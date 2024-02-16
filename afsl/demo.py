@@ -2,8 +2,10 @@
 A small `pdoc` example.
 """
 
+
 class Dog:
     """🐕"""
+
     name: str
     """The name of our dog."""
     friends: list["Dog"]
