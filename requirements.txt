@@ -1,0 +1,4 @@
+black==24.2.0
+pdoc==14.4.0
+torch==2.2.0
+twine
