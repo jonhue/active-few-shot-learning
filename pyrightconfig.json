@@ -1,0 +1,8 @@
+{
+  "include": [
+    // "examples",
+    "afsl",
+    "tests"
+  ],
+  "typeCheckingMode": "basic",
+}
