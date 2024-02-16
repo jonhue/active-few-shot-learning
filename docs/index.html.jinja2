@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="afsl retrieves data intelligently to maximize the information gain about a downstream task. This can be used, for example, to select data for efficient few-shot fine-tuning or to populate a context for in-context learning.">
+    <meta property="og:title" content="Active Few-Shot Learning">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jonhue.github.io/afsl">
+    <title>Active Few-Shot Learning</title>
+    {% autoescape false %}{% filter replace("\n","") | replace("    ","") | replace("<s","\n    <s") %}
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "afsl",
+                "operatingSystem": "Python 3",
+                "applicationCategory": "DeveloperApplication",
+                "sameAs": [
+                "https://github.com/jonhue/afsl",
+                "https://pypi.org/project/afsl/"
+                ],
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                },
+                "review": {
+                    "@type": "Review",
+                    "reviewRating": {
+                        "@type": "Rating",
+                        "ratingValue": "5"
+                    },
+                    "author": {
+                        "@type": "Person",
+                        "name": "Maximilian Hils",
+                        "sameAs": "https://hi.ls/"
+                    },
+                    "reviewBody": "A lightweight alternative to Sphinx!"
+                },
+                "url": "https://jonhue.github.io/afsl"
+            }
+        </script>
+        <style>{% include 'resources/bootstrap.min.css' %}</style>
+        <style>/* pygments */{{ pygments_css }}</style>
+        <style>
+
+            :root {
+                --color1: #2b50aa;
+                --color2: #F2545B;
+                --color3: #E8C547;
+                --color4: #419D78;
+            }
+
+            body {
+                font-size: 1.25rem;
+            }
+
+            h1 {
+                font-size: 2.75rem;
+            }
+
+            {% set boxwidth = 800 %}
+            {% set boxpad = 20 %}
+            {% set minw = boxwidth * 2 + boxpad * 4 %}
+
+            @media (min-width: {{ minw }}px) {
+                #example > input, #example > label {
+                    display: none;
+                }
+            }
+
+            @media (max-width: {{ minw - 1 }}px) {
+                #example-code, #example-render {
+                    display: none;
+                }
+
+                #view-code:checked ~ #example-code {
+                    display: block;
+                }
+
+                #view-render:checked ~ #example-render {
+                    display: block;
+                }
+            }
+
+            #example > label {
+                margin-bottom: 1rem;
+            }
+
+            #example > label[for=view-code] {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            #example > label[for=view-render] {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+
+            #example-invocation code {
+                font-size: 1.2em;
+                display: inline-block;
+                border: solid var(--bs-dark) 1px;
+                background-color: rgba(255, 255, 255, 0.8);
+                color: var(--bs-gray-dark);
+                border-radius: 3px;
+                padding: 3px 7px;
+                margin-bottom: 32px;
+            }
+
+            #example-render, #example-code {
+                width: {{ boxwidth }}px;
+                max-width: 98vw;
+                margin: 0 {{ boxpad }}px;
+                flex: 0 0 auto;
+                box-shadow: rgba(0, 0, 0, 0.2) 0 20px 68px;
+                border-radius: 5px;
+            }
+
+            .example-code {
+                background-color: var(--bs-dark) !important;
+                position: relative;
+                overflow: auto;
+            }
+
+            .example-code svg {
+                position: absolute;
+                left: 20px;
+                top: 20px;
+            }
+
+            .example-code .title {
+                color: white;
+                min-height: 1em;
+                margin-top: 20px;
+                text-align: center;
+            }
+
+            .example-code .highlight {
+                margin: 20px;
+                margin-bottom: 30px;
+            }
+
+            .example-code pre {
+                overflow: inherit;
+            }
+
+            #install {
+                text-overflow: ellipsis;
+            }
+
+            #actions {
+                & > :nth-child(1) {
+                    background-color: var(--color1);
+                    border-color: var(--color1);
+                }
+                & > :nth-child(2) {
+                    background-color: var(--color4);
+                    border-color: var(--color4);
+                }
+                & > :nth-child(3) {
+                    background-color: var(--color2);
+                    border-color: var(--color2);
+                }
+            }
+
+            .highlighted {
+                color: rgb(119, 148, 244);
+                font-style: italic;
+            }
+
+        </style>
+    {% endfilter %}{% endautoescape %}
+</head>
+{%- macro icon(name) -%}
+    {% autoescape false %}
+    {% filter replace('<svg ', '<svg aria-hidden="true" ') %}
+        {% include "resources/" + name + ".svg" %}
+    {% endfilter %}
+    {% endautoescape %}
+{%- endmacro %}
+<body class="my-4">
+<header class="container text-center my-4 py-4">
+    <div class="row justify-content-center mb-1 mt-4">
+        <h1>Active Few-Shot Learning</h1>
+    </div>
+    <div class="row justify-content-center mb-2">
+        <div class="col-md-7">
+            <p>
+                Efficient fine-tuning & in-context learning by intelligent active data selection.
+            </p>
+        </div>
+    </div>
+</header>
+<aside id="example" class="d-flex align-items-stretch justify-content-center flex-wrap">
+    <input type="radio" class="btn-check" name="view-selector" id="view-code" autocomplete="off" checked>
+    <label class="btn btn-outline-dark" for="view-code">Fine-tuning</label>
+    <input type="radio" class="btn-check" name="view-selector" id="view-render" autocomplete="off">
+    <label class="btn btn-outline-dark" for="view-render">In-context learning</label>
+    <div class="col-12"></div>
+    <div class="example-code" id="example-code">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14">
+            <g>
+                <circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle>
+                <circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle>
+                <circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle>
+            </g>
+        </svg>
+        <div class="title"></div>
+        {{ example_html1 }}
+    </div>
+    <div class="example-code" id="example-render">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14">
+            <g>
+                <circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle>
+                <circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle>
+                <circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle>
+            </g>
+        </svg>
+        <div class="title"></div>
+        {{ example_html2 }}
+    </div>
+</aside>
+<main class="container text-center my-4 py-4">
+    <div class="container text-center" id="actions">
+        <a href="https://github.com/jonhue/active-few-shot-learning"
+        itemprop="sameAs"
+        class="btn btn-lg btn-dark shadow mb-4 d-inline-flex align-items-center">
+            {{ icon("github") }}
+            &nbsp;GitHub
+        </a>
+        <a href="docs/afsl.html" class="btn btn-lg btn-dark shadow mb-4 d-inline-flex align-items-center">
+            {{ icon("book-half") }}
+            &nbsp;Documentation
+        </a>
+        <a href="https://github.com/jonhue/afsl/blob/main/CHANGELOG.md"
+        class="btn btn-lg btn-dark shadow mb-4 d-inline-flex align-items-center">
+            {{ icon("newspaper") }}
+            &nbsp;Paper
+        </a>
+        <div class="d-md-none"></div>
+        {# <a href="https://pypi.org/project/afsl/"
+        itemprop="sameAs"
+        class="btn btn-lg btn-warning shadow mb-4 d-inline-flex align-items-center">
+            {{ icon("box-seam") }}
+            &nbsp;PyPI
+        </a> #}
+    </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-7" style="max-width: 40rem; text-align: justify; hyphens: auto;">
+            <p>
+                <code>afsl</code> retrieves data intelligently to maximize the information gain about a downstream task.
+                This can be used, for example, to select data for efficient few-shot <i>fine-tuning</i> or to populate a context for <i>in-context learning</i>.
+                To learn more about how <code>afsl</code> works, check out our <a href="https://yas.pub">paper</a> or our <a href="https://yas.pub">blog post</a>.
+            </p>
+        </div>
+    </div>
+    {# <div class="container text-center my-4">
+        <h3>Installation</h3>
+        <div class="d-inline-block" style="max-width: 25rem; width: 100%;">
+            <div class="input-group input-group-lg shadow" onclick="getElementById('install').select()">
+                <label for="install" class="input-group-text" aria-label="install instructions">
+                    {{ icon("terminal-fill") }}
+                </label>
+                <input id="install" type="text" class="form-control bg-white" value="pip install active-few-shot-learning" readonly>
+            </div>
+        </div>
+        <div class="mb-3 text-muted">Latest Release: {{ __version__ }}</div>
+    </div> #}
+    <div class="container justify-content-center my-4" style="max-width: 40rem; text-align: justify; hyphens: auto;">
+        <h3>Publications</h3>
+        {# <div class="list-group"> #}
+            <div class="mt-4">
+                <h5 class="mb-1">Active Few-Shot Fine-Tuning</h5>
+                <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p>
+                <p style="font-size: 0.8em;">Preprint</p>
+            </div>
+            <div>
+                <h5 class="mb-1">Information-based Transductive Active Learning</h5>
+                <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p>
+                <p style="font-size: 0.8em;">Preprint</p>
+            </div>
+            {# <div class="list-group-item my-2">
+                <h5 class="mb-1">Title: Advances in Quantum Computing</h5>
+                <p class="mb-1">Authors: Albert Einstein, Niels Bohr</p>
+                <small>Year: 2020, Venue: Proceedings of the National Academy of Sciences</small>
+            </div>
+            <div class="list-group-item my-2">
+                <h5 class="mb-1">Title: Exploring the Universe: Dark Matter and Dark Energy</h5>
+                <p class="mb-1">Authors: Carl Sagan, Vera Rubin</p>
+                <small>Year: 2019, Venue: Journal of Cosmology and Astroparticle Physics</small>
+            </div> #}
+        {# </div> #}
+    </div>
+</main>
+<footer class="d-none d-md-block">
+    <div class="text-center">
+        Authors: <a href="https://jonhue.github.io">Jonas Hübotter</a>, <a href="https://sukhijab.github.io">Bhavya Sukhija</a>, <a href="https://lenarttreven.github.io">Lenart Treven</a>, <a href="https://yas.pub">Yarden As</a>, and <a href="https://las.inf.ethz.ch/krausea">Andreas Krause</a>
+    </div>
+
+    {% include "resources/_github-button.html" %}
+</footer>
+</body>
+</html>

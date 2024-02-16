@@ -6,7 +6,7 @@
 
 * The code is auto-formatted using `black .`.
 * Static type checks can be run using `pyright`.
-* Tests can be run using `pytest tests`.
+* Tests can be run using `pytest test`.
 
 ### Documentation
 
