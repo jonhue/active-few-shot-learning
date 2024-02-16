@@ -27,8 +27,8 @@ jobs:
       run: pip3 install --upgrade torch==${{ matrix.torch}}
     - name: Run Black
       run: black . --check
-    # - name: Run pyright
-    #   uses: jakebailey/pyright-action@v1.8.1
+    - name: Run pyright
+      uses: jakebailey/pyright-action@v1.8.1
     # - name: Run pytest
     #   run: |
     #     export PYTHONPATH=$(pwd)
