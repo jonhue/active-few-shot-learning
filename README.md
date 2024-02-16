@@ -2,6 +2,16 @@
 
 ## Maintenance
 
+### CI checks
+
+* The code is auto-formatted using `black .`.
+* Static type checks can be run using `pyright`.
+* Tests can be run using `pytest tests`.
+
+### Documentation
+
+To start a local server hosting the documentation run ```pdoc ./afsl --math```.
+
 ### Publishing
 
 1. update version number in `setup.py` and `afsl/__init__.py`
