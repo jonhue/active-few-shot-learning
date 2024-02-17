@@ -24,8 +24,14 @@ if __name__ == "__main__":
     lexer = pygments.lexers.python.PythonLexer()
     formatter = pygments.formatters.html.HtmlFormatter(style="dracula")
     pygments_css = formatter.get_style_defs()
-    example_html1 = Markup(pygments.highlight(demo1.read_text("utf8"), lexer, formatter).replace('converged', '<span class="highlighted">converged</span>'))
-    example_html2 = Markup(pygments.highlight(demo2.read_text("utf8"), lexer, formatter))
+    example_html1 = Markup(
+        pygments.highlight(demo1.read_text("utf8"), lexer, formatter).replace(
+            "converged", '<span class="highlighted">converged</span>'
+        )
+    )
+    example_html2 = Markup(
+        pygments.highlight(demo2.read_text("utf8"), lexer, formatter)
+    )
 
     (here / "index.html").write_bytes(
         env.get_template("index.html.jinja2")
