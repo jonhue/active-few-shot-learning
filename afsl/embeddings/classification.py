@@ -20,7 +20,7 @@ class ClassificationEmbedding(Embedding[ClassificationModel]):
 
     def __init__(
         self,
-        mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
+        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
         kind: ClassificationEmbeddingKind = DEFAULT_CLASSIFICATION_EMBEDDING_KIND,
     ):
         super().__init__(mini_batch_size=mini_batch_size)

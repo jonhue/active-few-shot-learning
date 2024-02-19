@@ -10,7 +10,7 @@ M = TypeVar("M", bound=Model)
 class Embedding(ABC, Generic[M]):
     mini_batch_size: int
 
-    def __init__(self, mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE):
+    def __init__(self, mini_batch_size=DEFAULT_MINI_BATCH_SIZE):
         self.mini_batch_size = mini_batch_size
 
     @abstractmethod
