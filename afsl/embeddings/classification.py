@@ -5,23 +5,23 @@ from afsl.embeddings import Embedding
 from afsl.model import ClassificationModel
 from afsl.utils import get_device, mini_batch_wrapper
 
-GradientEmbeddingKind = (
+ClassificationEmbeddingKind = (
     Literal["cross_entropy_loss"]
     | Literal["summed_cross_entropy_loss"]
     | Literal["norm"]
 )
-DEFAULT_GRADIENT_EMBEDDING_KIND = "cross_entropy_loss"
+DEFAULT_CLASSIFICATION_EMBEDDING_KIND = "cross_entropy_loss"
 
 
-class GradientEmbedding(Embedding[ClassificationModel]):
+class ClassificationEmbedding(Embedding[ClassificationModel]):
     """works only for classification models"""
 
-    kind: GradientEmbeddingKind
+    kind: ClassificationEmbeddingKind
 
     def __init__(
         self,
         mini_batch_size: int = 100,
-        kind: GradientEmbeddingKind = DEFAULT_GRADIENT_EMBEDDING_KIND,
+        kind: ClassificationEmbeddingKind = DEFAULT_CLASSIFICATION_EMBEDDING_KIND,
     ):
         super().__init__(mini_batch_size=mini_batch_size)
         self.kind = kind
