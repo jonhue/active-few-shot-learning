@@ -165,6 +165,19 @@
                 }
             }
 
+            #orgs {
+                align-items: center;
+                display: flex;
+                justify-content: center;
+                width: 100%;
+
+                img {
+                    max-width: 12rem;
+                    margin: 1rem 0.5rem;
+                    height: auto;
+                }
+            }
+
             .highlighted {
                 color: rgb(119, 148, 244);
                 font-style: italic;
@@ -250,9 +263,10 @@
     <div class="row justify-content-center mb-4">
         <div class="col-md-7" style="max-width: 40rem; text-align: justify; hyphens: auto;">
             <p>
-                <code>afsl</code> retrieves data intelligently to maximize the information gain about a downstream task.
+                <code>afsl</code> retrieves data intelligently to maximize the information gain about specified prediction targets.
                 This can be used, for example, to select data for efficient few-shot <i>fine-tuning</i> or to populate a context for <i>in-context learning</i>.
-                To learn more about how <code>afsl</code> works, check out our <a href="https://yas.pub">paper</a> or our <a href="https://yas.pub">blog post</a>.
+                The documentation details <a href="https://yas.pub">how to get started</a>.
+                To learn how <code>afsl</code> works, check out our <a href="https://yas.pub">paper</a> or our <a href="https://yas.pub">blog post</a>.
             </p>
         </div>
     </div>
@@ -272,13 +286,15 @@
         <h3>Publications</h3>
         {# <div class="list-group"> #}
             <div class="mt-4">
-                <h5 class="mb-1">Active Few-Shot Fine-Tuning</h5>
-                <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p>
+                <h5 class="mb-1">Active Few-Shot Fine-Tuning <a href="https://yas.pub">{{ icon("newspaper") }}</a></h5>
+                {# <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p> #}
+                {# <p style="font-size: 0.8em;">ICLR 2024 Workshop</p> #}
                 <p style="font-size: 0.8em;">Preprint</p>
             </div>
             <div>
-                <h5 class="mb-1">Information-based Transductive Active Learning</h5>
-                <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p>
+                <h5 class="mb-1">Information-based Transductive Active Learning <a href="https://yas.pub">{{ icon("newspaper") }}</a></h5>
+                {# <p class="mb-1" style="font-size: 0.8em;">Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p> #}
+                {# <p style="font-size: 0.8em;">ICML 2024</p> #}
                 <p style="font-size: 0.8em;">Preprint</p>
             </div>
             {# <div class="list-group-item my-2">
@@ -295,8 +311,16 @@
     </div>
 </main>
 <footer class="d-none d-md-block">
-    <div class="text-center">
+    {# <div class="text-center">
         Authors: <a href="https://jonhue.github.io">Jonas Hübotter</a>, <a href="https://sukhijab.github.io">Bhavya Sukhija</a>, <a href="https://lenarttreven.github.io">Lenart Treven</a>, <a href="https://yas.pub">Yarden As</a>, and <a href="https://las.inf.ethz.ch/krausea">Andreas Krause</a>
+    </div> #}
+
+    <div id="orgs">
+        <a href="https://ethz.ch/en"><img src="resources/eth.png"></a>
+        <a href="https://las.inf.ethz.ch"><img src="resources/las.png"></a>
+    </div>
+    <div class="text-center">
+        made by <a href="https://jonhue.github.io">Jonas Hübotter</a>
     </div>
 
     {% include "resources/_github-button.html" %}
