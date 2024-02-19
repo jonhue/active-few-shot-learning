@@ -23,5 +23,5 @@ def test_condition_on():
     assert conditioned_gaussian[0, 0] == 0.9375
     assert conditioned_gaussian[0, 0] == gaussian.condition_on([1])[0, 0]
 
-    conditioned_gaussian = gaussian.condition_on([1,1])
+    conditioned_gaussian = gaussian.condition_on([1, 1])
     assert conditioned_gaussian[0, 0] == approx(0.9286, abs=1e-4)

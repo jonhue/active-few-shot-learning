@@ -19,7 +19,7 @@ class SimpleMLP(nn.Module):
         return x
 
     def forward(self, x):
-        x = self.latent(x)
+        x = self.embed(x)
         x = self.output(x)
         return x
 
