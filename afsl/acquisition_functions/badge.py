@@ -2,8 +2,7 @@ from typing import List, NamedTuple
 import torch
 from afsl.acquisition_functions import SequentialAcquisitionFunction
 from afsl.embeddings import M, Embedding
-from afsl.types import Target
-from afsl.utils import mini_batch_wrapper_non_cat
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 
 class BADGEState(NamedTuple):
@@ -19,16 +18,21 @@ def compute_distances(embeddings, centroids):
     return min_distances
 
 
-class BADGE(SequentialAcquisitionFunction[BADGEState]):
+class BADGE(SequentialAcquisitionFunction[M, BADGEState]):
+    embedding: Embedding[M]
+
+    def __init__(
+        self, embedding: Embedding[M], mini_batch_size=DEFAULT_MINI_BATCH_SIZE
+    ):
+        super().__init__(mini_batch_size=mini_batch_size)
+        self.embedding = embedding
+
     def initialize(
         self,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
     ) -> BADGEState:
-        embeddings = embedding.embed(model, data)
+        embeddings = self.embedding.embed(model, data)
         # Choose the first centroid randomly
         centroid_indices = [
             torch.randint(0, embeddings.size(0), (1,)).to(embeddings.device)
@@ -49,34 +53,6 @@ class BADGE(SequentialAcquisitionFunction[BADGEState]):
         probabilities = sqd_distances / sqd_distances.sum()
         return probabilities
 
-    def select(
-        self,
-        batch_size: int,
-        embedding: Embedding[M],
-        model: M,
-        data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
-        force_nonsequential=False,
-    ) -> torch.Tensor:
-        assert not force_nonsequential, "Non-sequential selection is not supported"
-
-        states = mini_batch_wrapper_non_cat(
-            fn=lambda batch: self.initialize(
-                embedding=embedding,
-                model=model,
-                data=batch,
-                target=target,
-                Sigma=Sigma,
-            ),
-            data=data,
-            batch_size=self.mini_batch_size,
-        )
-
-        indices = []
-        for _ in range(batch_size):
-            probabilities = torch.cat([self.compute(state) for state in states], dim=0)
-            i = int(torch.multinomial(probabilities, num_samples=1).item())
-            indices.append(i)
-            states = [self.step(state, i) for state in states]
-        return torch.tensor(indices)
+    @staticmethod
+    def selector(probabilities: torch.Tensor) -> int:
+        return int(torch.multinomial(probabilities, num_samples=1).item())

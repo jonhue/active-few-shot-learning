@@ -1,9 +1,9 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import BaCE, BaCEState
+from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
-class ITL(BaCE):
+class ITL(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_covariance_matrix = state.covariance_matrix.condition_on(

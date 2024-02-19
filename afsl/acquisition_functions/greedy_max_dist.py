@@ -3,7 +3,7 @@ import torch
 from afsl.acquisition_functions import SequentialAcquisitionFunction
 from afsl.acquisition_functions.badge import compute_distances
 from afsl.embeddings import M, Embedding
-from afsl.types import Target
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 
 class GreedyMaxDistState(NamedTuple):
@@ -11,16 +11,21 @@ class GreedyMaxDistState(NamedTuple):
     centroid_indices: List[torch.Tensor]
 
 
-class GreedyMaxDist(SequentialAcquisitionFunction[GreedyMaxDistState]):
+class GreedyMaxDist(SequentialAcquisitionFunction[M, GreedyMaxDistState]):
+    embedding: Embedding[M]
+
+    def __init__(
+        self, embedding: Embedding[M], mini_batch_size=DEFAULT_MINI_BATCH_SIZE
+    ):
+        super().__init__(mini_batch_size=mini_batch_size)
+        self.embedding = embedding
+
     def initialize(
         self,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
     ) -> GreedyMaxDistState:
-        embeddings = embedding.embed(model, data)
+        embeddings = self.embedding.embed(model, data)
         # Choose the first centroid randomly
         centroid_indices = [
             torch.randint(0, embeddings.size(0), (1,)).to(embeddings.device)

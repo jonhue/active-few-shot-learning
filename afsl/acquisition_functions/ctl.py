@@ -1,9 +1,8 @@
 import torch
-import wandb
-from afsl.acquisition_functions.bace import BaCE, BaCEState
+from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
-class CTL(BaCE):
+class CTL(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         ind_a = torch.arange(state.n)
         ind_b = torch.arange(state.n, state.covariance_matrix.dim)

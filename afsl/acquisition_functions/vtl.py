@@ -1,9 +1,9 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import BaCE, BaCEState
+from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
-class VTL(BaCE):
+class VTL(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         noise_var = self.noise_std**2
 
