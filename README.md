@@ -14,9 +14,8 @@ To start a local server hosting the documentation run ```pdoc ./afsl --math```.
 
 ### Publishing
 
-1. update version number in `setup.py` and `afsl/__init__.py`
-2. test package metadata: `python setup.py check`
-3. generate distribution archives: `python setup.py sdist`
-4. *(optional)* upload to test PyPI: `twine upload --repository-url https://test.pypi.org/legacy/ dist/active-few-shot-learning-VERSION.tar.gz`
-5. *(optional)* test installation from test PyPI: `pip install --index-url https://test.pypi.org/simple/ active-few-shot-learning --user`
-6. upload to PyPI: `twine upload dist/active-few-shot-learning-VERSION.tar.gz`
+1. update version number in `pyproject.toml` and `afsl/__init__.py`
+2. build: `poetry build`
+3. publish: `poetry publish`
+4. push version update to GitHub
+5. create new release on GitHub

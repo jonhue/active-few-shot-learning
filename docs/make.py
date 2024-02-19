@@ -17,7 +17,7 @@ if __name__ == "__main__":
     demo1 = here / "demo1.py"
     demo2 = here / "demo2.py"
     env = Environment(
-        loader=FileSystemLoader([here, here / ".." / "pdoc" / "templates"]),
+        loader=FileSystemLoader([here]),
         autoescape=True,
     )
 
@@ -39,7 +39,6 @@ if __name__ == "__main__":
             example_html1=example_html1,
             example_html2=example_html2,
             pygments_css=pygments_css,
-            __version__=pdoc.__version__,
         )
         .encode()
     )
@@ -50,14 +49,12 @@ if __name__ == "__main__":
     # Render main docs
     pdoc.render.configure(
         edit_url_map={
-            "pdoc": "https://github.com/mitmproxy/pdoc/blob/main/pdoc/",
-            "demo": "https://github.com/mitmproxy/pdoc/blob/main/test/testdata/demo",
-            "demo_long": "https://github.com/mitmproxy/pdoc/blob/main/test/testdata/demo_long",
-        },
-        favicon="/favicon.svg",
-        logo="/logo.svg",
-        logo_link="https://pdoc.dev",
-        footer_text=f"pdoc {pdoc.__version__}",
+            "afsl": "https://github.com/jonhue/afsl/",
+        }
+    )
+    pdoc.pdoc(
+        here / ".." / "afsl",
+        output_directory=here / "docs",
     )
 
     # Add sitemap.xml
@@ -76,5 +73,7 @@ if __name__ == "__main__":
             if file.name.startswith("_"):
                 continue
             filename = str(file.relative_to(here).as_posix()).replace("index.html", "")
-            f.write(f"""\n<url><loc>https://pdoc.dev/{filename}</loc></url>""")
+            f.write(
+                f"""\n<url><loc>https://jonhue.github.io/afsl/{filename}</loc></url>"""
+            )
         f.write("""\n</urlset>""")

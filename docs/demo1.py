@@ -1,8 +1,7 @@
-from afsl import ActiveDataLoader, GradientEmebeddings
+from afsl import ActiveDataLoader
 
-emb = GradientEmebeddings()
-train_loader = ActiveDataLoader(emb, dataset, task, batch_size=32)
+train_loader = ActiveDataLoader(data, target, batch_size=32)
 
 while not converged:
-    data = train_loader.next(model)
-    model.step(data)
+    batch = data[train_loader.next(model)]
+    model.step(batch)

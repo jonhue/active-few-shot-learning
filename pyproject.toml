@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "afsl"
+version = "0.1.0"
+description = "Active Few-Shot Learning for Neural Networks"
+authors = ["Jonas Hübotter <jonas.huebotter@inf.ethz.ch>"]
+license = "MIT"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+torch = "^2.2.0"
+
+[tool.poetry.urls]
+homepage = "https://github.com/jonhue/afsl"
+
+[build-system]
+requires = ["poetry>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+exclude = "(venv|^/afsl/model.py)"
