@@ -49,8 +49,9 @@ if __name__ == "__main__":
     # Render main docs
     pdoc.render.configure(
         edit_url_map={
-            "afsl": "https://github.com/jonhue/afsl/",
-        }
+            "afsl": "https://github.com/jonhue/afsl/docs",
+        },
+        math=True,
     )
     pdoc.pdoc(
         here / ".." / "afsl",

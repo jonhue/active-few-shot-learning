@@ -1,5 +1,13 @@
 """
-Active Few-Shot Learning
+*Active Few-Shot Learning* (`afsl`) is a Python package for intelligent active data selection.
+
+## Why Active Data Selection?
+
+## Getting Started
+
+### Installation
+
+---
 """
 
 from afsl.active_data_loader import ActiveDataLoader

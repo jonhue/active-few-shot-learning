@@ -1,6 +1,8 @@
 import torch
 from afsl.model import Model
 
+DEFAULT_MINI_BATCH_SIZE = 100
+
 
 def get_device(model: Model):
     return next(model.parameters()).device
