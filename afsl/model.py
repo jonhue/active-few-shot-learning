@@ -1,14 +1,9 @@
-<<<<<<< HEAD
 """
 Selection of protocols for PyTorch models.
 """
 
 from __future__ import annotations
 from typing import Iterator, Protocol, runtime_checkable
-=======
-from __future__ import annotations
-from typing import Iterator, Protocol
->>>>>>> a5db24e (add some tests)
 import torch
 
 
@@ -58,7 +53,14 @@ class ClassificationModel(Model, Protocol):
         r"""Returns the logits (a tensor with shape $n \times k$) of the input data `x` (of shape $n \times d$)."""
         ...
 
+    def embed(self, x: torch.Tensor) -> torch.Tensor:
+        return self.logits(x)
+
     @property
     def final_layer(self) -> torch.nn.Linear:
+<<<<<<< HEAD
         """Returns the final linear layer of the model."""
+=======
+        """Returns the final linear layer of the model. Assumes that this layer does not include an additive bias (TODO: drop assumption)."""
+>>>>>>> c134e94 (gradient embeddings)
         ...
