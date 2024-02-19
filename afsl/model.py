@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 """
 Selection of protocols for PyTorch models.
 """
 
 from __future__ import annotations
 from typing import Iterator, Protocol, runtime_checkable
+=======
+from __future__ import annotations
+from typing import Iterator, Protocol
+>>>>>>> a5db24e (add some tests)
 import torch
 
 
