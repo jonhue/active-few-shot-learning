@@ -2,13 +2,13 @@ import torch
 import torch.nn.functional as F
 from afsl.acquisition_functions import (
     BatchAcquisitionFunction,
-    TargetedAcquisitionFunction,
+    Targeted,
 )
 from afsl.model import LatentModel
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE, get_device
 
 
-class CosineSimilarity(TargetedAcquisitionFunction, BatchAcquisitionFunction):
+class CosineSimilarity(Targeted, BatchAcquisitionFunction):
     def __init__(
         self,
         target: torch.Tensor,
@@ -17,7 +17,7 @@ class CosineSimilarity(TargetedAcquisitionFunction, BatchAcquisitionFunction):
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
     ):
         BatchAcquisitionFunction.__init__(self, mini_batch_size=mini_batch_size)
-        TargetedAcquisitionFunction.__init__(
+        Targeted.__init__(
             self,
             target=target,
             subsampled_target_frac=subsampled_target_frac,
