@@ -1,6 +1,6 @@
 import torch
 from afsl.embeddings import Embedding
-from afsl.types import LatentModel
+from afsl.model import LatentModel
 from afsl.utils import get_device, mini_batch_wrapper
 
 

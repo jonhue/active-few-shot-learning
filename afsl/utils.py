@@ -1,5 +1,5 @@
 import torch
-from afsl.types import Model
+from afsl.model import Model
 
 
 def get_device(model: Model):

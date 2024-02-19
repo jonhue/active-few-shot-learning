@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 import torch
-from afsl.types import Model
+from afsl.model import Model
 
 M = TypeVar("M", bound=Model)
 

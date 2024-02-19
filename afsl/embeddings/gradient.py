@@ -2,7 +2,7 @@ from typing import Literal
 import torch
 from torch import nn
 from afsl.embeddings import Embedding
-from afsl.types import ClassificationModel
+from afsl.model import ClassificationModel
 from afsl.utils import get_device, mini_batch_wrapper
 
 GradientEmbeddingKind = (

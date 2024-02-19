@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as F
 from afsl.acquisition_functions import BatchAcquisitionFunction
 from afsl.embeddings import Embedding
-from afsl.types import LatentModel, Target
+from afsl.model import LatentModel
+from afsl.types import Target
 from afsl.utils import get_device
 
 

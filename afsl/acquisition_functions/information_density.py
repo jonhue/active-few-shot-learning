@@ -3,7 +3,8 @@ from afsl.acquisition_functions import BatchAcquisitionFunction
 from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
 from afsl.acquisition_functions.max_entropy import MaxEntropy
 from afsl.embeddings import Embedding
-from afsl.types import LatentModel, Target
+from afsl.model import LatentModel
+from afsl.types import Target
 
 
 class InformationDensity(BatchAcquisitionFunction):
