@@ -1,60 +1,52 @@
 from abc import ABC, abstractmethod
+import math
 from typing import Generic, TypeVar
 import torch
-from afsl.embeddings import M, Embedding
-from afsl.types import Target
-from afsl.utils import mini_batch_wrapper, mini_batch_wrapper_non_cat
+from afsl.embeddings import M
+from afsl.utils import (
+    DEFAULT_MINI_BATCH_SIZE,
+    mini_batch_wrapper,
+    mini_batch_wrapper_non_cat,
+)
 
 
-class AcquisitionFunction(ABC):
+class AcquisitionFunction(ABC, Generic[M]):
     mini_batch_size: int
 
-    def __init__(self, mini_batch_size: int = 100):
+    def __init__(self, mini_batch_size=DEFAULT_MINI_BATCH_SIZE):
         self.mini_batch_size = mini_batch_size
 
     @abstractmethod
     def select(
         self,
         batch_size: int,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
         force_nonsequential=False,
     ) -> torch.Tensor:
         pass
 
 
-class BatchAcquisitionFunction(AcquisitionFunction):
+class BatchAcquisitionFunction(AcquisitionFunction[M]):
     @abstractmethod
     def compute(
         self,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
     ) -> torch.Tensor:
         pass
 
     def select(
         self,
         batch_size: int,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
         force_nonsequential=False,
     ) -> torch.Tensor:
         values = mini_batch_wrapper(
             fn=lambda batch: self.compute(
-                embedding=embedding,
                 model=model,
                 data=batch,
-                target=target,
-                Sigma=Sigma,
             ),
             data=data,
             batch_size=self.mini_batch_size,
@@ -66,15 +58,12 @@ class BatchAcquisitionFunction(AcquisitionFunction):
 State = TypeVar("State")
 
 
-class SequentialAcquisitionFunction(AcquisitionFunction, Generic[State]):
+class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
     @abstractmethod
     def initialize(
         self,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
     ) -> State:
         pass
 
@@ -89,20 +78,14 @@ class SequentialAcquisitionFunction(AcquisitionFunction, Generic[State]):
     def select(
         self,
         batch_size: int,
-        embedding: Embedding[M],
         model: M,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
         force_nonsequential=False,
     ) -> torch.Tensor:
         states = mini_batch_wrapper_non_cat(
             fn=lambda batch: self.initialize(
-                embedding=embedding,
                 model=model,
                 data=batch,
-                target=target,
-                Sigma=Sigma,
             ),
             data=data,
             batch_size=self.mini_batch_size,
@@ -116,7 +99,38 @@ class SequentialAcquisitionFunction(AcquisitionFunction, Generic[State]):
             indices = []
             for _ in range(batch_size):
                 values = torch.cat([self.compute(state) for state in states], dim=0)
-                i = int(torch.argmax(values).item())
+                i = self.selector(values)
                 indices.append(i)
                 states = [self.step(state, i) for state in states]
             return torch.tensor(indices)
+
+    @staticmethod
+    def selector(values: torch.Tensor) -> int:
+        return int(torch.argmax(values).item())
+
+
+class TargetedAcquisitionFunction(ABC):
+    target: torch.Tensor
+    r"""Tensor of prediction targets (shape $m \times d$) or `None` if data selection should be "undirected"."""
+
+    def __init__(
+        self,
+        target: torch.Tensor,
+        subsampled_target_frac: float = 0.5,
+        max_target_size: int | None = None,
+    ):
+        assert target.size(0) > 0, "Target must be non-empty"
+        assert (
+            subsampled_target_frac > 0 and subsampled_target_frac <= 1
+        ), "Fraction of target must be in (0, 1]"
+        assert (
+            max_target_size is None or max_target_size > 0
+        ), "Max target size must be positive"
+
+        m = self.target.size(0)
+        max_target_size = max_target_size if max_target_size is not None else m
+        self.target = target[
+            torch.randperm(m)[
+                : min(math.ceil(subsampled_target_frac * m), max_target_size)
+            ]
+        ]

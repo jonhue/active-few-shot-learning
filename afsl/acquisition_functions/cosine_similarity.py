@@ -1,28 +1,39 @@
 import torch
 import torch.nn.functional as F
-from afsl.acquisition_functions import BatchAcquisitionFunction
-from afsl.embeddings import Embedding
+from afsl.acquisition_functions import (
+    BatchAcquisitionFunction,
+    TargetedAcquisitionFunction,
+)
 from afsl.model import LatentModel
-from afsl.types import Target
-from afsl.utils import get_device
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, get_device
 
 
-class CosineSimilarity(BatchAcquisitionFunction):
+class CosineSimilarity(TargetedAcquisitionFunction, BatchAcquisitionFunction):
+    def __init__(
+        self,
+        target: torch.Tensor,
+        subsampled_target_frac: float = 0.5,
+        max_target_size: int | None = None,
+        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+    ):
+        BatchAcquisitionFunction.__init__(self, mini_batch_size=mini_batch_size)
+        TargetedAcquisitionFunction.__init__(
+            self,
+            target=target,
+            subsampled_target_frac=subsampled_target_frac,
+            max_target_size=max_target_size,
+        )
+
     def compute(
         self,
-        embedding: Embedding,
         model: LatentModel,
         data: torch.Tensor,
-        target: Target,
-        Sigma: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        assert target is not None, "Target must be non-empty"
-
         model.eval()
         device = get_device(model)
         with torch.no_grad():
             data_latent = model.latent(data.to(device))
-            target_latent = model.latent(target.to(device))
+            target_latent = model.latent(self.target.to(device))
 
             data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
             target_latent_normalized = F.normalize(target_latent, p=2, dim=1)
