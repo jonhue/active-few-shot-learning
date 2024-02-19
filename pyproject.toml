@@ -19,6 +19,9 @@ classifiers = [
 python = ">=3.10"
 torch = "^2.2.0"
 
+[tool.poetry.extras]
+logging = ["wandb"]
+
 [tool.poetry.urls]
 homepage = "https://github.com/jonhue/afsl"
 

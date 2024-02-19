@@ -21,5 +21,5 @@ def mini_batch_wrapper_non_cat(fn, data, batch_size):
 
 
 def mini_batch_wrapper(fn, data, batch_size):
-    results = mini_batch_wrapper(fn, data, batch_size)
+    results = mini_batch_wrapper_non_cat(fn, data, batch_size)
     return torch.cat(results, dim=0)

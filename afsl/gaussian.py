@@ -28,14 +28,16 @@ class GaussianCovarianceMatrix:
         return self._matrix.size(0)
 
     def condition_on(self, indices, target_indices=None):
-        indices = torch.atleast_1d(indices)
-        noise_var = self.noise_std**2
+        indices = torch.tensor(indices)
+        if indices.dim() == 0:
+            indices = indices.unsqueeze(0)
         if target_indices is None:
             target_indices = torch.arange(self.dim)
+        noise_var = self.noise_std**2
 
-        Sigma_AA = self._matrix[target_indices, target_indices]
-        Sigma_ii = self._matrix[indices, indices]
-        Sigma_Ai = self._matrix[target_indices, indices]
+        Sigma_AA = self._matrix[target_indices][:, target_indices]
+        Sigma_ii = self._matrix[indices][:, indices]
+        Sigma_Ai = self._matrix[target_indices][:, indices]
         posterior_Sigma_AA = (
             Sigma_AA
             - Sigma_Ai

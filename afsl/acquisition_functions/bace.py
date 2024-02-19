@@ -5,7 +5,7 @@ from afsl.acquisition_functions import (
     Targeted,
 )
 from afsl.embeddings import M, Embedding
-from afsl.embeddings.latent import LatentEmbedding
+from afsl.embeddings.provided import ProvidedEmbedding
 from afsl.gaussian import GaussianCovarianceMatrix
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
@@ -22,7 +22,7 @@ class BaCE(SequentialAcquisitionFunction[M, BaCEState]):
 
     def __init__(
         self,
-        embedding: Embedding[M] = LatentEmbedding(),
+        embedding: Embedding[M] = ProvidedEmbedding(),
         Sigma: torch.Tensor | None = None,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
@@ -53,7 +53,7 @@ class TargetedBaCE(Targeted, BaCE[M]):
     def __init__(
         self,
         target: torch.Tensor,
-        embedding: Embedding[M] = LatentEmbedding(),
+        embedding: Embedding[M] = ProvidedEmbedding(),
         Sigma: torch.Tensor | None = None,
         noise_std=1.0,
         subsampled_target_frac: float = 0.5,

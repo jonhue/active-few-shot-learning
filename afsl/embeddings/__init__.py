@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 import torch
 from afsl.model import Model
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 M = TypeVar("M", bound=Model)
 
@@ -9,7 +10,7 @@ M = TypeVar("M", bound=Model)
 class Embedding(ABC, Generic[M]):
     mini_batch_size: int
 
-    def __init__(self, mini_batch_size: int = 100):
+    def __init__(self, mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE):
         self.mini_batch_size = mini_batch_size
 
     @abstractmethod

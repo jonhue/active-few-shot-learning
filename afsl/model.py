@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Iterator, Protocol
 import torch
 
@@ -5,26 +6,30 @@ import torch
 class Model(Protocol):
     """"""
 
-    def __call__(self, data: torch.Tensor) -> torch.Tensor:
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
         ...
 
-    def eval(self) -> None:
+    def eval(self) -> Model:
         ...
 
     def parameters(self) -> Iterator[torch.nn.Parameter]:
         ...
 
 
-class LatentModel(Model):
+class ModelWithEmbedding(Model, Protocol):
     """"""
 
-    def latent(self, data: torch.Tensor) -> torch.Tensor:
-        r"""Returns the latent representation (a tensor with shape $n \times k$) of the input data (of shape $n \times d$)."""
+    def embed(self, x: torch.Tensor) -> torch.Tensor:
+        r"""Returns the latent representation (a tensor with shape $n \times k$) of the input data `x` (of shape $n \times d$)."""
         ...
 
 
-class ClassificationModel(LatentModel):
-    def predict(self, inputs: torch.Tensor) -> torch.Tensor:
+class ClassificationModel(Model, Protocol):
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
+        ...
+
+    def logits(self, x: torch.Tensor) -> torch.Tensor:
+        r"""Returns the logits (a tensor with shape $n \times k$) of the input data `x` (of shape $n \times d$)."""
         ...
 
     @property
