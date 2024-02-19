@@ -73,5 +73,7 @@ if __name__ == "__main__":
             if file.name.startswith("_"):
                 continue
             filename = str(file.relative_to(here).as_posix()).replace("index.html", "")
-            f.write(f"""\n<url><loc>https://jonhue.github.io/afsl/{filename}</loc></url>""")
+            f.write(
+                f"""\n<url><loc>https://jonhue.github.io/afsl/{filename}</loc></url>"""
+            )
         f.write("""\n</urlset>""")

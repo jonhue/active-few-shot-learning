@@ -1,6 +1,7 @@
-black==24.2.0
-pdoc==14.4.0
-pyright==1.1.350
-torch==2.2.0
+black~=24.2
+poetry~=1.7
+pdoc~=14.4
+pyright~=1.1
+torch~=2.2
 twine
 wandb
