@@ -3,6 +3,8 @@ import torch
 
 
 class Model(Protocol):
+    """"""
+
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
         ...
 
@@ -14,7 +16,10 @@ class Model(Protocol):
 
 
 class LatentModel(Model):
+    """"""
+
     def latent(self, data: torch.Tensor) -> torch.Tensor:
+        r"""Returns the latent representation (a tensor with shape $n \times k$) of the input data (of shape $n \times d$)."""
         ...
 
 

@@ -25,3 +25,6 @@ homepage = "https://github.com/jonhue/afsl"
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+exclude = "(venv|^/afsl/model.py)"
