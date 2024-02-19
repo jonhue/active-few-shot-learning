@@ -2,7 +2,7 @@ from typing import Generic
 import torch
 from afsl.acquisition_functions import AcquisitionFunction
 from afsl.acquisition_functions.itl import ITL
-from afsl.embeddings import M
+from afsl.embeddings import M, Embedding
 from afsl.embeddings.latent import LatentEmbedding
 
 
@@ -52,13 +52,14 @@ class ActiveDataLoader(Generic[M]):
         data: torch.Tensor,
         target: torch.Tensor,
         batch_size: int,
+        embedding: Embedding = LatentEmbedding(),
         Sigma: torch.Tensor | None = None,
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
     ):
         acquisition_function = ITL(
             target=target,
-            embedding=LatentEmbedding(),
+            embedding=embedding,
             Sigma=Sigma,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
