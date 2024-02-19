@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(
-    name="active-few-shot-learning",
+    name="afsl",
     version="0.1.0",
     description="Active Few-Shot Learning for Neural Networks",
-    url="https://github.com/jonhue/active-few-shot-learning",
+    url="https://github.com/jonhue/afsl",
     author="Jonas Hübotter",
     author_email="jonas.huebotter@inf.ethz.ch",
     license="MIT",

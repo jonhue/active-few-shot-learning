@@ -3,3 +3,4 @@ pdoc==14.4.0
 pyright==1.1.350
 torch==2.2.0
 twine
+wandb
