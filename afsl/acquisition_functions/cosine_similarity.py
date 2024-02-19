@@ -4,7 +4,7 @@ from afsl.acquisition_functions import (
     BatchAcquisitionFunction,
     Targeted,
 )
-from afsl.model import LatentModel
+from afsl.model import ModelWithEmbedding
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE, get_device
 
 
@@ -26,14 +26,14 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
 
     def compute(
         self,
-        model: LatentModel,
+        model: ModelWithEmbedding,
         data: torch.Tensor,
     ) -> torch.Tensor:
         model.eval()
         device = get_device(model)
         with torch.no_grad():
-            data_latent = model.latent(data.to(device))
-            target_latent = model.latent(self.target.to(device))
+            data_latent = model.embed(data.to(device))
+            target_latent = model.embed(self.target.to(device))
 
             data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
             target_latent_normalized = F.normalize(target_latent, p=2, dim=1)
