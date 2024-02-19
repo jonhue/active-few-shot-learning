@@ -2,7 +2,7 @@ from typing import NamedTuple
 import torch
 from afsl.acquisition_functions import (
     SequentialAcquisitionFunction,
-    TargetedAcquisitionFunction,
+    Targeted,
 )
 from afsl.embeddings import M, Embedding
 from afsl.embeddings.latent import LatentEmbedding
@@ -49,7 +49,7 @@ class BaCE(SequentialAcquisitionFunction[M, BaCEState]):
         return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)
 
 
-class TargetedBaCE(TargetedAcquisitionFunction, BaCE[M]):
+class TargetedBaCE(Targeted, BaCE[M]):
     def __init__(
         self,
         target: torch.Tensor,
@@ -67,7 +67,7 @@ class TargetedBaCE(TargetedAcquisitionFunction, BaCE[M]):
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
         )
-        TargetedAcquisitionFunction.__init__(
+        Targeted.__init__(
             self,
             target=target,
             subsampled_target_frac=subsampled_target_frac,

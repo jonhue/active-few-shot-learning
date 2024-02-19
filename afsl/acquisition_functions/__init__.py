@@ -109,7 +109,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         return int(torch.argmax(values).item())
 
 
-class TargetedAcquisitionFunction(ABC):
+class Targeted(ABC):
     target: torch.Tensor
     r"""Tensor of prediction targets (shape $m \times d$) or `None` if data selection should be "undirected"."""
 
