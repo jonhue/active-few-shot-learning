@@ -14,7 +14,7 @@ DEFAULT_CLASSIFICATION_EMBEDDING_KIND = "cross_entropy_loss"
 
 
 class ClassificationEmbedding(Embedding[ClassificationModel]):
-    """works only for classification models"""
+    """works only for classification models; assumes that the final layer is a linear layer without bias"""
 
     kind: ClassificationEmbeddingKind
 
@@ -27,6 +27,9 @@ class ClassificationEmbedding(Embedding[ClassificationModel]):
         self.kind = kind
 
     def embed(self, model: ClassificationModel, data: torch.Tensor) -> torch.Tensor:
+        assert isinstance(model.final_layer, nn.Linear), "Final layer must be linear."
+        assert model.final_layer.bias is None, "Final layer must not have bias."
+
         model.eval()
         with torch.no_grad():
 
@@ -42,7 +45,7 @@ class ClassificationEmbedding(Embedding[ClassificationModel]):
 
                 if self.kind == "cross_entropy_loss":
                     # compute gradient explicitly: eq. (1) of https://arxiv.org/pdf/1906.03671.pdf
-                    pred_ = torch.nn.functional.one_hot(pred, K)  # (N, C)
+                    pred_ = torch.nn.functional.one_hot(pred, C)  # (N, C)
                     A = (outputs - pred_)[:, :, None]  # (N, C, 1)
                     B = logits[:, None, :]  # (N, 1, K)
                     J = torch.matmul(A, B).view(

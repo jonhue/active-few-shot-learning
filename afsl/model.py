@@ -36,9 +36,19 @@ class ClassificationModel(Model, Protocol):
         ...
 
     def embed(self, x: torch.Tensor) -> torch.Tensor:
-        return self.logits(x)
+        ...
 
     @property
     def final_layer(self) -> torch.nn.Linear:
         """Returns the final linear layer of the model. Assumes that this layer does not include an additive bias (TODO: drop assumption)."""
         ...
+
+
+class Classifier(ClassificationModel):
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
+        outputs = self(x)
+        _, predicted = torch.max(outputs.data, dim=1)
+        return predicted
+
+    def embed(self, x: torch.Tensor) -> torch.Tensor:
+        return self.logits(x)
