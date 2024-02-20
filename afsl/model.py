@@ -36,8 +36,8 @@ class ModelWithEmbedding(Model, Protocol):
 class ModelWithKernel(Model, Protocol):
     """"""
 
-    def kernel(self, x1: torch.Tensor, x2: torch.Tensor | None) -> torch.Tensor:
-        r"""Given inputs `x1` (of shape $n \times d$) and `x2` (of shape $m \times d$), returns their covariance matrix (a tensor with shape $n \times m$). If `x2` is `None`, returns the covariance matrix of `x1` with itself."""
+    def kernel(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
+        r"""Given inputs `x1` (of shape $n \times d$) and `x2` (of shape $m \times d$), returns their kernel matrix (a symmetric and positive semi-definite tensor with shape $n \times m$)."""
         ...
 
 
