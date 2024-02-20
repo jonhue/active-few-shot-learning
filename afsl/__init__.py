@@ -1,11 +1,128 @@
-"""
+r"""
 *Active Few-Shot Learning* (`afsl`) is a Python package for intelligent active data selection.
 
 ## Why Active Data Selection?
 
+As opposed to random data selection, active data selection chooses data adaptively utilizing the current model.
+In other words, <p style="text-align: center;">active data selection pays *attention* to the most useful data</p> which allows for faster learning and adaptation.
+There are mainly two reasons for why some data may be particularly useful:
+
+1. **Informativeness**: The data contains information that the model had previously been uncertain about.
+2. **Relevance**: The data is closely related to a particular task, such as answering a specific prompt.
+
+This is related to memory recall, where the brain recalls informative and relevant memories (think "data") to make sense of the current sensory input.
+Focusing recall on useful data enables efficient few-shot learning.
+
+`afsl` provides a simple interface for active data selection, which can be used as a drop-in replacement for random data selection.
+
 ## Getting Started
 
-### Installation
+You can install `afsl` from [PyPI](https://pypi.org/project/afsl/) via pip:
+
+```bash
+pip install afsl
+```
+
+We briefly discuss how to use `afsl` for [fine-tuning](#example-fine-tuning) and [in-context learning / retrieval-augmented generation](#example-in-context-learning).
+
+### Example: Fine-tuning
+
+Given a [PyTorch](https://pytorch.org) model which may (but does not have to be!) pre-trained, we can use `afsl` to efficiently fine-tune the model.
+This model may be generative (e.g., a language model) or discriminative (e.g., a classifier), and can use any architecture.
+
+We only need the following things:
+- A tensor of inputs `data` ($n \times d$) from which we want to select batches for fine-tuning.
+- A tensor of prediction targets `target` ($m \times d$) which specifies the task we want to fine-tune the model for.
+Here, $m$ can be quite small, e.g., equal to the number of classes in a classification task.
+If there is no *specific* task for training, then active data selection can still be useful as we will see later.
+- The `model` can be any PyTorch `nn.Module` with an `embed(x)` method that computes (latent) embeddings for the given inputs `x`, e.g., the representation of `x` from the penultimate layer.
+See `afsl.model.ModelWithEmbedding` for more details. Alternatively, the model can have a `kernel(x1,x2)` method that computes a kernel for given inputs `x1` and `x2` (see `afsl.model.ModelWithKernel`).
+
+.. note::
+
+   For active data selection to be effective, it is important that the model's embeddings are somewhat representative of the data.
+   In particular, embeddings should capture the relationship between the data and the task.
+
+With this in place, we can initialize the "active" data loader
+
+```python
+from afsl import ActiveDataLoader
+
+data_loader = ActiveDataLoader.initialize(data, target, batch_size=64)
+```
+
+To obtain the next batch from `data`, we can then simply call
+
+```python
+batch = data[data_loader.next(model)]
+```
+
+Note that the active data selection of the next batch is utilizing the current `model` to select the most relevant data with respect to the given `target`.
+
+Combining the data selection with a model update step, we can implement a simple training loop as follows:
+
+```python
+while not converged:
+    batch = data[data_loader.next(model)]
+    model.step(batch)
+```
+
+Notice the feedback loop(!): the batch selection improves as the model learns and the model learns faster as the batch selection improves.
+
+This is it!
+Training with active data selection is as simple as that.
+
+#### "Undirected" Data Selection
+
+If there is no specific task for training then all data is equally relevant, yet, we can still use active data selection to select the most informative data.
+To do this, simply initialize
+
+```python
+data_loader = ActiveDataLoader.initialize(data, target=None, batch_size=64)
+```
+
+### Example: In-context Learning
+
+We can also use the intelligent retrieval of informative and relevant data outside a training loop — for example, for in-context learning and retrieval-augmented generation.
+
+The setup is analogous to the previous section: we have a pre-trained `model`, a dataset `data` to query from, and `target`s (e.g., a prompt) for which we want to retrieve relevant data.
+We can use `afsl` to query the most useful data and then add it to the model's context:
+
+```python
+from afsl import ActiveDataLoader
+
+data_loader = ActiveDataLoader.initialize(data, target, batch_size=5)
+context = data[data_loader.next(model)]
+model.add_to_context(context)
+```
+
+Again: very simple!
+
+## Citation
+
+If you use the code in a publication, please cite our papers:
+
+```bibtex
+# Active fine-tuning:
+@inproceedings{huebotter2024active,
+    title={Active Few-Show Fine-Tuning},
+    author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
+    booktitle={ICLR Workshop on Bridging the Gap Between Practice and Theory in Deep Learning},
+    year={2024},
+    pdf={https://arxiv.org/abs/TODO},
+    url={https://github.com/jonhue/afsl}
+}
+
+# Theoretical analysis of "directed" active learning:
+@inproceedings{huebotter2024information,
+    title={Information-based Transductive Active Learning},
+    author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
+    booktitle={ICML},
+    year={2024},
+    pdf={https://arxiv.org/abs/TODO},
+    url={https://github.com/jonhue/afsl}
+}
+```
 
 ---
 """
