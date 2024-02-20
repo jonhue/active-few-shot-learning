@@ -36,7 +36,7 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
             covariance_matrix = GaussianCovarianceMatrix(
-                model.kernel(data, None), noise_std=self.noise_std
+                model.kernel(data, data), noise_std=self.noise_std
             )
         else:
             data_embeddings = compute_embedding(
@@ -82,8 +82,9 @@ class TargetedBaCE(Targeted, BaCE):
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
+            joint_data = torch.cat((data, self.target))
             covariance_matrix = GaussianCovarianceMatrix(
-                model.kernel(torch.cat((data, self.target)), None),
+                model.kernel(joint_data, joint_data),
                 noise_std=self.noise_std,
             )
         else:
