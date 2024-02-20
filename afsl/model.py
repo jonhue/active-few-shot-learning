@@ -35,9 +35,6 @@ class ClassificationModel(Model, Protocol):
         r"""Returns the logits (a tensor with shape $n \times k$) of the input data `x` (of shape $n \times d$)."""
         ...
 
-    def embed(self, x: torch.Tensor) -> torch.Tensor:
-        ...
-
     @property
     def final_layer(self) -> torch.nn.Linear:
         """Returns the final linear layer of the model. Assumes that this layer does not include an additive bias (TODO: drop assumption)."""
