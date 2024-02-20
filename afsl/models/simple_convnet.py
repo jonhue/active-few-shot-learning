@@ -1,9 +1,8 @@
 import torch
 from torch import nn
-from afsl.model import Classifier
 
 
-class SimpleCNN(nn.Module, Classifier):
+class SimpleCNN(nn.Module):
     def __init__(self, input_channels, output_channels, k):
         super(SimpleCNN, self).__init__()
         self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1)
@@ -26,3 +25,8 @@ class SimpleCNN(nn.Module, Classifier):
         x = self.logits(x)
         x = self.fc2(x)
         return x
+
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
+        outputs = self(x)
+        _, predicted = torch.max(outputs.data, dim=1)
+        return predicted

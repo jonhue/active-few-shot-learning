@@ -4,10 +4,9 @@ from afsl.acquisition_functions import (
     SequentialAcquisitionFunction,
     Targeted,
 )
-from afsl.embeddings import M, Embedding
-from afsl.embeddings.provided import ProvidedEmbedding
 from afsl.gaussian import GaussianCovarianceMatrix
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE
+from afsl.model import ModelWithEmbeddingOrKernel, ModelWithKernel
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding
 
 
 class BaCEState(NamedTuple):
@@ -15,33 +14,37 @@ class BaCEState(NamedTuple):
     n: int
 
 
-class BaCE(SequentialAcquisitionFunction[M, BaCEState]):
-    embedding: Embedding[M]
+class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState]):
     Sigma: torch.Tensor | None
     noise_std: float
 
     def __init__(
         self,
-        embedding: Embedding[M] = ProvidedEmbedding(),
         Sigma: torch.Tensor | None = None,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
     ):
         super().__init__(mini_batch_size=mini_batch_size)
-        self.embedding = embedding
         self.Sigma = Sigma
         self.noise_std = noise_std
 
     def initialize(
         self,
-        model: M,
+        model: ModelWithEmbeddingOrKernel,
         data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
-        data_embeddings = self.embedding.embed(model, data)
-        covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
-            noise_std=self.noise_std, Embeddings=data_embeddings, Sigma=self.Sigma
-        )
+        if isinstance(model, ModelWithKernel):
+            covariance_matrix = GaussianCovarianceMatrix(
+                model.kernel(data, None), noise_std=self.noise_std
+            )
+        else:
+            data_embeddings = compute_embedding(
+                model, data, mini_batch_size=self.mini_batch_size
+            )
+            covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
+                noise_std=self.noise_std, Embeddings=data_embeddings, Sigma=self.Sigma
+            )
         return BaCEState(covariance_matrix=covariance_matrix, n=n)
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
@@ -49,11 +52,10 @@ class BaCE(SequentialAcquisitionFunction[M, BaCEState]):
         return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)
 
 
-class TargetedBaCE(Targeted, BaCE[M]):
+class TargetedBaCE(Targeted, BaCE):
     def __init__(
         self,
         target: torch.Tensor,
-        embedding: Embedding[M] = ProvidedEmbedding(),
         Sigma: torch.Tensor | None = None,
         noise_std=1.0,
         subsampled_target_frac: float = 0.5,
@@ -62,7 +64,6 @@ class TargetedBaCE(Targeted, BaCE[M]):
     ):
         BaCE.__init__(
             self,
-            embedding=embedding,
             Sigma=Sigma,
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
@@ -76,16 +77,26 @@ class TargetedBaCE(Targeted, BaCE[M]):
 
     def initialize(
         self,
-        model: M,
+        model: ModelWithEmbeddingOrKernel,
         data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
-        data_embeddings = self.embedding.embed(model, data)
-        target_embeddings = self.embedding.embed(model, self.target)
-        joint_embeddings = torch.cat((data_embeddings, target_embeddings))
-        covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
-            noise_std=self.noise_std, Embeddings=joint_embeddings, Sigma=self.Sigma
-        )
+        if isinstance(model, ModelWithKernel):
+            covariance_matrix = GaussianCovarianceMatrix(
+                model.kernel(torch.cat((data, self.target)), None),
+                noise_std=self.noise_std,
+            )
+        else:
+            data_embeddings = compute_embedding(
+                model, data=data, mini_batch_size=self.mini_batch_size
+            )
+            target_embeddings = compute_embedding(
+                model, data=self.target, mini_batch_size=self.mini_batch_size
+            )
+            joint_embeddings = torch.cat((data_embeddings, target_embeddings))
+            covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
+                noise_std=self.noise_std, Embeddings=joint_embeddings, Sigma=self.Sigma
+            )
         return BaCEState(covariance_matrix=covariance_matrix, n=n)
 
     def step(self, state: BaCEState, i: int) -> BaCEState:

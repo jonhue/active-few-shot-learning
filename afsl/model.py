@@ -1,5 +1,9 @@
+"""
+Selection of protocols for PyTorch models.
+"""
+
 from __future__ import annotations
-from typing import Iterator, Protocol
+from typing import Iterator, Protocol, runtime_checkable
 import torch
 
 
@@ -19,6 +23,7 @@ class Model(Protocol):
         ...
 
 
+@runtime_checkable
 class ModelWithEmbedding(Model, Protocol):
     """"""
 
@@ -27,8 +32,21 @@ class ModelWithEmbedding(Model, Protocol):
         ...
 
 
+@runtime_checkable
+class ModelWithKernel(Model, Protocol):
+    """"""
+
+    def kernel(self, x1: torch.Tensor, x2: torch.Tensor | None) -> torch.Tensor:
+        r"""Given inputs `x1` (of shape $n \times d$) and `x2` (of shape $m \times d$), returns their covariance matrix (a tensor with shape $n \times m$). If `x2` is `None`, returns the covariance matrix of `x1` with itself."""
+        ...
+
+
+ModelWithEmbeddingOrKernel = ModelWithEmbedding | ModelWithKernel
+
+
 class ClassificationModel(Model, Protocol):
     def predict(self, x: torch.Tensor) -> torch.Tensor:
+        r"""Returns the predicted class labels (shape $n$) of the input data `x` (of shape $n \times d$)."""
         ...
 
     def logits(self, x: torch.Tensor) -> torch.Tensor:
@@ -37,15 +55,5 @@ class ClassificationModel(Model, Protocol):
 
     @property
     def final_layer(self) -> torch.nn.Linear:
-        """Returns the final linear layer of the model. Assumes that this layer does not include an additive bias (TODO: drop assumption)."""
+        """Returns the final linear layer of the model."""
         ...
-
-
-class Classifier(ClassificationModel):
-    def predict(self, x: torch.Tensor) -> torch.Tensor:
-        outputs = self(x)
-        _, predicted = torch.max(outputs.data, dim=1)
-        return predicted
-
-    def embed(self, x: torch.Tensor) -> torch.Tensor:
-        return self.logits(x)

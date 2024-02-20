@@ -11,12 +11,12 @@ class SimpleMLP(nn.Module):
             input_size = hidden_size
         self.output = nn.Linear(input_size, output_size)
 
-    def embed(self, x):
+    def logits(self, x):
         for layer in self.hidden_layers:
             x = torch.relu(layer(x))
         return x
 
     def forward(self, x):
-        x = self.embed(x)
+        x = self.logits(x)
         x = self.output(x)
         return x
