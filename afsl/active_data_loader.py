@@ -1,9 +1,7 @@
 from typing import Generic
 import torch
-from afsl.acquisition_functions import AcquisitionFunction
+from afsl.acquisition_functions import M, AcquisitionFunction
 from afsl.acquisition_functions.itl import ITL
-from afsl.embeddings import M, Embedding
-from afsl.embeddings.latent import LatentEmbedding
 
 
 class ActiveDataLoader(Generic[M]):
@@ -27,7 +25,7 @@ class ActiveDataLoader(Generic[M]):
     batch_size: int
     r"""Size of the batch to be selected."""
 
-    acquisition_function: AcquisitionFunction
+    acquisition_function: AcquisitionFunction[M]
     r"""Acquisition function to be used for data selection."""
 
     subsampled_target_frac: float
@@ -37,7 +35,7 @@ class ActiveDataLoader(Generic[M]):
         self,
         data: torch.Tensor,
         batch_size: int,
-        acquisition_function: AcquisitionFunction,
+        acquisition_function: AcquisitionFunction[M],
     ):
         assert data.size(0) > 0, "Data must be non-empty"
         assert batch_size > 0, "Batch size must be positive"
@@ -52,14 +50,12 @@ class ActiveDataLoader(Generic[M]):
         data: torch.Tensor,
         target: torch.Tensor,
         batch_size: int,
-        embedding: Embedding = LatentEmbedding(),
         Sigma: torch.Tensor | None = None,
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
     ):
         acquisition_function = ITL(
             target=target,
-            embedding=embedding,
             Sigma=Sigma,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,

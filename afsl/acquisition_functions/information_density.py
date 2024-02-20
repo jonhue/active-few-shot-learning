@@ -2,7 +2,7 @@ import torch
 from afsl.acquisition_functions import BatchAcquisitionFunction
 from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
 from afsl.acquisition_functions.max_entropy import MaxEntropy
-from afsl.model import LatentModel
+from afsl.model import ModelWithEmbedding
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 
@@ -19,7 +19,7 @@ class InformationDensity(BatchAcquisitionFunction):
 
     def compute(
         self,
-        model: LatentModel,
+        model: ModelWithEmbedding,
         data: torch.Tensor,
     ) -> torch.Tensor:
         entropy = self.max_entropy.compute(model, data)

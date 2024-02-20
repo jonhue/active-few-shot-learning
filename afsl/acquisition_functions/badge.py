@@ -1,8 +1,8 @@
 from typing import List, NamedTuple
 import torch
 from afsl.acquisition_functions import SequentialAcquisitionFunction
-from afsl.embeddings import M, Embedding
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE
+from afsl.model import ModelWithEmbedding
+from afsl.utils import compute_embedding
 
 
 class BADGEState(NamedTuple):
@@ -18,21 +18,15 @@ def compute_distances(embeddings, centroids):
     return min_distances
 
 
-class BADGE(SequentialAcquisitionFunction[M, BADGEState]):
-    embedding: Embedding[M]
-
-    def __init__(
-        self, embedding: Embedding[M], mini_batch_size=DEFAULT_MINI_BATCH_SIZE
-    ):
-        super().__init__(mini_batch_size=mini_batch_size)
-        self.embedding = embedding
-
+class BADGE(SequentialAcquisitionFunction[ModelWithEmbedding, BADGEState]):
     def initialize(
         self,
-        model: M,
+        model: ModelWithEmbedding,
         data: torch.Tensor,
     ) -> BADGEState:
-        embeddings = self.embedding.embed(model, data)
+        embeddings = compute_embedding(
+            model, data, mini_batch_size=self.mini_batch_size
+        )
         # Choose the first centroid randomly
         centroid_indices = [
             torch.randint(0, embeddings.size(0), (1,)).to(embeddings.device)

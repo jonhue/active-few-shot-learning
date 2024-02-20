@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 import math
 from typing import Generic, TypeVar
 import torch
-from afsl.embeddings import M
+from afsl.model import Model
 from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
     mini_batch_wrapper,
     mini_batch_wrapper_non_cat,
 )
+
+M = TypeVar("M", bound=Model)
 
 
 class AcquisitionFunction(ABC, Generic[M]):
