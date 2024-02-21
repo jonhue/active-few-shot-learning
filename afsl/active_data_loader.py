@@ -1,7 +1,7 @@
 from typing import Generic
 import torch
 from afsl.acquisition_functions import M, AcquisitionFunction
-from afsl.acquisition_functions.greedy_max_det import GreedyMaxDet
+from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.acquisition_functions.itl import ITL
 
 
@@ -88,7 +88,7 @@ class ActiveDataLoader(Generic[M]):
                 max_target_size=max_target_size,
             )
         else:
-            acquisition_function = GreedyMaxDet(Sigma=Sigma)
+            acquisition_function = UndirectedITL(Sigma=Sigma)
         return cls(
             data=data,
             batch_size=batch_size,

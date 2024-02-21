@@ -1,8 +1,8 @@
-from afsl.acquisition_functions.greedy_max_det import GreedyMaxDet
+from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 
-class UncertaintySampling(GreedyMaxDet):
+class UncertaintySampling(UndirectedITL):
     r"""
     `UncertaintySampling`[^1] selects the most uncertain data point: \\[ \argmax_\vx\ \sigma^2(\vx) \\] where $\sigma^2(\vx) = k(\vx, \vx)$ denotes the variance of $\vx$ induced by the kernel $k$.[^3]
 
@@ -12,7 +12,7 @@ class UncertaintySampling(GreedyMaxDet):
 
     .. note::
 
-        `UncertaintySampling` coincides with [GreedyMaxDet](greedy_max_det) with `force_nonsequential=True`.
+        `UncertaintySampling` coincides with [Undirected ITL](undirected_itl) with `force_nonsequential=True`.
 
     | Relevance? | Informativeness? | Diversity? | Model Requirement  |
     |------------|------------------|------------|--------------------|

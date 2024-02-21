@@ -4,9 +4,9 @@ The default implementation uses [ITL](acquisition_functions/itl).
 You can use a custom acquisition function as follows:
 
 ```python
-from afsl.acquisition_functions.greedy_max_det import GreedyMaxDet
+from afsl.acquisition_functions.undirected_itl import UndirectedITL
 
-acquisition_function = GreedyMaxDet()
+acquisition_function = UndirectedITL()
 data_loader = afsl.ActiveDataLoader(data, batch_size=64, acquisition_function=acquisition_function)
 ```
 
@@ -20,8 +20,9 @@ The following table provides an overview of the acquisition functions and their 
 | [VTL](acquisition_functions/vtl)                                   | ✅          | ✅                | ✅          | embedding / kernel  |
 | [CTL](acquisition_functions/ctl)                                   | ✅          | ❌                | ✅          | embedding / kernel  |
 | [Cosine Similarity](acquisition_functions/cosine_similarity)       | ✅          | ❌                | ❌          | embedding           |
-| [GreedyMaxDet](acquisition_functions/greedy_max_det)               | ❌          | ✅                | ✅          | embedding / kernel  |
-| [GreedyMaxDist](acquisition_functions/greedy_max_dist)             | ❌          | (✅)                | ✅          | embedding / kernel  |
+| [Undirected ITL](acquisition_functions/undirected_itl)             | ❌          | ✅                | ✅          | embedding / kernel  |
+| [Undirected VTL](acquisition_functions/undirected_vtl)             | ❌          | ✅                | ✅          | embedding / kernel  |
+| [MaxDist](acquisition_functions/max_dist)                          | ❌          | (✅)                | ✅          | embedding / kernel  |
 | [k-means++](acquisition_functions/kmeans_pp)                       | ❌          | (✅)                | ✅          | embedding / kernel  |
 | [Uncertainty Sampling](acquisition_functions/uncertainty_sampling) | ❌          | ✅                | ❌          | embedding / kernel  |
 | [MaxMargin](acquisition_functions/max_margin)                      | ❌          | (✅)              | ❌          | softmax             |
