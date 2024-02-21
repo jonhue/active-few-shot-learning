@@ -3,7 +3,7 @@ import wandb
 from afsl.acquisition_functions.bace import BaCE, BaCEState
 
 
-class GreedyMaxDet(BaCE):
+class UndirectedITL(BaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[:, :])
         wandb.log(

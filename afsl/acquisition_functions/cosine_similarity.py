@@ -10,7 +10,7 @@ from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding
 
 class CosineSimilarity(Targeted, BatchAcquisitionFunction):
     r"""
-    The cosine similarity between two vectors $\vphi$ and $\vphip$ is \\[\angle(\vphi, \vphip) = \frac{\vphi^\top \vphip}{\|\vphi\|_2 \|\vphip\|_2}.\\]
+    The cosine similarity between two vectors $\vphi$ and $\vphip$ is \\[\angle(\vphi, \vphip) \defeq \frac{\vphi^\top \vphip}{\|\vphi\|_2 \|\vphip\|_2}.\\]
 
     Given a set of targets $\spA$ and a model which for an input $\vx$ computes an embedding $\vphi(\vx)$, `CosineSimilarity`[^1] selects the inputs $\vx$ which maximize \\[ \frac{1}{|\spA|} \sum_{\vxp \in \spA} \angle(\vphi(\vx), \vphi(\vxp)). \\]
     Intuitively, this selects the points that are most similar to the targets $\spA$.
