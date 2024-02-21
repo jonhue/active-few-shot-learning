@@ -5,10 +5,27 @@ from afsl.acquisition_functions import (
     Targeted,
 )
 from afsl.model import ModelWithEmbedding
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding, get_device
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding
 
 
 class CosineSimilarity(Targeted, BatchAcquisitionFunction):
+    r"""
+    The cosine similarity between two vectors $\vphi$ and $\vphip$ is \\[\angle(\vphi, \vphip) = \frac{\vphi^\top \vphip}{\|\vphi\|_2 \|\vphip\|_2}.\\]
+
+    Given a set of targets $\spA$ and a model which for an input $\vx$ computes an embedding $\vphi(\vx)$, `CosineSimilarity`[^1] selects the inputs $\vx$ which maximize \\[ \frac{1}{|\spA|} \sum_{\vxp \in \spA} \angle(\vphi(\vx), \vphi(\vxp)). \\]
+    Intuitively, this selects the points that are most similar to the targets $\spA$.
+
+    .. note::
+
+        `CosineSimilarity` coincides with [CTL](ctl) with `force_nonsequential=True`.
+
+    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
+    |------------|------------------|------------|--------------------|
+    | ✅          | ❌                | ❌          | embedding           |
+
+    [^1]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
+    """
+
     def __init__(
         self,
         target: torch.Tensor,
@@ -16,6 +33,13 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
     ):
+        r"""
+        :param target: Tensor of prediction targets (shape $m \times d$).
+        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
+        :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
+        :param mini_batch_size: Size of mini-batch used for computing the acquisition function.
+        """
+
         BatchAcquisitionFunction.__init__(self, mini_batch_size=mini_batch_size)
         Targeted.__init__(
             self,
@@ -30,7 +54,6 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
         data: torch.Tensor,
     ) -> torch.Tensor:
         model.eval()
-        device = get_device(model)
         with torch.no_grad():
             data_latent = compute_embedding(
                 model, data=data, mini_batch_size=self.mini_batch_size
