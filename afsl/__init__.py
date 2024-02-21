@@ -34,7 +34,7 @@ We only need the following things:
 - A tensor of inputs `data` ($n \times d$) from which we want to select batches for fine-tuning.
 - A tensor of prediction targets `target` ($m \times d$) which specifies the task we want to fine-tune the model for.
 Here, $m$ can be quite small, e.g., equal to the number of classes in a classification task.
-If there is no *specific* task for training, then active data selection can still be useful as we will see later.
+If there is no *specific* task for training, then active data selection can still be useful as we will see [later](#undirected-data-selection).
 - The `model` can be any PyTorch `nn.Module` with an `embed(x)` method that computes (latent) embeddings for the given inputs `x`, e.g., the representation of `x` from the penultimate layer.
 See `afsl.model.ModelWithEmbedding` for more details. Alternatively, the model can have a `kernel(x1,x2)` method that computes a kernel for given inputs `x1` and `x2` (see `afsl.model.ModelWithKernel`).
 
