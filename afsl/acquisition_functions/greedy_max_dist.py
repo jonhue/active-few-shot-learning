@@ -1,43 +1,38 @@
-from typing import List, NamedTuple
 import torch
-from afsl.acquisition_functions import SequentialAcquisitionFunction
-from afsl.acquisition_functions.badge import compute_distances
-from afsl.model import ModelWithEmbedding
-from afsl.utils import compute_embedding
+from afsl.acquisition_functions.distance import (
+    DistanceBasedAcquisitionFunction,
+    DistanceState,
+)
 
 
-class GreedyMaxDistState(NamedTuple):
-    embeddings: torch.Tensor
-    centroid_indices: List[torch.Tensor]
+class GreedyMaxDist(DistanceBasedAcquisitionFunction):
+    r"""
+    Given a model which for two inputs $\vx$ and $\vxp$ induces a distance $d(\vx,\vxp)$,[^1] `GreedyMaxDist`[^2] constructs the batch by choosing the point with the maximum distance to the nearest previously selected point: \\[ \vx_i = \argmax_{\vx} \min_{j < i} d(\vx, \vx_j). \\]
+    The first point $\vx_1$ is chosen randomly.
 
+    .. note::
 
-class GreedyMaxDist(
-    SequentialAcquisitionFunction[ModelWithEmbedding, GreedyMaxDistState]
-):
-    def initialize(
-        self,
-        model: ModelWithEmbedding,
-        data: torch.Tensor,
-    ) -> GreedyMaxDistState:
-        embeddings = compute_embedding(
-            model, data, mini_batch_size=self.mini_batch_size
-        )
-        # Choose the first centroid randomly
-        centroid_indices = [
-            torch.randint(0, embeddings.size(0), (1,)).to(embeddings.device)
-        ]
-        return GreedyMaxDistState(
-            embeddings=embeddings, centroid_indices=centroid_indices
-        )
+        This acquisition function is similar to [k-means++](kmeans_pp) but selects the batch deterministically rather than randomly.
 
-    def step(self, state: GreedyMaxDistState, i: int) -> GreedyMaxDistState:
-        state.centroid_indices.append(torch.tensor(i).to(state.embeddings.device))
-        return state
+    `GreedyMaxDist` explicitly enforces *diversity* in the selected batch.
+    If the selected centroids from previous batches are used to initialize the centroids for the current batch,[^3] then `GreedyMaxDist` heuristically also leads to *informative* samples since samples are chosen to be different from previously seen data.
 
-    def compute(self, state: GreedyMaxDistState) -> torch.Tensor:
+    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
+    |------------|------------------|------------|--------------------|
+    | ❌          | (✅)                | ✅          | embedding / kernel  |
+
+    [^1]: See afsl.acquisition_functions.distance.DistanceBasedAcquisitionFunction for a discussion of how a distance is induced by embeddings or a kernel.
+
+    [^2]: Holzmüller, D., Zaverkin, V., Kästner, J., and Steinwart, I. A framework and benchmark for deep batch active learning for regression. JMLR, 24(164), 2023.
+
+    [^3]: see `initialize_with_previous_samples`
+    """
+
+    def compute(self, state: DistanceState) -> torch.Tensor:
+        if len(state.centroid_indices) == 0:
+            # Choose the first centroid randomly
+            return torch.ones(state.data.size(0))
+
         # Compute the distance of each point to the nearest centroid
-        centroids = state.embeddings[
-            torch.cat(state.centroid_indices).to(state.embeddings.device)
-        ]
-        distances = compute_distances(state.embeddings, centroids)
+        distances = self.compute_min_distances(state)
         return distances

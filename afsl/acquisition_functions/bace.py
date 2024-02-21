@@ -23,8 +23,11 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
         Sigma: torch.Tensor | None = None,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        force_nonsequential=False,
     ):
-        super().__init__(mini_batch_size=mini_batch_size)
+        super().__init__(
+            mini_batch_size=mini_batch_size, force_nonsequential=force_nonsequential
+        )
         self.Sigma = Sigma
         self.noise_std = noise_std
 
@@ -61,12 +64,14 @@ class TargetedBaCE(Targeted, BaCE):
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        force_nonsequential=False,
     ):
         BaCE.__init__(
             self,
             Sigma=Sigma,
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            force_nonsequential=force_nonsequential,
         )
         Targeted.__init__(
             self,

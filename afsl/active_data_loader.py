@@ -78,8 +78,6 @@ class ActiveDataLoader(Generic[M]):
         :param Sigma: Optionally pass a covariance matrix of model parameters. See `afsl.model.ModelWithEmbedding` for more details.
         :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
-
-        :return: Instance of `ActiveDataLoader`.
         """
 
         if target is not None:

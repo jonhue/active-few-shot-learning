@@ -51,6 +51,7 @@ if __name__ == "__main__":
         edit_url_map={
             "afsl": "https://github.com/jonhue/afsl/docs",
         },
+        template_directory=here / "templates",
         math=True,
     )
     pdoc.pdoc(
