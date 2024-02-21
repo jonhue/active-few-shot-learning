@@ -158,10 +158,6 @@ footer #orgs {
     font-size: 1.25rem;
   }
 
-  header {
-    margin: 4em auto;
-  }
-
   header, main {
     max-width: 35em;
   }
@@ -177,13 +173,6 @@ footer #orgs {
   }
 }
 
-/* @media (min-width: 800px) {
-  #example > input, #example > label {
-      display: none;
-  }
-} */
-
-/* @media (max-width: 799px) { */
 #example-1, #example-2 {
   display: none;
 }
@@ -195,4 +184,3 @@ footer #orgs {
 #view-2:checked ~ #example-2 {
   display: block;
 }
-/* } */
