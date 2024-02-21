@@ -44,12 +44,25 @@ header {
   border-bottom-left-radius: 0;
 }
 
+#example-1, #example-2 {
+  display: none;
+}
+
+#view-1:checked ~ #example-1 {
+  display: block;
+}
+
+#view-2:checked ~ #example-2 {
+  display: block;
+}
+
 .example-code {
   box-shadow: rgba(0, 0, 0, 0.2) 0 20px 68px;
   border-radius: 5px;
   background-color: var(--bs-dark) !important;
   position: relative;
   overflow: auto;
+  margin: 0 -0.75em;
 }
 
 .example-code svg {
@@ -66,8 +79,7 @@ header {
 }
 
 .example-code .highlight {
-  margin: 1em;
-  margin-bottom: 1.5em;
+  margin: 1em 1em 1.5em;
 }
 
 .example-code pre {
@@ -136,14 +148,12 @@ footer {
 }
 
 footer #orgs {
-  align-items: center;
-  display: flex;
-  justify-content: center;
   width: 100%;
+  margin-bottom: 1em;
 
   img {
       max-width: 12rem;
-      margin: 1rem 0.5rem;
+      margin: 0 auto;
       height: auto;
   }
 }
@@ -152,6 +162,23 @@ footer #orgs {
   display: none;
 }
 
+
+@media (min-width: 450px) {
+  .example-code {
+    margin: 0;
+  }
+
+  footer #orgs {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+
+    img {
+        margin: 1rem 0.5rem;
+    }
+  }
+}
 
 @media (min-width: 620px) {
   body {
@@ -171,16 +198,4 @@ footer #orgs {
   #github-button {
     display: block;
   }
-}
-
-#example-1, #example-2 {
-  display: none;
-}
-
-#view-1:checked ~ #example-1 {
-  display: block;
-}
-
-#view-2:checked ~ #example-2 {
-  display: block;
 }
