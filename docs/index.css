@@ -16,7 +16,7 @@ body {
 }
 
 header {
-  margin: 3em auto;
+  margin: 1em auto 3em;
   max-width: 29em;
   text-align: center;
 }
@@ -183,6 +183,10 @@ footer #orgs {
 @media (min-width: 620px) {
   body {
     font-size: 1.25rem;
+  }
+
+  header {
+    margin: 3em auto;
   }
 
   header, main {
