@@ -109,6 +109,8 @@ class ModelWithKernel(Model, Protocol):
 
     A kernel $k(\vx,\vxp)$ is a symmetric and positive semi-definite function that measures the similarity between two inputs $\vx$ and $\vxp$.
     This protocol can be implemented alternatively to `ModelWithEmbedding` for direct computation of the kernel $k$.
+
+    https://pytorch.org/tutorials/intermediate/neural_tangent_kernels.html describes how to compute the empirical NTK with PyTorch.
     """
 
     def kernel(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
@@ -125,7 +127,7 @@ ModelWithEmbeddingOrKernel = ModelWithEmbedding | ModelWithKernel
 
 
 class ClassificationModel(Model, Protocol):
-    """Protocol for PyTorch classification models."""
+    """Protocol for PyTorch classification models. The `forward` function is expected to return a distribution over classes."""
 
     def predict(self, x: torch.Tensor) -> torch.Tensor:
         r"""

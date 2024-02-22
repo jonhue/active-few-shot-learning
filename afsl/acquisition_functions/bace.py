@@ -75,22 +75,20 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
             data_embeddings = compute_embedding(
                 model, data, mini_batch_size=self.mini_batch_size
             )
-            latent_covariance = self.compute_latent_covariance(model)
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 noise_std=self.noise_std,
                 Embeddings=data_embeddings,
-                Sigma=latent_covariance,
+                Sigma=(
+                    model.latent_covariance()
+                    if isinstance(model, ModelWithLatentCovariance)
+                    else None
+                ),
             )
         return BaCEState(covariance_matrix=covariance_matrix, n=n)
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
         return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)
-
-    @staticmethod
-    def compute_latent_covariance(model: ModelWithEmbedding) -> torch.Tensor | None:
-        if isinstance(model, ModelWithLatentCovariance):
-            return model.latent_covariance()
 
 
 class TargetedBaCE(Targeted, BaCE):
@@ -152,11 +150,14 @@ class TargetedBaCE(Targeted, BaCE):
                 else torch.tensor([])
             )
             joint_embeddings = torch.cat((data_embeddings, target_embeddings))
-            latent_covariance = self.compute_latent_covariance(model)
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 noise_std=self.noise_std,
                 Embeddings=joint_embeddings,
-                Sigma=latent_covariance,
+                Sigma=(
+                    model.latent_covariance()
+                    if isinstance(model, ModelWithLatentCovariance)
+                    else None
+                ),
             )
         return BaCEState(covariance_matrix=covariance_matrix, n=n)
 
