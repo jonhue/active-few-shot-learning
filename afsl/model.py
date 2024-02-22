@@ -48,7 +48,7 @@ class ModelWithEmbedding(Model, Protocol):
     - **Output Gradients (empirical NTK):** Another common choice is $\vphi(\vx) = \grad[\vtheta] \vf(\vx; \vtheta)$ where $\vtheta$ are the network parameters.
     Its associated kernel is known as the *(empirical) Neural Tangent Kernel* (NTK).[^4][^3][^5]
     If $\vtheta$ is restricted to the weights of the final linear layer, then this embedding is simply the last-layer embedding.
-    - **Loss Gradients:** Another possible choice is $\vphi(\vx) = \grad[\vtheta] \ell(\vf(\vx; \vtheta); \widehat{\vy}(\vx))$ where $\ell$ is a loss function and $\widehat{\vy}(\vx)$ is some hallucinated label (see afsl.embeddings.classification.CrossEntropyEmbedding).[^6]
+    - **Loss Gradients:** Another possible choice is $\vphi(\vx) = \grad[\vtheta] \ell(\vf(\vx; \vtheta); \widehat{\vy}(\vx))$ where $\ell$ is a loss function and $\widehat{\vy}(\vx)$ is some hallucinated label (see afsl.embeddings.classification.HallucinatedCrossEntropyEmbedding).[^6]
     - **Outputs (empirical NNGP):** Another possible choice is $\vphi(\vx) = \vf(\vx)$ (i.e., the output of the network).
     Its associated kernel is known as the *(empirical) Neural Network Gaussian Process* (NNGP) kernel.[^2]
 
