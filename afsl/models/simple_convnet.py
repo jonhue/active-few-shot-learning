@@ -24,6 +24,7 @@ class SimpleCNN(nn.Module):
     def forward(self, x):
         x = self.logits(x)
         x = self.fc2(x)
+        x = torch.nn.functional.softmax(x, dim=1)
         return x
 
     def predict(self, x: torch.Tensor) -> torch.Tensor:

@@ -1,9 +1,14 @@
 import torch
-from afsl.model import Model
+from afsl.model import ModelWithEmbedding
 
 
-class EmpiricalNTKEmbedding(Model):
-    """compute embedding corresponding to empirical NTK. Assumes MLP model!"""
+class EmpiricalNTKEmbedding(ModelWithEmbedding):
+    """
+    Implements the embedding corresponding to the empirical NTK kernel.
+    Requires the model to be a multi-layer perceptron, i.e., a full-connected neural network with linear layers composed by nonlinearities.
+
+    For more details regarding the empirical NTK, see afsl.model.ModelWithEmbedding.
+    """
 
     def embed(self, data: torch.Tensor) -> torch.Tensor:
         data.requires_grad = True
