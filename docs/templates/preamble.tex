@@ -12,6 +12,9 @@
 
 \newcommand{\Pr}[1]{\mathbb{P}\!\left(#1\right)}
 \newcommand{\H}[1]{\mathrm{H}\!\left[#1\right]}
+\newcommand{\I}[2]{\mathrm{I}\!\left(#1 ; #2\right)}
+\newcommand{\Var}[1]{\mathrm{Var}\!\left[#1\right]}
+\newcommand{\Cor}[1]{\mathrm{Cor}\!\left[#1\right]}
 
 % \NewDocumentCommand{\Ind}{m}{\mathbbm{1}\{{#1}\}}
 % \NewDocumentCommand{\fnPr}{}{\mathbb{P}}
@@ -30,6 +33,7 @@
 % \NewDocumentCommand{\Cor}{som}{\mathrm{Cor}\IfValueT{#2}{_{#2}}{} \IfBooleanTF{#1}{#3}{\brackets*{#3}}}
 
 \newcommand{\grad}[1][]{\boldsymbol{\nabla}_{\!\!#1}\,}
+\DeclareMathOperator*{\tr}{tr}
 
 % \NewDocumentCommand{\grad}{e_}{\boldsymbol{\nabla}\IfValueT{#1}{_{\!\!#1}\,}}
 % \NewDocumentCommand{\jac}{}{\mD}
@@ -45,6 +49,8 @@
 % \NewDocumentCommand{\diag}{som}{\mathrm{diag}\IfValueT{#2}{_{#2}}{} \IfBooleanTF{#1}{\braces{#3}}{\braces*{#3}}}
 % \NewDocumentCommand{\msqrt}{m}{#1^{\nicefrac{1}{2}}}
 % \NewDocumentCommand{\vecop}{m}{\mathrm{vec}\brackets{#1}}
+
+\newcommand{\N}[2]{\mathcal{N}\!\left(#1, #2\right)}
 
 % \NewDocumentCommand{\N}{somm}{\mathcal{N}\IfBooleanTF{#1}{\left(}{(}\IfValueT{#2}{#2;}{} #3, #4\IfBooleanTF{#1}{\right)}{)}}
 % \NewDocumentCommand{\GP}{omm}{\mathcal{GP}(\IfValueT{#1}{#1;}{} #2, #3)}
