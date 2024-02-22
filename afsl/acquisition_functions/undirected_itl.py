@@ -38,6 +38,11 @@ class UndirectedITL(BaCE):
     If the set of prediction targets $\spA$ of [ITL](itl) includes all of $\spS$ (i.e., $\spS \subseteq \spA$) then `UndirectedITL` is equivalent to [ITL](itl).[^3]
     Intuitively, such prediction targets include "everything", and hence, ITL is "undirected".
 
+    .. note::
+
+        **Prior vs Posterior Uncertainty:** Note that while `UndirectedITL` selects $\vx_{i+1}$ so as to maximize the *prior* uncertainty $\sigma_i^2(\vx)$, [ITL](itl) selects $\vx_{i+1}$ so as to minimize the *posterior* uncertainty at the prediction targets.
+        Remarkably, if $\spS \subseteq \spA$ then the two approaches are equivalent.
+
     #### Comparison to VTL
 
     `UndirectedITL` can be equivalently expressed as \\[\begin{align}
