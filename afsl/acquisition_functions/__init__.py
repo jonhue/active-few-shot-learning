@@ -31,7 +31,7 @@ The following table provides an overview of the acquisition functions and their 
 | [Random](acquisition_functions/random)                             | ❌          | ❌                | (✅)        | -                   |
 
 
-- **Relevance** and **Informativeness** capture whether obtained data is "useful" as outlined [here](/afsl#why-active-data-selection).
+- **Relevance** and **Informativeness** capture whether obtained data is "useful" as outlined [here](/afsl/docs/afsl#why-active-data-selection).
 - **Diversity** captures whether the selected batches are diverse, i.e., whether they cover different "useful" parts of the data space. In a non-diverse batch, most data is not useful conditional on the rest of the batch, meaning that most of the batch is "wasted".
 - **Model Requirement** describes the type of model required for the acquisition function. For example, some acquisition functions require an *embedding* or a *kernel* (see afsl.model), while others require the model to output a *softmax* distribution (typically in a classification context).
 
