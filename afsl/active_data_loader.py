@@ -65,7 +65,6 @@ class ActiveDataLoader(Generic[M]):
         data: torch.Tensor,
         target: torch.Tensor | None,
         batch_size: int,
-        Sigma: torch.Tensor | None = None,
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
     ):
@@ -75,7 +74,6 @@ class ActiveDataLoader(Generic[M]):
         :param data: Tensor of inputs (shape $n \times d$) to be selected from.
         :param target: Tensor of prediction targets (shape $m \times d$) or `None`.
         :param batch_size: Size of the batch to be selected.
-        :param Sigma: Optionally pass a covariance matrix of model parameters. See `afsl.model.ModelWithEmbedding` for more details.
         :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
         """
@@ -83,12 +81,11 @@ class ActiveDataLoader(Generic[M]):
         if target is not None:
             acquisition_function = ITL(
                 target=target,
-                Sigma=Sigma,
                 subsampled_target_frac=subsampled_target_frac,
                 max_target_size=max_target_size,
             )
         else:
-            acquisition_function = UndirectedITL(Sigma=Sigma)
+            acquisition_function = UndirectedITL()
         return cls(
             data=data,
             batch_size=batch_size,

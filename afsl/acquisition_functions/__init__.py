@@ -18,7 +18,7 @@ The following table provides an overview of the acquisition functions and their 
 |--------------------------------------------------------------------|------------|------------------|------------|---------------------|
 | [ITL](acquisition_functions/itl)                                   | ✅          | ✅                | ✅          | embedding / kernel  |
 | [VTL](acquisition_functions/vtl)                                   | ✅          | ✅                | ✅          | embedding / kernel  |
-| [CTL](acquisition_functions/ctl)                                   | ✅          | ❌                | ✅          | embedding / kernel  |
+| [CTL](acquisition_functions/ctl)                                   | ✅          | (✅)                | ✅          | embedding / kernel  |
 | [Cosine Similarity](acquisition_functions/cosine_similarity)       | ✅          | ❌                | ❌          | embedding           |
 | [Undirected ITL](acquisition_functions/undirected_itl)             | ❌          | ✅                | ✅          | embedding / kernel  |
 | [Undirected VTL](acquisition_functions/undirected_vtl)             | ❌          | ✅                | ✅          | embedding / kernel  |

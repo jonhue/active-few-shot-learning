@@ -20,7 +20,7 @@ class DistanceState(NamedTuple):
 
 class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, DistanceState]):
     r"""
-    Given a model which for two inputs $\vx$ and $\vxp$ induces a distance $d(\vx,\vxp)$,[^1] `MaxDist`[^2] constructs the batch by choosing the point with the maximum distance to the nearest previously selected point: \\[ \vx_i = \argmax_{\vx} \min_{j < i} d(\vx, \vx_j). \\]
+    Given a model which for two inputs $\vx$ and $\vxp$ induces a distance $d(\vx,\vxp)$, `MaxDist`[^2] constructs the batch by choosing the point with the maximum distance to the nearest previously selected point: \\[ \vx_i = \argmax_{\vx} \min_{j < i} d(\vx, \vx_j). \\]
     The first point $\vx_1$ is chosen randomly.
 
     .. note::
