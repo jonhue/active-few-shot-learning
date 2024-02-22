@@ -18,7 +18,7 @@ class KMeansPP(MaxDist):
     |------------|------------------|------------|--------------------|
     | ❌          | (✅)                | ✅          | embedding / kernel  |
 
-    Using the afsl.embeddings.classification.CrossEntropyEmbedding embeddings, this acquisition function is known as BADGE (*Batch Active learning by Diverse Gradient Embeddings*).[^4]
+    Using the afsl.embeddings.classification.HallucinatedCrossEntropyEmbedding embeddings, this acquisition function is known as BADGE (*Batch Active learning by Diverse Gradient Embeddings*).[^4]
 
     [^1]: See [here](max_dist#where-does-the-distance-come-from) for a discussion of how a distance is induced by embeddings or a kernel.
 
