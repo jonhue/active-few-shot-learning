@@ -1,7 +1,7 @@
 import torch
 from afsl.model import Model, ModelWithEmbedding
 
-DEFAULT_MINI_BATCH_SIZE = 100
+DEFAULT_MINI_BATCH_SIZE = 1_000
 
 
 def get_device(model: Model):
