@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from afsl.embeddings.classification import HallucinatedCrossEntropyEmbedding
 
 
 class EfficientNet(nn.Module):
@@ -20,7 +21,7 @@ class EfficientNet(nn.Module):
         k = self.model.classifier.fc.in_features
         self.model.classifier.fc = torch.nn.Identity()
 
-        self.fc = nn.Linear(k, 10)
+        self.fc = nn.Linear(k, 10, bias=False)
 
     @property
     def final_layer(self):
@@ -43,3 +44,14 @@ class EfficientNet(nn.Module):
 
     # def reset(self):
     #     self.fc.reset_parameters()
+
+
+class EfficientNetWithHallucinatedCrossEntropyEmbedding(
+    EfficientNet, HallucinatedCrossEntropyEmbedding
+):
+    pass
+
+
+class EfficientNetWithLastLayerEmbedding(EfficientNet):
+    def embed(self, x):
+        return self.logits(x)

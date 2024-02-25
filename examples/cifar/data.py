@@ -1,9 +1,19 @@
+import math
+from typing import NamedTuple
 import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets.vision import VisionDataset
 from PIL import Image
+
+
+class CollectedData(NamedTuple):
+    inputs: torch.Tensor
+    labels: torch.Tensor
+
+    def __len__(self) -> int:
+        return self.inputs.size(0)
 
 
 class Dataset(VisionDataset):
@@ -123,10 +133,59 @@ def collect_data(dataloader: DataLoader):
     return torch.cat(inputs), torch.cat(labels)
 
 
-def collect_test_data(testloader, labels=None):
-    test_inputs, test_labels = collect_data(testloader)
-    if labels is None:
-        return test_inputs, test_labels
-    else:
-        mask = torch.any(test_labels == torch.tensor(labels).reshape(-1, 1), dim=0)
-        return test_inputs[mask], test_labels[mask]
+def collect_dataset(
+    dataset: torchvision.datasets.CIFAR100,
+    restrict_to_labels: torch.Tensor | None = None,
+):
+    dataloader = DataLoader(dataset, batch_size=64, shuffle=False)
+    inputs = []
+    labels = []
+    for data in dataloader:
+        if restrict_to_labels is not None:
+            mask = torch.any(data[1] == restrict_to_labels.reshape(-1, 1), dim=0)
+        else:
+            mask = torch.ones(data[0].shape[0], dtype=torch.bool)
+        inputs.append(data[0][mask])
+        labels.append(data[1][mask])
+    return torch.cat(inputs), torch.cat(labels)
+
+
+class ImbalancedTestConfig(NamedTuple):
+    drop_perc: float
+    drop_labels: torch.Tensor
+
+
+def collect_test_data(
+    _testset: torchvision.datasets.CIFAR100,
+    n_test: int,
+    restrict_to_labels: torch.Tensor | None = None,
+    imbalanced_test_config: ImbalancedTestConfig | None = None,
+):
+    test_inputs, test_labels = collect_dataset(
+        _testset, restrict_to_labels=restrict_to_labels
+    )
+    shuffle_mask = torch.randperm(test_labels.size(0))
+    n = math.floor(test_inputs.size(0) / 2)
+    val_inputs = test_inputs[shuffle_mask][:n]
+    val_labels = test_labels[shuffle_mask][:n]
+    valset = CollectedData(val_inputs, val_labels)
+    test_inputs = test_inputs[shuffle_mask][n:]
+    test_labels = test_labels[shuffle_mask][n:]
+    if imbalanced_test_config is not None:
+        drop_mask = torch.any(
+            test_labels == imbalanced_test_config.drop_labels.reshape(-1, 1), dim=0
+        )
+        true_indices = torch.where(drop_mask)[0]
+        indices_to_flip = true_indices[
+            torch.randperm(len(true_indices))[
+                : int(imbalanced_test_config.drop_perc * drop_mask.sum())
+            ]
+        ]
+        drop_mask[indices_to_flip] = False
+
+        test_inputs = test_inputs[~drop_mask]
+        test_labels = test_labels[~drop_mask]
+    test_inputs = test_inputs[:n_test]
+    test_labels = test_labels[:n_test]
+    testset = CollectedData(test_inputs, test_labels)
+    return testset, valset

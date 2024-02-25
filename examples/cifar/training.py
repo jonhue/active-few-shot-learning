@@ -1,22 +1,15 @@
-from typing import NamedTuple
 import wandb
 import numpy as np
 from tqdm import tqdm
 import torch
+from torch.profiler import profile, record_function, ProfilerActivity
 from torch.utils.data import DataLoader
+import afsl
 from afsl.acquisition_functions import AcquisitionFunction
 from afsl.active_data_loader import ActiveDataLoader
 from afsl.utils import get_device
-from examples.cifar.data import Dataset
+from examples.cifar.data import CollectedData, Dataset
 from examples.utils import accuracy
-
-
-class CollectedData(NamedTuple):
-    inputs: torch.Tensor
-    labels: torch.Tensor
-
-    def __len__(self) -> int:
-        return self.inputs.size(0)
 
 
 def train(
@@ -52,8 +45,8 @@ def train(
 def train_loop(
     model: torch.nn.Module,
     labels: torch.Tensor,
-    trainset: CollectedData,
-    # testset: CollectedData,
+    train_inputs: afsl.data.Dataset,
+    train_labels: torch.Tensor,
     valset: CollectedData,
     criterion: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
@@ -62,7 +55,6 @@ def train_loop(
     num_epochs=5,
     query_batch_size=10,
     train_batch_size=64,
-    use_oracle_train_labels=False,  # use as training samples only points whose true labels are also in the test set
     # randomize=None,  # every k steps, select data u.a.r.
     # test_subset_size=None,  # use a random subset of the test data for the acquisition function
     reweighting=True,  # dynamically reweight loss to address imbalanced dataset
@@ -71,14 +63,17 @@ def train_loop(
     data = Dataset(root="./data")
     wandb.log({"round": 0, "round_accuracy": 0.0})
 
+    # with profile(
+    #     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+    #     record_shapes=True,
+    #     profile_memory=True,
+    #     with_stack=True,
+    # ) as prof:
+
     # unique_test_labels = torch.unique(testset.labels)
 
-    if use_oracle_train_labels:
-        train_mask = (trainset.labels[:, None] == labels).any(dim=1)
-    else:
-        train_mask = torch.ones(len(trainset), dtype=torch.bool)
     data_loader = ActiveDataLoader(
-        data=trainset.inputs[train_mask],
+        dataset=train_inputs,
         batch_size=query_batch_size,
         acquisition_function=acquisition_function,
     )
@@ -90,10 +85,11 @@ def train_loop(
         #     else test_inputs
         # )
         indices = data_loader.next(model).cpu()
-        batch_labels = trainset.labels[train_mask][indices]
+        batch_labels = train_labels[indices]
         mask = (batch_labels[:, None] == labels).any(dim=1)
         batch = CollectedData(
-            inputs=trainset.inputs[train_mask][indices][mask], labels=batch_labels[mask]
+            inputs=torch.stack([train_inputs[i] for i in indices])[mask],
+            labels=batch_labels[mask],
         )
         data.add_data(batch.inputs, batch.labels)
 
@@ -141,3 +137,5 @@ def train_loop(
             )
         }
     )
+
+    # print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))

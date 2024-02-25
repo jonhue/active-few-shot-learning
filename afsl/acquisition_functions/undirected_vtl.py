@@ -1,7 +1,7 @@
 import torch
 import wandb
 from afsl.acquisition_functions.bace import BaCEState, TargetedBaCE
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
 
 
 class UndirectedVTL(TargetedBaCE):
@@ -24,6 +24,8 @@ class UndirectedVTL(TargetedBaCE):
         self,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
     ):
         """
@@ -36,6 +38,8 @@ class UndirectedVTL(TargetedBaCE):
             target=torch.tensor([]),
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
             force_nonsequential=force_nonsequential,
         )
 

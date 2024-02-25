@@ -128,11 +128,12 @@ If you use the code in a publication, please cite our papers:
 """
 
 from afsl.active_data_loader import ActiveDataLoader
-from afsl import acquisition_functions, embeddings, model
+from afsl import acquisition_functions, data, embeddings, model
 
 __all__ = [
     "ActiveDataLoader",
     "acquisition_functions",
+    "data",
     "embeddings",
     "model",
 ]

@@ -5,7 +5,12 @@ from afsl.acquisition_functions import (
     Targeted,
 )
 from afsl.model import ModelWithEmbedding
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding
+from afsl.utils import (
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+    compute_embedding,
+)
 
 
 class CosineSimilarity(Targeted, BatchAcquisitionFunction):
@@ -32,6 +37,8 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
     ):
         r"""
         :param target: Tensor of prediction targets (shape $m \times d$).
@@ -40,7 +47,12 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
         :param mini_batch_size: Size of mini-batch used for computing the acquisition function.
         """
 
-        BatchAcquisitionFunction.__init__(self, mini_batch_size=mini_batch_size)
+        BatchAcquisitionFunction.__init__(
+            self,
+            mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
+        )
         Targeted.__init__(
             self,
             target=target,
@@ -55,12 +67,8 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
     ) -> torch.Tensor:
         model.eval()
         with torch.no_grad():
-            data_latent = compute_embedding(
-                model, data=data, mini_batch_size=self.mini_batch_size
-            )
-            target_latent = compute_embedding(
-                model, data=self.target, mini_batch_size=self.mini_batch_size
-            )
+            data_latent = compute_embedding(model, data=data)
+            target_latent = compute_embedding(model, data=self.target)
 
             data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
             target_latent_normalized = F.normalize(target_latent, p=2, dim=1)

@@ -48,19 +48,19 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
     [^3]: see `initialize_with_previous_samples`
     """
 
-    initialize_with_previous_samples: bool = True
-    """Whether to initialize the centroids with the samples from previous batches."""
+    # initialize_with_previous_samples: bool = True
+    # """Whether to initialize the centroids with the samples from previous batches."""
 
-    def __init__(
-        self,
-        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
-        force_nonsequential=False,
-        initialize_with_previous_samples=True,
-    ):
-        super().__init__(
-            mini_batch_size=mini_batch_size, force_nonsequential=force_nonsequential
-        )
-        self.initialize_with_previous_samples = initialize_with_previous_samples
+    # def __init__(
+    #     self,
+    #     mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+    #     force_nonsequential=False,
+    #     initialize_with_previous_samples=True,
+    # ):
+    #     super().__init__(
+    #         mini_batch_size=mini_batch_size, force_nonsequential=force_nonsequential
+    #     )
+    #     self.initialize_with_previous_samples = initialize_with_previous_samples
 
     def initialize(
         self,
@@ -68,22 +68,20 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
         data: torch.Tensor,
     ) -> DistanceState:
         if isinstance(model, ModelWithEmbedding):
-            embeddings = compute_embedding(
-                model, data, mini_batch_size=self.mini_batch_size
-            )
+            embeddings = compute_embedding(model, data)
 
-        if self.initialize_with_previous_samples:
-            centroid_indices = self.selected
-            if isinstance(model, ModelWithEmbedding):
-                centroids = embeddings[centroid_indices.to(embeddings.device)]
-                distances = torch.square(torch.cdist(embeddings, centroids, p=2))
-            else:
-                centroids = data[centroid_indices.to(data.device)]
-                distances = sqd_kernel_distance(data, centroids, model)
-            min_sqd_distances = torch.min(distances, dim=1).values
-        else:
-            centroid_indices = torch.tensor([])
-            min_sqd_distances = torch.full(size=(data.size(0),), fill_value=torch.inf)
+        # if self.initialize_with_previous_samples:
+        #     centroid_indices = self.selected
+        #     if isinstance(model, ModelWithEmbedding):
+        #         centroids = embeddings[centroid_indices.to(embeddings.device)]
+        #         distances = torch.square(torch.cdist(embeddings, centroids, p=2))
+        #     else:
+        #         centroids = data[centroid_indices.to(data.device)]
+        #         distances = sqd_kernel_distance(data, centroids, model)
+        #     min_sqd_distances = torch.min(distances, dim=1).values
+        # else:
+        centroid_indices = torch.tensor([])
+        min_sqd_distances = torch.full(size=(data.size(0),), fill_value=torch.inf)
 
         if isinstance(model, ModelWithEmbedding):
             kernel_matrix = embeddings @ embeddings.T

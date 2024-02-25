@@ -1,3 +1,4 @@
+import argparse
 import glob
 import json
 import os
@@ -297,3 +298,12 @@ def median(row):
 
 def count(row):
     return row.shape[0]
+
+
+def int_or_none(value):
+    if value.lower() == "none":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value} is not an integer or 'None'")

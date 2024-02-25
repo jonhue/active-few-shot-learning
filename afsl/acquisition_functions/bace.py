@@ -6,12 +6,16 @@ from afsl.acquisition_functions import (
 )
 from afsl.gaussian import GaussianCovarianceMatrix
 from afsl.model import (
-    ModelWithEmbedding,
     ModelWithEmbeddingOrKernel,
     ModelWithKernel,
     ModelWithLatentCovariance,
 )
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, compute_embedding
+from afsl.utils import (
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+    compute_embedding,
+)
 
 __all__ = ["BaCE", "BaCEState", "TargetedBaCE"]
 
@@ -49,6 +53,8 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
         self,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
     ):
         """
@@ -57,7 +63,10 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
         :param force_nonsequential: Whether to force non-sequential data selection.
         """
         super().__init__(
-            mini_batch_size=mini_batch_size, force_nonsequential=force_nonsequential
+            mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
+            force_nonsequential=force_nonsequential,
         )
         self.noise_std = noise_std
 
@@ -72,9 +81,7 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
                 model.kernel(data, data), noise_std=self.noise_std
             )
         else:
-            data_embeddings = compute_embedding(
-                model, data, mini_batch_size=self.mini_batch_size
-            )
+            data_embeddings = compute_embedding(model, data)
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 noise_std=self.noise_std,
                 Embeddings=data_embeddings,
@@ -103,6 +110,8 @@ class TargetedBaCE(Targeted, BaCE):
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
     ):
         r"""
@@ -117,6 +126,8 @@ class TargetedBaCE(Targeted, BaCE):
             self,
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
             force_nonsequential=force_nonsequential,
         )
         Targeted.__init__(
@@ -139,13 +150,9 @@ class TargetedBaCE(Targeted, BaCE):
                 noise_std=self.noise_std,
             )
         else:
-            data_embeddings = compute_embedding(
-                model, data=data, mini_batch_size=self.mini_batch_size
-            )
+            data_embeddings = compute_embedding(model, data=data)
             target_embeddings = (
-                compute_embedding(
-                    model, data=self.target, mini_batch_size=self.mini_batch_size
-                )
+                compute_embedding(model, data=self.target)
                 if self.target.size(0) > 0
                 else torch.tensor([])
             )
