@@ -1,3 +1,4 @@
+from typing import List
 import torch
 
 
@@ -28,7 +29,9 @@ class GaussianCovarianceMatrix:
         return self._matrix.size(0)
 
     def condition_on(
-        self, indices: torch.Tensor | int, target_indices: torch.Tensor | None = None
+        self,
+        indices: torch.Tensor | List[int] | int,
+        target_indices: torch.Tensor | None = None,
     ):
         _indices: torch.Tensor = torch.tensor(indices) if not torch.is_tensor(indices) else indices  # type: ignore
         if _indices.dim() == 0:

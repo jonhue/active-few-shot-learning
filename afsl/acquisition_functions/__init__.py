@@ -177,7 +177,7 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         original_indices = torch.cat(_original_indices)
 
         _, indices = torch.topk(values, batch_size)
-        return original_indices[indices]
+        return original_indices[indices.cpu()]
 
 
 State = TypeVar("State")
@@ -240,6 +240,16 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         :return: Updated state of batch selection.
         """
         pass
+
+    @staticmethod
+    def selector(values: torch.Tensor) -> int:
+        """
+        Given acquisition function values, selects the next data point to be added to the batch.
+
+        :param values: Acquisition function values.
+        :return: Index of the selected data point.
+        """
+        return int(torch.argmax(values).item())
 
     def select_from_minibatch(
         self,
@@ -304,9 +314,8 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
             )
 
         indexed_dataset = _IndexedDataset(dataset)
-        selected = range(len(dataset))
-        while len(selected) > batch_size:
-            indexed_dataset = Subset(indexed_dataset, selected)
+        selected_indices = range(len(dataset))
+        while len(selected_indices) > batch_size:
             data_loader = DataLoader(
                 indexed_dataset,
                 batch_size=self.mini_batch_size,
@@ -314,26 +323,17 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
                 shuffle=True,
             )
 
-            selected = []
+            selected_indices = []
             for data, idx in data_loader:
-                selected.extend(
+                selected_indices.extend(
                     idx[self.select_from_minibatch(batch_size, model, data)]
                     .cpu()
                     .tolist()
                 )
                 if self.subsample:
                     break
-        return torch.tensor(selected)
-
-    @staticmethod
-    def selector(values: torch.Tensor) -> int:
-        """
-        Given acquisition function values, selects the next data point to be added to the batch.
-
-        :param values: Acquisition function values.
-        :return: Index of the selected data point.
-        """
-        return int(torch.argmax(values).item())
+            indexed_dataset = Subset(indexed_dataset, selected_indices)
+        return torch.tensor(selected_indices)
 
 
 class Targeted(ABC):
@@ -341,8 +341,10 @@ class Targeted(ABC):
     Abstract base class for acquisition functions that take into account the relevance of data with respect to a specified target (denoted $\spA$).
     """
 
-    target: torch.Tensor
-    r"""Tensor of prediction targets (shape $m \times d$)."""
+    _target: torch.Tensor
+    # r"""Tensor of prediction targets (shape $m \times d$)."""
+
+    _max_target_size: int
 
     def __init__(
         self,
@@ -364,10 +366,20 @@ class Targeted(ABC):
             max_target_size is None or max_target_size > 0
         ), "Max target size must be positive"
 
+        self._target = target
         m = target.size(0)
-        max_target_size = max_target_size if max_target_size is not None else m
-        self.target = target[
+        self._max_target_size = max_target_size if max_target_size is not None else m
+        self._subsampled_target_frac = subsampled_target_frac
+
+    def get_target(self) -> torch.Tensor:
+        r"""
+        Returns the tensor of (subsampled) prediction target (shape $m \times d$).
+        """
+        m = self._target.size(0)
+        return self._target[
             torch.randperm(m)[
-                : min(math.ceil(subsampled_target_frac * m), max_target_size)
+                : min(
+                    math.ceil(self._subsampled_target_frac * m), self._max_target_size
+                )
             ]
         ]

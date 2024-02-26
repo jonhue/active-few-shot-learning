@@ -7,14 +7,15 @@ applicable_configs = {
     "noise-std": [1],
     "n-init": [100],
     "query-batch-size": [10],
-    "subsampled-target-frac": [0.5],
+    "subsampled-target-frac": [0.1],
     "max-target-size": ["None"],
-    "subsample-acquisition": [0, 1],
+    "subsample-acquisition": [1],
     "algs": [
         # "OracleRandom",
         # "Random",
         # "ITL",
-        "UndirectedITL",
+        "ITL-nonsequential",
+        # "UndirectedITL",
     ],
 }
 

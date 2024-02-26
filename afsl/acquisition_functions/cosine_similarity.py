@@ -68,7 +68,7 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
         model.eval()
         with torch.no_grad():
             data_latent = compute_embedding(model, data=data)
-            target_latent = compute_embedding(model, data=self.target)
+            target_latent = compute_embedding(model, data=self.get_target())
 
             data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
             target_latent_normalized = F.normalize(target_latent, p=2, dim=1)

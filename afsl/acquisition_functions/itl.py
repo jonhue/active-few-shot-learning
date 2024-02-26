@@ -51,11 +51,12 @@ class ITL(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_covariance_matrix = state.covariance_matrix.condition_on(
-            torch.arange(start=state.n, end=state.covariance_matrix.dim)
-        )[: state.n, : state.n]
+            torch.arange(start=state.n, end=state.covariance_matrix.dim),
+            target_indices=torch.arange(state.n),
+        )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
-        mi = 0.5 * torch.log(variances / conditional_variances)
+        mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         wandb.log(
             {
                 "max_mi": torch.max(mi),

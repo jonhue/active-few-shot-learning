@@ -106,22 +106,22 @@ def get_datasets(imbalanced_train_perc=None):
     return trainset, testset
 
 
-def get_data_loaders(
-    batch_size=64,
-    train_batch_size=None,
-    imbalanced_train_perc=None,
-):
-    trainset, testset = get_datasets(imbalanced_train_perc=imbalanced_train_perc)
+# def get_data_loaders(
+#     batch_size=64,
+#     train_batch_size=None,
+#     imbalanced_train_perc=None,
+# ):
+#     trainset, testset = get_datasets(imbalanced_train_perc=imbalanced_train_perc)
 
-    # Define data loaders
-    trainloader = DataLoader(
-        trainset,
-        batch_size=train_batch_size if train_batch_size is not None else batch_size,
-        shuffle=True,
-    )
-    testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+#     # Define data loaders
+#     trainloader = DataLoader(
+#         trainset,
+#         batch_size=train_batch_size if train_batch_size is not None else batch_size,
+#         shuffle=True,
+#     )
+#     testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
-    return trainloader, testloader
+#     return trainloader, testloader
 
 
 def collect_data(dataloader: DataLoader):

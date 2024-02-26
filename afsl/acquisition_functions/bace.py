@@ -143,8 +143,9 @@ class TargetedBaCE(Targeted, BaCE):
         data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
+        target = self.get_target()
         if isinstance(model, ModelWithKernel):
-            joint_data = torch.cat((data, self.target))
+            joint_data = torch.cat((data, target))
             covariance_matrix = GaussianCovarianceMatrix(
                 model.kernel(joint_data, joint_data),
                 noise_std=self.noise_std,
@@ -152,8 +153,8 @@ class TargetedBaCE(Targeted, BaCE):
         else:
             data_embeddings = compute_embedding(model, data=data)
             target_embeddings = (
-                compute_embedding(model, data=self.target)
-                if self.target.size(0) > 0
+                compute_embedding(model, data=target)
+                if target.size(0) > 0
                 else torch.tensor([])
             )
             joint_embeddings = torch.cat((data_embeddings, target_embeddings))

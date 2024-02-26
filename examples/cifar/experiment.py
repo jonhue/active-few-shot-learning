@@ -21,7 +21,7 @@ LR = 0.001
 EPOCHS = 5
 TRAIN_BATCH_SIZE = 64
 REWEIGHTING = True
-MODEL = EfficientNetWithHallucinatedCrossEntropyEmbedding  # EfficientNetWithLastLayerEmbedding
+MODEL = EfficientNetWithLastLayerEmbedding  #  EfficientNetWithHallucinatedCrossEntropyEmbedding
 RESET_PARAMS = False
 LABELS = torch.arange(10)  # torch.tensor([3, 6, 9])
 IMBALANCED_TEST = (
@@ -83,7 +83,7 @@ def experiment(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Define model
-    model = MODEL()
+    model = MODEL(output_dim=LABELS.size(0))
     model.to(device)
 
     # Define the loss criterion and optimizer
@@ -94,13 +94,13 @@ def experiment(
     # Define trainset
     trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
     train_labels = torch.tensor(trainset.targets)
-    if alg == "Oracle Random":
+    if alg == "OracleRandom":
         mask = (train_labels[:, None] == LABELS).any(dim=1)
         trainset.data = trainset.data[mask]
         train_labels = train_labels[mask]
     if debug:
-        trainset.data = trainset.data[:10]
-        train_labels = train_labels[:10]
+        trainset.data = trainset.data  # [:10]
+        train_labels = train_labels  # [:10]
     train_inputs = InputDataset(trainset)
 
     # Define testset and valset
@@ -120,7 +120,7 @@ def experiment(
             mini_batch_size=MINI_BATCH_SIZE,
             num_workers=num_workers,
         )
-    elif alg == "ITL":
+    elif alg == "ITL" or alg == "ITL-nonsequential":
         acquisition_function = ITL(
             target=target,
             noise_std=noise_std,
@@ -129,6 +129,7 @@ def experiment(
             mini_batch_size=MINI_BATCH_SIZE,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=(alg == "ITL-nonsequential"),
         )
     elif alg == "UndirectedITL":
         acquisition_function = UndirectedITL(
@@ -184,9 +185,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE
     )
-    parser.add_argument("--subsampled-target-frac", type=float, default=0.5)
+    parser.add_argument("--subsampled-target-frac", type=float, default=0.1)
     parser.add_argument("--max-target-size", type=int_or_none, default=None)
-    parser.add_argument("--subsample-acquisition", type=int, default=0)
+    parser.add_argument("--subsample-acquisition", type=int, default=1)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     main(args)
