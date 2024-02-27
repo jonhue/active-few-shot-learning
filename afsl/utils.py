@@ -3,7 +3,7 @@ from afsl.model import Model, ModelWithEmbedding
 
 DEFAULT_MINI_BATCH_SIZE = 1_000
 DEFAULT_NUM_WORKERS = 0
-DEFAULT_SUBSAMPLE = False
+DEFAULT_SUBSAMPLE = True
 
 
 def get_device(model: Model):

@@ -47,6 +47,7 @@ def experiment(
     subsampled_target_frac: float,
     max_target_size: int | None,
     subsample_acquisition: bool,
+    update_target: bool,
     debug: bool,
 ):
     wandb.init(
@@ -73,6 +74,7 @@ def experiment(
             "labels": LABELS.tolist(),
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
+            "update_target": update_target,
         },
         mode="offline" if debug else "online",
     )
@@ -99,8 +101,8 @@ def experiment(
         trainset.data = trainset.data[mask]
         train_labels = train_labels[mask]
     if debug:
-        trainset.data = trainset.data  # [:10]
-        train_labels = train_labels  # [:10]
+        trainset.data = trainset.data[:10]
+        train_labels = train_labels[:10]
     train_inputs = InputDataset(trainset)
 
     # Define testset and valset
@@ -154,6 +156,7 @@ def experiment(
         num_epochs=EPOCHS,
         query_batch_size=query_batch_size,
         train_batch_size=TRAIN_BATCH_SIZE,
+        update_target=update_target,
         reweighting=REWEIGHTING,
         reset_parameters=RESET_PARAMS,
     )
@@ -171,6 +174,7 @@ def main(args):
         subsampled_target_frac=args.subsampled_target_frac,
         max_target_size=args.max_target_size,
         subsample_acquisition=bool(args.subsample_acquisition),
+        update_target=bool(args.update_target),
         debug=args.debug,
     )
     print("Total time taken:", time.process_time() - t_start, "seconds")
@@ -185,9 +189,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE
     )
-    parser.add_argument("--subsampled-target-frac", type=float, default=0.1)
+    parser.add_argument("--subsampled-target-frac", type=float, default=0.5)
     parser.add_argument("--max-target-size", type=int_or_none, default=None)
     parser.add_argument("--subsample-acquisition", type=int, default=1)
+    parser.add_argument("--update-target", type=int, default=0)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     main(args)

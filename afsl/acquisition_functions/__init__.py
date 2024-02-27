@@ -341,10 +341,11 @@ class Targeted(ABC):
     Abstract base class for acquisition functions that take into account the relevance of data with respect to a specified target (denoted $\spA$).
     """
 
-    _target: torch.Tensor
-    # r"""Tensor of prediction targets (shape $m \times d$)."""
+    max_target_size: int | None
+    r"""Maximum size of the target to be subsampled in each iteration."""
 
-    _max_target_size: int
+    subsampled_target_frac: float
+    r"""Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$."""
 
     def __init__(
         self,
@@ -354,8 +355,8 @@ class Targeted(ABC):
     ):
         r"""
         :param target: Tensor of prediction targets (shape $m \times d$).
-        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
-        :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
+        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$.
+        :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large.
         """
 
         assert target.size(0) > 0, "Target must be non-empty"
@@ -367,19 +368,22 @@ class Targeted(ABC):
         ), "Max target size must be positive"
 
         self._target = target
-        m = target.size(0)
-        self._max_target_size = max_target_size if max_target_size is not None else m
-        self._subsampled_target_frac = subsampled_target_frac
+        self.max_target_size = max_target_size
+        self.subsampled_target_frac = subsampled_target_frac
+
+    def add_to_target(self, new_target: torch.Tensor):
+        self._target = torch.cat([self._target, new_target])
 
     def get_target(self) -> torch.Tensor:
         r"""
         Returns the tensor of (subsampled) prediction target (shape $m \times d$).
         """
         m = self._target.size(0)
+        max_target_size = self.max_target_size if self.max_target_size is not None else m
         return self._target[
             torch.randperm(m)[
                 : min(
-                    math.ceil(self._subsampled_target_frac * m), self._max_target_size
+                    math.ceil(self.subsampled_target_frac * m), max_target_size
                 )
             ]
         ]

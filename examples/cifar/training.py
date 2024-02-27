@@ -55,6 +55,7 @@ def train_loop(
     num_epochs=5,
     query_batch_size=10,
     train_batch_size=64,
+    update_target=False,
     # randomize=None,  # every k steps, select data u.a.r.
     # test_subset_size=None,  # use a random subset of the test data for the acquisition function
     reweighting=True,  # dynamically reweight loss to address imbalanced dataset
@@ -84,17 +85,21 @@ def train_loop(
         #     if test_subset_size is not None
         #     else test_inputs
         # )
-        indices = data_loader.next(model).cpu()
-        batch_labels = train_labels[indices]
-        mask = (batch_labels[:, None] == labels).any(dim=1)
-        batch = CollectedData(
-            inputs=torch.stack([train_inputs[i] for i in indices])[mask],
-            labels=batch_labels[mask],
-        )
-        data.add_data(batch.inputs, batch.labels)
+        batch_indices = data_loader.next(model).cpu()
+        batch_labels = train_labels[batch_indices]
+        batch_mask = (batch_labels[:, None] == labels).any(dim=1)
+        batch_inputs = [train_inputs[i] for i in batch_indices[batch_mask]]
 
-        if len(data) > 0:
+        if len(batch_inputs) > 0:
+            batch = CollectedData(
+                inputs=torch.stack(batch_inputs),
+                labels=batch_labels[batch_mask],
+            )
+            data.add_data(batch.inputs, batch.labels)
             trainloader = DataLoader(data, batch_size=train_batch_size, shuffle=True)
+
+            if update_target and isinstance(acquisition_function, afsl.acquisition_functions.Targeted):
+                acquisition_function.add_to_target(batch.inputs)
 
             print("data labels:", torch.unique(torch.tensor(data.targets)))
             if reweighting:
