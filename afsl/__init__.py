@@ -31,7 +31,7 @@ Given a [PyTorch](https://pytorch.org) model which may (but does not have to be!
 This model may be generative (e.g., a language model) or discriminative (e.g., a classifier), and can use any architecture.
 
 We only need the following things:
-- A tensor of inputs `data` ($n \times d$) from which we want to select batches for fine-tuning.
+- A dataset of inputs `dataset` (such that `dataset[i]` returns a vector of length $d$) from which we want to select batches for fine-tuning. If one has a supervised dataset returning input-label pairs, then `afsl.data.InputDataset(dataset)` can be used to obtain a dataset over the input space.
 - A tensor of prediction targets `target` ($m \times d$) which specifies the task we want to fine-tune the model for.
 Here, $m$ can be quite small, e.g., equal to the number of classes in a classification task.
 If there is no *specific* task for training, then active data selection can still be useful as we will see [later](#undirected-data-selection).
@@ -48,7 +48,7 @@ With this in place, we can initialize the "active" data loader
 ```python
 from afsl import ActiveDataLoader
 
-data_loader = ActiveDataLoader.initialize(data, target, batch_size=64)
+data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=64)
 ```
 
 To obtain the next batch from `data`, we can then simply call
@@ -63,7 +63,7 @@ Combining the data selection with a model update step, we can implement a simple
 
 ```python
 while not converged:
-    batch = data[data_loader.next(model)]
+    batch = dataset[data_loader.next(model)]
     model.step(batch)
 ```
 
@@ -78,7 +78,7 @@ If there is no specific task for training then all data is equally relevant, yet
 To do this, simply initialize
 
 ```python
-data_loader = ActiveDataLoader.initialize(data, target=None, batch_size=64)
+data_loader = ActiveDataLoader.initialize(dataset, target=None, batch_size=64)
 ```
 
 ### Example: In-context Learning
@@ -91,8 +91,8 @@ We can use `afsl` to query the most useful data and then add it to the model's c
 ```python
 from afsl import ActiveDataLoader
 
-data_loader = ActiveDataLoader.initialize(data, target, batch_size=5)
-context = data[data_loader.next(model)]
+data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=5)
+context = dataset[data_loader.next(model)]
 model.add_to_context(context)
 ```
 
