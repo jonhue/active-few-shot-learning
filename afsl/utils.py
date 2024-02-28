@@ -1,7 +1,10 @@
 import torch
 from afsl.model import Model, ModelWithEmbedding
 
-DEFAULT_MINI_BATCH_SIZE = 100
+DEFAULT_MINI_BATCH_SIZE = 1_000
+DEFAULT_EMBEDDING_BATCH_SIZE = 100
+DEFAULT_NUM_WORKERS = 0
+DEFAULT_SUBSAMPLE = True
 
 
 def get_device(model: Model):
@@ -28,14 +31,16 @@ def mini_batch_wrapper(fn, data, batch_size):
 def compute_embedding(
     model: ModelWithEmbedding,
     data: torch.Tensor,
-    mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+    batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE,
 ) -> torch.Tensor:
     device = get_device(model)
     model.eval()
     with torch.no_grad():
         embeddings = mini_batch_wrapper(
-            fn=lambda batch: model.embed(batch.to(device)),
+            fn=lambda batch: model.embed(
+                batch.to(device, non_blocking=True)
+            ),  # TODO: handle device internally
             data=data,
-            batch_size=mini_batch_size,
+            batch_size=batch_size,
         )
         return embeddings

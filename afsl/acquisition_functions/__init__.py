@@ -40,57 +40,71 @@ The following table provides an overview of the acquisition functions and their 
 
 from abc import ABC, abstractmethod
 import math
-from typing import Generic, TypeVar
+from typing import Callable, Generic, Tuple, TypeVar
 import torch
+from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
+from afsl.data import Dataset
 from afsl.model import Model
 from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
-    mini_batch_wrapper,
-    mini_batch_wrapper_non_cat,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
 )
+import warnings
 
 M = TypeVar("M", bound=Model)
+
+
+class _IndexedDataset(TorchDataset[Tuple[torch.Tensor, int]]):
+    def __init__(self, dataset: Dataset):
+        self.dataset = dataset
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+        data = self.dataset[idx]
+        return data, idx
 
 
 class AcquisitionFunction(ABC, Generic[M]):
     """Abstract base class for acquisition functions."""
 
-    mini_batch_size: int
-    """Size of mini-batch used for computing the acquisition function."""
+    mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE
+    """Size of mini batches used for computing the acquisition function."""
 
-    selected: torch.Tensor
-    """Indices of the selected data points."""
+    num_workers: int = DEFAULT_NUM_WORKERS
+    """Number of workers used for data loading."""
 
-    def __init__(self, mini_batch_size=DEFAULT_MINI_BATCH_SIZE):
+    subsample: bool = DEFAULT_SUBSAMPLE
+    """Whether to (uniformly) subsample the data to a single mini batch for faster computation."""
+
+    def __init__(
+        self,
+        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
+    ):
         self.mini_batch_size = mini_batch_size
-        self.selected = torch.tensor([])
+        self.num_workers = num_workers
+        self.subsample = subsample
 
     @abstractmethod
-    def _select(
-        self,
-        batch_size: int,
-        model: M,
-        data: torch.Tensor,
-    ) -> torch.Tensor:
-        pass
-
     def select(
         self,
         batch_size: int,
         model: M,
-        data: torch.Tensor,
+        dataset: Dataset,
     ) -> torch.Tensor:
         r"""
         Selects the next batch.
 
-        :param batch_size: Size of the batch to be selected.
+        :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
         :param model: Model used for data selection.
-        :param data: Tensor of inputs (shape $n \times d$) to be selected from.
+        :param dataset: Inputs (shape $n \times d$) to be selected from.
         :return: Indices of the newly selected batch.
         """
-        selected = self._select(batch_size, model, data)
-        self.selected = torch.cat([self.selected, selected])
-        return selected
+        pass
 
 
 class BatchAcquisitionFunction(AcquisitionFunction[M]):
@@ -113,22 +127,52 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         """
         pass
 
-    def _select(
+    def select(
         self,
         batch_size: int,
         model: M,
-        data: torch.Tensor,
+        dataset: Dataset,
     ) -> torch.Tensor:
-        values = mini_batch_wrapper(
-            fn=lambda batch: self.compute(
-                model=model,
-                data=batch,
-            ),
-            data=data,
-            batch_size=self.mini_batch_size,
+        return BatchAcquisitionFunction._select(
+            compute_fn=self.compute,
+            batch_size=batch_size,
+            model=model,
+            dataset=dataset,
+            mini_batch_size=self.mini_batch_size,
+            num_workers=self.num_workers,
+            subsample=self.subsample,
         )
+
+    @staticmethod
+    def _select(
+        compute_fn: Callable[[M, torch.Tensor], torch.Tensor],
+        batch_size: int,
+        model: M,
+        dataset: Dataset,
+        mini_batch_size: int,
+        num_workers: int,
+        subsample: bool,
+    ) -> torch.Tensor:
+        indexed_dataset = _IndexedDataset(dataset)
+        data_loader = DataLoader(
+            indexed_dataset,
+            batch_size=mini_batch_size,
+            num_workers=num_workers,
+            shuffle=True,
+        )
+
+        _values = []
+        _original_indices = []
+        for data, idx in data_loader:
+            _values.append(compute_fn(model, data))
+            _original_indices.append(idx)
+            if subsample:
+                break
+        values = torch.cat(_values)
+        original_indices = torch.cat(_original_indices)
+
         _, indices = torch.topk(values, batch_size)
-        return indices
+        return original_indices[indices.cpu()]
 
 
 State = TypeVar("State")
@@ -145,9 +189,15 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
     def __init__(
         self,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
     ):
-        super().__init__(mini_batch_size=mini_batch_size)
+        super().__init__(
+            mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
+        )
         self.force_nonsequential = force_nonsequential
 
     @abstractmethod
@@ -177,42 +227,14 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
 
     @abstractmethod
     def step(self, state: State, i: int) -> State:
-        """
+        r"""
         Updates the state after adding a data point to the batch.
 
         :param state: State of batch selection.
-        :param i: Index of the data point added to the batch.
+        :param i: Index of selected data point.
         :return: Updated state of batch selection.
         """
         pass
-
-    def _select(
-        self,
-        batch_size: int,
-        model: M,
-        data: torch.Tensor,
-    ) -> torch.Tensor:
-        states = mini_batch_wrapper_non_cat(
-            fn=lambda batch: self.initialize(
-                model=model,
-                data=batch,
-            ),
-            data=data,
-            batch_size=self.mini_batch_size,
-        )
-
-        if self.force_nonsequential:
-            values = torch.cat([self.compute(state) for state in states], dim=0)
-            _, indices = torch.topk(values, batch_size)
-            return indices
-        else:
-            indices = []
-            for _ in range(batch_size):
-                values = torch.cat([self.compute(state) for state in states], dim=0)
-                i = self.selector(values)
-                indices.append(i)
-                states = [self.step(state, i) for state in states]
-            return torch.tensor(indices)
 
     @staticmethod
     def selector(values: torch.Tensor) -> int:
@@ -224,14 +246,101 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         """
         return int(torch.argmax(values).item())
 
+    def select_from_minibatch(
+        self,
+        batch_size: int,
+        model: M,
+        data: torch.Tensor,
+    ) -> torch.Tensor:
+        r"""
+        Selects the next batch from the given mini batch `data`.
+
+        :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
+        :param model: Model used for data selection.
+        :param data: Mini batch of inputs (shape $n \times d$) to be selected from.
+        :return: Indices of the newly selected batch (with respect to mini batch).
+        """
+        state = self.initialize(model, data)
+
+        indices = []
+        for _ in range(batch_size):
+            values = self.compute(state)
+            i = self.selector(values)
+            indices.append(i)
+            state = self.step(state, i)
+        return torch.tensor(indices)
+
+    def select(
+        self,
+        batch_size: int,
+        model: M,
+        dataset: Dataset,
+    ) -> torch.Tensor:
+        r"""
+        Selects the next batch. If `force_nonsequential` is `True`, the data is selected analogously to `BatchAcquisitionFunction.select`.
+        Otherwise, the data is selected by hierarchical composition of data selected from mini batches.
+
+        :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
+        :param model: Model used for data selection.
+        :param dataset: Inputs (shape $n \times d$) to be selected from.
+        :return: Indices of the newly selected batch.
+        """
+        if self.force_nonsequential:
+
+            def compute_fn(model: M, data: torch.Tensor) -> torch.Tensor:
+                return self.compute(self.initialize(model, data))
+
+            return BatchAcquisitionFunction._select(
+                compute_fn=compute_fn,
+                batch_size=batch_size,
+                model=model,
+                dataset=dataset,
+                mini_batch_size=self.mini_batch_size,
+                num_workers=self.num_workers,
+                subsample=self.subsample,
+            )
+
+        assert (
+            batch_size < self.mini_batch_size
+        ), "Batch size must be smaller than `mini_batch_size`."
+        if batch_size > self.mini_batch_size / 2:
+            warnings.warn(
+                "The evaluation of the acquisition function may be slow since `batch_size` is large relative to `mini_batch_size`."
+            )
+
+        indexed_dataset = _IndexedDataset(dataset)
+        selected_indices = range(len(dataset))
+        while len(selected_indices) > batch_size:
+            data_loader = DataLoader(
+                indexed_dataset,
+                batch_size=self.mini_batch_size,
+                num_workers=self.num_workers,
+                shuffle=True,
+            )
+
+            selected_indices = []
+            for data, idx in data_loader:
+                selected_indices.extend(
+                    idx[self.select_from_minibatch(batch_size, model, data)]
+                    .cpu()
+                    .tolist()
+                )
+                if self.subsample:
+                    break
+            indexed_dataset = Subset(indexed_dataset, selected_indices)
+        return torch.tensor(selected_indices)
+
 
 class Targeted(ABC):
     r"""
     Abstract base class for acquisition functions that take into account the relevance of data with respect to a specified target (denoted $\spA$).
     """
 
-    target: torch.Tensor
-    r"""Tensor of prediction targets (shape $m \times d$)."""
+    max_target_size: int | None
+    r"""Maximum size of the target to be subsampled in each iteration."""
+
+    subsampled_target_frac: float
+    r"""Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$."""
 
     def __init__(
         self,
@@ -241,8 +350,8 @@ class Targeted(ABC):
     ):
         r"""
         :param target: Tensor of prediction targets (shape $m \times d$).
-        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
-        :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
+        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$.
+        :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large.
         """
 
         assert target.size(0) > 0, "Target must be non-empty"
@@ -253,10 +362,24 @@ class Targeted(ABC):
             max_target_size is None or max_target_size > 0
         ), "Max target size must be positive"
 
-        m = self.target.size(0)
-        max_target_size = max_target_size if max_target_size is not None else m
-        self.target = target[
+        self._target = target
+        self.max_target_size = max_target_size
+        self.subsampled_target_frac = subsampled_target_frac
+
+    def add_to_target(self, new_target: torch.Tensor):
+        """Appends new target data to the target."""
+        self._target = torch.cat([self._target, new_target])
+
+    def get_target(self) -> torch.Tensor:
+        r"""
+        Returns the tensor of (subsampled) prediction target (shape $m \times d$).
+        """
+        m = self._target.size(0)
+        max_target_size = (
+            self.max_target_size if self.max_target_size is not None else m
+        )
+        return self._target[
             torch.randperm(m)[
-                : min(math.ceil(subsampled_target_frac * m), max_target_size)
+                : min(math.ceil(self.subsampled_target_frac * m), max_target_size)
             ]
         ]

@@ -1,3 +1,4 @@
+from typing import List
 import torch
 
 
@@ -14,7 +15,7 @@ class GaussianCovarianceMatrix:
         noise_std: float, Embeddings: torch.Tensor, Sigma: torch.Tensor | None = None
     ):
         if Sigma is None:
-            Sigma = torch.eye(Embeddings.size(0)).to(Embeddings.device)
+            Sigma = torch.eye(Embeddings.size(1)).to(Embeddings.device)
         return GaussianCovarianceMatrix(
             Embeddings @ Sigma @ Embeddings.T, noise_std=noise_std
         )
@@ -27,17 +28,21 @@ class GaussianCovarianceMatrix:
     def dim(self) -> int:
         return self._matrix.size(0)
 
-    def condition_on(self, indices, target_indices=None):
-        indices = torch.tensor(indices)
-        if indices.dim() == 0:
-            indices = indices.unsqueeze(0)
+    def condition_on(
+        self,
+        indices: torch.Tensor | List[int] | int,
+        target_indices: torch.Tensor | None = None,
+    ):
+        _indices: torch.Tensor = torch.tensor(indices) if not torch.is_tensor(indices) else indices  # type: ignore
+        if _indices.dim() == 0:
+            _indices = _indices.unsqueeze(0)
         if target_indices is None:
             target_indices = torch.arange(self.dim)
         noise_var = self.noise_std**2
 
         Sigma_AA = self._matrix[target_indices][:, target_indices]
-        Sigma_ii = self._matrix[indices][:, indices]
-        Sigma_Ai = self._matrix[target_indices][:, indices]
+        Sigma_ii = self._matrix[_indices][:, _indices]
+        Sigma_Ai = self._matrix[target_indices][:, _indices]
         posterior_Sigma_AA = (
             Sigma_AA
             - Sigma_Ai

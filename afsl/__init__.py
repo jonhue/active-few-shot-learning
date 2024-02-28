@@ -109,7 +109,7 @@ If you use the code in a publication, please cite our papers:
     author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
     booktitle={ICLR Workshop on Bridging the Gap Between Practice and Theory in Deep Learning},
     year={2024},
-    pdf={https://arxiv.org/abs/TODO},
+    pdf={https://arxiv.org/pdf/2402.15898.pdf},
     url={https://github.com/jonhue/afsl}
 }
 
@@ -119,7 +119,7 @@ If you use the code in a publication, please cite our papers:
     author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
     booktitle={ICML},
     year={2024},
-    pdf={https://arxiv.org/abs/TODO},
+    pdf={https://arxiv.org/pdf/2402.15441.pdf},
     url={https://github.com/jonhue/afsl}
 }
 ```
@@ -128,11 +128,12 @@ If you use the code in a publication, please cite our papers:
 """
 
 from afsl.active_data_loader import ActiveDataLoader
-from afsl import acquisition_functions, embeddings, model
+from afsl import acquisition_functions, data, embeddings, model
 
 __all__ = [
     "ActiveDataLoader",
     "acquisition_functions",
+    "data",
     "embeddings",
     "model",
 ]

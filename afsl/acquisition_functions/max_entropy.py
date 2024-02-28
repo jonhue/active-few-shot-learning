@@ -25,6 +25,8 @@ class MaxEntropy(BatchAcquisitionFunction):
     ) -> torch.Tensor:
         model.eval()
         with torch.no_grad():
-            output = torch.softmax(model(data.to(get_device(model))), dim=1)
+            output = torch.softmax(
+                model(data.to(get_device(model), non_blocking=True)), dim=1
+            )
             entropy = -torch.sum(output * torch.log(output), dim=1)
             return entropy

@@ -1,6 +1,7 @@
 import torch
 from afsl.acquisition_functions import BatchAcquisitionFunction
 from afsl.model import Model
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS
 
 
 class Random(BatchAcquisitionFunction):
@@ -21,6 +22,15 @@ class Random(BatchAcquisitionFunction):
     |------------|------------------|------------|--------------------|
     | ❌          | ❌                | (✅)        | -                  |
     """
+
+    def __init__(
+        self,
+        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+    ):
+        super().__init__(
+            mini_batch_size=mini_batch_size, num_workers=num_workers, subsample=True
+        )
 
     def compute(
         self,

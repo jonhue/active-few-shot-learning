@@ -1,5 +1,5 @@
 from afsl.acquisition_functions.undirected_itl import UndirectedITL
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
 
 
 class UncertaintySampling(UndirectedITL):
@@ -25,9 +25,17 @@ class UncertaintySampling(UndirectedITL):
     [^3]: see afsl.model.ModelWithKernel
     """
 
-    def __init__(self, noise_std=1.0, mini_batch_size=DEFAULT_MINI_BATCH_SIZE):
+    def __init__(
+        self,
+        noise_std=1.0,
+        mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        num_workers=DEFAULT_NUM_WORKERS,
+        subsample=DEFAULT_SUBSAMPLE,
+    ):
         super().__init__(
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample,
             force_nonsequential=True,
         )

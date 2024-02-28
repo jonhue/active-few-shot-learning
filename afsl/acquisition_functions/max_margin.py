@@ -25,7 +25,9 @@ class MaxMargin(BatchAcquisitionFunction):
     ) -> torch.Tensor:
         model.eval()
         with torch.no_grad():
-            output = torch.softmax(model(data.to(get_device(model))), dim=1)
+            output = torch.softmax(
+                model(data.to(get_device(model), non_blocking=True)), dim=1
+            )
             top_preds, _ = torch.topk(output, 2, dim=1)
             margins = top_preds[:, 0] - top_preds[:, 1]
             return margins

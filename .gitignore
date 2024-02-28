@@ -3,3 +3,5 @@ venv
 build
 dist
 __pycache__
+data
+*.out
