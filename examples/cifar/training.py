@@ -81,7 +81,9 @@ def train_loop(
             data.add_data(batch.inputs, batch.labels)
             trainloader = DataLoader(data, batch_size=train_batch_size, shuffle=True)
 
-            if update_target and isinstance(acquisition_function, afsl.acquisition_functions.Targeted):
+            if update_target and isinstance(
+                acquisition_function, afsl.acquisition_functions.Targeted
+            ):
                 acquisition_function.add_to_target(batch.inputs)
 
             print("data labels:", torch.unique(torch.tensor(data.targets)))

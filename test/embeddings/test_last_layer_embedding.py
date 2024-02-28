@@ -14,5 +14,5 @@ data = torch.randn(100, 10)
 
 
 def test_last_layer():
-    embeddings = compute_embedding(model, data, mini_batch_size=99)
+    embeddings = compute_embedding(model, data, batch_size=99)
     assert embeddings.shape == (100, 32)

@@ -375,11 +375,11 @@ class Targeted(ABC):
         Returns the tensor of (subsampled) prediction target (shape $m \times d$).
         """
         m = self._target.size(0)
-        max_target_size = self.max_target_size if self.max_target_size is not None else m
+        max_target_size = (
+            self.max_target_size if self.max_target_size is not None else m
+        )
         return self._target[
             torch.randperm(m)[
-                : min(
-                    math.ceil(self.subsampled_target_frac * m), max_target_size
-                )
+                : min(math.ceil(self.subsampled_target_frac * m), max_target_size)
             ]
         ]
