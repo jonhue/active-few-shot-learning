@@ -51,7 +51,7 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
 
     [^2]: Holzmüller, D., Zaverkin, V., Kästner, J., and Steinwart, I. A framework and benchmark for deep batch active learning for regression. JMLR, 24(164), 2023.
 
-    [^3]: see `initialize_with_previous_samples`
+    [^3]: see `initialize_with_previous_samples` (deprecated)
     """
 
     embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE
