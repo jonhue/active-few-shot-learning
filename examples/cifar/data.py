@@ -106,39 +106,6 @@ def get_datasets(imbalanced_train_perc=None):
     return trainset, testset
 
 
-# TODO: drop
-def get_data_loaders(
-    batch_size=64,
-    train_batch_size=None,
-    imbalanced_train_perc=None,
-):
-    trainset, testset = get_datasets(imbalanced_train_perc=imbalanced_train_perc)
-
-    # Define data loaders
-    trainloader = DataLoader(
-        trainset,
-        batch_size=train_batch_size if train_batch_size is not None else batch_size,
-        shuffle=True,
-    )
-    testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
-
-    return trainloader, testloader
-
-
-# TODO: drop
-def get_test_data(testloader, labels=None):
-    test_inputs = []
-    test_labels = []
-    for data in testloader:
-        if labels is not None:
-            mask = torch.any(data[1] == torch.tensor(labels).reshape(-1, 1), dim=0)
-        else:
-            mask = torch.ones(data[0].shape[0], dtype=torch.bool)
-        test_inputs.append(data[0][mask])
-        test_labels.append(data[1][mask])
-    return torch.cat(test_inputs), torch.cat(test_labels)
-
-
 def collect_data(dataloader: DataLoader):
     inputs = []
     labels = []
