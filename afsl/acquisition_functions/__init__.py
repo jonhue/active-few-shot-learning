@@ -49,7 +49,6 @@ from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
-    get_device,
 )
 import warnings
 
@@ -80,9 +79,6 @@ class AcquisitionFunction(ABC, Generic[M]):
     subsample: bool = DEFAULT_SUBSAMPLE
     """Whether to (uniformly) subsample the data to a single mini batch for faster computation."""
 
-    # selected: torch.Tensor = torch.tensor([])
-    # """Indices of the selected data points."""
-
     def __init__(
         self,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
@@ -92,7 +88,6 @@ class AcquisitionFunction(ABC, Generic[M]):
         self.mini_batch_size = mini_batch_size
         self.num_workers = num_workers
         self.subsample = subsample
-        # self.selected
 
     @abstractmethod
     def select(
