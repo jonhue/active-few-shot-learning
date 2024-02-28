@@ -18,7 +18,7 @@ jobs:
         - '3.12'
         - '3.13'
         torch:
-        - '2.2.0'
+        - '2.2'
 
     name: Python ${{ matrix.python }}, Torch ${{ matrix.torch }}
     steps:
@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: pip3 install -r requirements.txt
     - name: Install torch
-      run: pip3 install --upgrade torch==${{ matrix.torch}}
+      run: pip3 install --upgrade torch~=${{ matrix.torch }}
     - name: Run Black
       run: black . --check
     - name: Run pyright
