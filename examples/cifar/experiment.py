@@ -15,7 +15,7 @@ from examples.cifar.model import (
     EfficientNetWithLastLayerEmbedding,
 )
 from examples.cifar.training import train_loop
-from examples.launch_utils import int_or_none
+from examples.utils import int_or_none
 
 LR = 0.001
 EPOCHS = 5

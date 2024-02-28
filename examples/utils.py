@@ -1,3 +1,4 @@
+import argparse
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -21,3 +22,12 @@ def accuracy(
             total += labels.size(0)
             correct += (predicted == labels.to(device)).sum().item()
     return 100 * correct / total
+
+
+def int_or_none(value):
+    if value.lower() == "none":
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value} is not an integer or 'None'")
