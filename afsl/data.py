@@ -1,3 +1,7 @@
+"""
+Selection of classes for datasets and data loaders.
+"""
+
 from typing import Sized, Tuple
 import torch
 from torch.utils.data import DataLoader as TorchDataLoader, Dataset as TorchDataset
