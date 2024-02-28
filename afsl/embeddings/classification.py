@@ -1,5 +1,5 @@
 """
-Implementation of embeddings for classification models whose final layer is a linear layer (without bias). The `forward` function is expected to return a distribution over classes.
+Implementation of embeddings for classification models whose final layer is a linear layer. The `forward` function is expected to return a distribution over classes.
 
 For more details regarding embeddings, see afsl.model.ModelWithEmbedding.
 """
@@ -20,20 +20,22 @@ class HallucinatedCrossEntropyEmbedding(ClassificationModel, ModelWithEmbedding)
 
     def embed(self, data: torch.Tensor) -> torch.Tensor:
         assert isinstance(self.final_layer, nn.Linear), "Final layer must be linear."
-        assert self.final_layer.bias is None, "Final layer must not have bias."
 
         logits = self.logits(data)  # (N, K)
         probabilities = self(data)  # (N, C)
         pred = self.predict(data)  # (N,)
-        # losses = nn.CrossEntropyLoss(reduction="none")(outputs, pred)  # (N,)
 
         C = probabilities.size(1)
 
         # compute gradient explicitly: eq. (1) of https://arxiv.org/pdf/1906.03671.pdf
         pred_ = torch.nn.functional.one_hot(pred, C)  # (N, C)
         A = (probabilities - pred_)[:, :, None]  # (N, C, 1)
-        B = logits[:, None, :]  # (N, 1, K)
-        J = torch.matmul(A, B).view(-1, A.shape[1] * B.shape[2])  # (N, C * K)
+        if self.final_layer.bias is not None:
+            logits = torch.cat(
+                (logits, torch.ones(logits.size(0), 1)), dim=1
+            )  # (n, K+1)
+        B = logits[:, None, :]  # (N, 1, K+1)
+        J = torch.matmul(A, B).view(-1, A.shape[1] * B.shape[2])  # (N, C * (K+1))
         return J
 
 
