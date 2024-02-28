@@ -4,7 +4,11 @@ from afsl.acquisition_functions import M, AcquisitionFunction
 from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.acquisition_functions.itl import ITL
 from afsl.data import Dataset
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS
+from afsl.utils import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+)
 
 
 class ActiveDataLoader(Generic[M]):
@@ -70,6 +74,7 @@ class ActiveDataLoader(Generic[M]):
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
         mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
+        embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers: int = DEFAULT_NUM_WORKERS,
         subsample_acquisition: bool = False,
     ):
@@ -82,6 +87,7 @@ class ActiveDataLoader(Generic[M]):
         :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
         :param mini_batch_size: Size of mini batches used for computing the acquisition function.
+        :param embedding_batch_size: Batch size used for computing the embeddings.
         :param num_workers: Number of workers used for data loading.
         :param subsample_acquisition: Whether to subsample the data to a single mini batch before computing the acquisition function.
         """
@@ -92,12 +98,14 @@ class ActiveDataLoader(Generic[M]):
                 subsampled_target_frac=subsampled_target_frac,
                 max_target_size=max_target_size,
                 mini_batch_size=mini_batch_size,
+                embedding_batch_size=embedding_batch_size,
                 num_workers=num_workers,
                 subsample=subsample_acquisition,
             )
         else:
             acquisition_function = UndirectedITL(
                 mini_batch_size=mini_batch_size,
+                embedding_batch_size=embedding_batch_size,
                 num_workers=num_workers,
                 subsample=subsample_acquisition,
             )

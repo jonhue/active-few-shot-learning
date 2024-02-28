@@ -121,6 +121,7 @@ class TargetedBaCE(Targeted, BaCE):
         subsampled_target_frac: float = 0.5,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers=DEFAULT_NUM_WORKERS,
         subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
@@ -131,12 +132,16 @@ class TargetedBaCE(Targeted, BaCE):
         :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
         :param mini_batch_size: Size of mini-batch used for computing the acquisition function.
+        :param embedding_batch_size: Batch size used for computing the embeddings.
+        :param num_workers: Number of workers used for parallel computation.
+        :param subsample: Whether to subsample the data set.
         :param force_nonsequential: Whether to force non-sequential data selection.
         """
         BaCE.__init__(
             self,
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            embedding_batch_size=embedding_batch_size,
             num_workers=num_workers,
             subsample=subsample,
             force_nonsequential=force_nonsequential,
