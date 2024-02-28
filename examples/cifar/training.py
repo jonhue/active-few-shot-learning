@@ -2,7 +2,6 @@ import wandb
 import numpy as np
 from tqdm import tqdm
 import torch
-from torch.profiler import profile, record_function, ProfilerActivity
 from torch.utils.data import DataLoader
 import afsl
 from afsl.acquisition_functions import AcquisitionFunction
@@ -56,22 +55,11 @@ def train_loop(
     query_batch_size=10,
     train_batch_size=64,
     update_target=False,
-    # randomize=None,  # every k steps, select data u.a.r.
-    # test_subset_size=None,  # use a random subset of the test data for the acquisition function
-    reweighting=True,  # dynamically reweight loss to address imbalanced dataset
-    reset_parameters=False,  # reset parameters after each round
+    reweighting=True,
+    reset_parameters=False,
 ):
     data = Dataset(root="./data")
     wandb.log({"round": 0, "round_accuracy": 0.0})
-
-    # with profile(
-    #     activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-    #     record_shapes=True,
-    #     profile_memory=True,
-    #     with_stack=True,
-    # ) as prof:
-
-    # unique_test_labels = torch.unique(testset.labels)
 
     data_loader = ActiveDataLoader(
         dataset=train_inputs,
@@ -80,12 +68,7 @@ def train_loop(
     )
 
     for i in range(num_rounds):
-        # sub_test_inputs = (
-        #     test_inputs[torch.randperm(len(test_inputs))[:test_subset_size]]
-        #     if test_subset_size is not None
-        #     else test_inputs
-        # )
-        batch_indices = data_loader.next(model).cpu()
+        batch_indices = data_loader.next(model)
         batch_labels = train_labels[batch_indices]
         batch_mask = (batch_labels[:, None] == labels).any(dim=1)
         batch_inputs = [train_inputs[i] for i in batch_indices[batch_mask]]
@@ -126,13 +109,10 @@ def train_loop(
             {
                 "round": i,
                 "round_accuracy": acc,
-                # "valid_perc": prior_data.valid_perc(unique_test_labels),
                 "data_len": len(data),
-                "missing_perc": data.valid_perc(torch.tensor(range(5))),
-                # "label": labels[train_mask][indices],
+                "missing_perc": data.valid_perc(torch.arange(5)),
             }
         )
-        # wandb.log({"round": j + 1, "round_accuracy": acc, "label": labels[indices]})
     wandb.log(
         {
             "label_histogram": wandb.Histogram(
@@ -142,5 +122,3 @@ def train_loop(
             )
         }
     )
-
-    # print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))

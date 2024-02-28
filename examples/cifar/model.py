@@ -22,7 +22,7 @@ class EfficientNet(nn.Module):
         # Replace the last linear layer
         k = self.model.classifier.fc.in_features
         self.model.classifier.fc = torch.nn.Identity()
-        self.fc = nn.Linear(k, output_dim, bias=False)
+        self.fc = nn.Linear(k, output_dim)
 
     @property
     def final_layer(self):
@@ -35,7 +35,6 @@ class EfficientNet(nn.Module):
     def forward(self, x):
         x = self.logits(x)
         x = self.fc(x)
-        x = torch.nn.functional.softmax(x, dim=1)
         return x
 
     def predict(self, x):

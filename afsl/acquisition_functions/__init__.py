@@ -40,7 +40,7 @@ The following table provides an overview of the acquisition functions and their 
 
 from abc import ABC, abstractmethod
 import math
-from typing import Callable, Generic, Sized, Tuple, TypeVar
+from typing import Callable, Generic, Tuple, TypeVar
 import torch
 from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
 from afsl.data import Dataset
@@ -372,6 +372,7 @@ class Targeted(ABC):
         self.subsampled_target_frac = subsampled_target_frac
 
     def add_to_target(self, new_target: torch.Tensor):
+        """Appends new target data to the target."""
         self._target = torch.cat([self._target, new_target])
 
     def get_target(self) -> torch.Tensor:

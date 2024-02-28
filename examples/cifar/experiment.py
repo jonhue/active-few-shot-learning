@@ -56,7 +56,7 @@ def experiment(
         project="Fine-tuning CIFAR",
         config={
             "learning_rate": LR,
-            "architecture": "EfficientNet (partially frozen)",
+            "architecture": "EfficientNet (partially frozen) with-bias",
             "dataset": "CIFAR-100",
             "epochs": EPOCHS,
             "train_batch_size": TRAIN_BATCH_SIZE,
@@ -75,6 +75,7 @@ def experiment(
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
             "update_target": update_target,
+            "variation": "old-data",
         },
         mode="offline" if debug else "online",
     )
@@ -90,7 +91,6 @@ def experiment(
 
     # Define the loss criterion and optimizer
     criterion = nn.CrossEntropyLoss()
-    # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4)
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
     # Define trainset

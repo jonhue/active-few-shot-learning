@@ -168,7 +168,3 @@ class TargetedBaCE(Targeted, BaCE):
                 ),
             )
         return BaCEState(covariance_matrix=covariance_matrix, n=n)
-
-    def step(self, state: BaCEState, i: int) -> BaCEState:
-        posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)

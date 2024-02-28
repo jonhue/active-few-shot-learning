@@ -5,9 +5,9 @@ import experiment
 applicable_configs = {
     "seed": [i for i in range(10)],
     "noise-std": [1],
-    "n-init": [4, 10, 20, 50, 100, 200, 500],
+    "n-init": [100],  # [4, 10, 20, 50, 100, 200, 500]
     "query-batch-size": [10],
-    "subsampled-target-frac": [0.5],
+    "subsampled-target-frac": [0.1],  # [0.05, 0.1, 0.2, 0.5, 1.0]
     "max-target-size": ["None"],
     "subsample-acquisition": [1],
     "update-target": [0],
@@ -15,7 +15,7 @@ applicable_configs = {
         # "OracleRandom",
         # "Random",
         "ITL",
-        # "ITL-nonsequential",
+        "ITL-nonsequential",
         # "UndirectedITL",
     ],
 }
