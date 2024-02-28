@@ -23,7 +23,7 @@ TRAIN_BATCH_SIZE = 64
 REWEIGHTING = True
 MODEL = EfficientNetWithLastLayerEmbedding  #  EfficientNetWithHallucinatedCrossEntropyEmbedding
 RESET_PARAMS = False
-LABELS = torch.arange(10)  # torch.tensor([3, 6, 9])
+LABELS = torch.arange(10)
 IMBALANCED_TEST = (
     None  # ImbalancedTestConfig(drop_perc=0.5, drop_labels=torch.arange(5))
 )
