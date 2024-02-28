@@ -16,13 +16,13 @@ class ActiveDataLoader(Generic[M]):
     `ActiveDataLoader` can be used as a drop-in replacement for random data selection:
 
     ```python
-    data_loader = ActiveDataLoader.initialize(data, target, batch_size=64)
-    batch = data[data_loader.next(model)]
+    data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=64)
+    batch = dataset[data_loader.next(model)]
     ```
 
     where
     - `model` is a PyTorch `nn.Module`,
-    - `data` is a tensor of inputs (shape $n \times d$), and
+    - `dataset` is a dataset of inputs (where `dataset[i]` returns a vector of length $d$), and
     - `target` is a tensor of prediction targets (shape $m \times d$) or `None`.
     """
 
