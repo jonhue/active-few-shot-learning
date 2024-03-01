@@ -354,7 +354,7 @@ class Targeted(ABC):
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large.
         """
 
-        assert target.size(0) > 0, "Target must be non-empty"
+        # assert target.size(0) > 0, "Target must be non-empty"
         assert (
             subsampled_target_frac > 0 and subsampled_target_frac <= 1
         ), "Fraction of target must be in (0, 1]"
