@@ -32,8 +32,8 @@ class HallucinatedCrossEntropyEmbedding(ClassificationModel, ModelWithEmbedding)
         A = (probabilities - pred_)[:, :, None]  # (N, C, 1)
         if self.final_layer.bias is not None:
             logits = torch.cat(
-                (logits, torch.ones(logits.size(0), 1)), dim=1
-            )  # (n, K+1)
+                (logits, torch.ones(logits.size(0), 1, device=logits.device)), dim=1
+            )  # (N, K+1)
         B = logits[:, None, :]  # (N, 1, K+1)
         J = torch.matmul(A, B).view(-1, A.shape[1] * B.shape[2])  # (N, C * (K+1))
         return J

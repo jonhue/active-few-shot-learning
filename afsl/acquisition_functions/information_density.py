@@ -32,6 +32,8 @@ class InformationDensity(BatchAcquisitionFunction):
         self,
         target: torch.Tensor,
         beta=1.0,
+        subsampled_target_frac: float = 0.5,
+        max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
         embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers=DEFAULT_NUM_WORKERS,
@@ -44,6 +46,8 @@ class InformationDensity(BatchAcquisitionFunction):
         )
         self.cosine_similarity = CosineSimilarity(
             target=target,
+            subsampled_target_frac=subsampled_target_frac,
+            max_target_size=max_target_size,
             mini_batch_size=mini_batch_size,
             embedding_batch_size=embedding_batch_size,
             num_workers=num_workers,

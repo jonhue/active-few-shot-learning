@@ -1,3 +1,4 @@
+import random
 import torch
 from afsl.acquisition_functions.max_dist import MaxDist
 
@@ -31,5 +32,7 @@ class KMeansPP(MaxDist):
 
     @staticmethod
     def selector(min_sqd_distances: torch.Tensor) -> int:
+        if torch.isinf(min_sqd_distances).all():
+            return random.randint(0, min_sqd_distances.size(0) - 1)
         probabilities = min_sqd_distances / min_sqd_distances.sum()
         return int(torch.multinomial(probabilities, num_samples=1).item())

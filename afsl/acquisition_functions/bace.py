@@ -175,7 +175,7 @@ class TargetedBaCE(Targeted, BaCE):
                     model, data=target, batch_size=self.embedding_batch_size
                 )
                 if target.size(0) > 0
-                else torch.tensor([])
+                else torch.tensor([], device=data_embeddings.device)
             )
             joint_embeddings = torch.cat((data_embeddings, target_embeddings))
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(

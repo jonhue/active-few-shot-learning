@@ -4,26 +4,27 @@ import wandb
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from afsl.acquisition_functions.itl import ITL
-from afsl.acquisition_functions.random import Random
-from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.data import InputDataset
-from examples.cifar.data import collect_test_data, get_datasets
+from examples.acquisition_functions import get_acquisition_function
+from examples.fine_tuning.mnist.data import collect_test_data, get_datasets
 
-from examples.cifar.model import (
-    EfficientNetWithHallucinatedCrossEntropyEmbedding,
-    EfficientNetWithLastLayerEmbedding,
+from examples.fine_tuning.mnist.model import (
+    SimpleCNNWithHallucinatedCrossEntropyEmbedding,
+    SimpleCNNWithLastLayerEmbedding,
 )
-from examples.cifar.training import train_loop
+from examples.fine_tuning.training import train_loop
 from examples.utils import int_or_none
 
 LR = 0.001
-EPOCHS = 5
+EPOCHS = 100
+USE_BEST_MODEL = True
 TRAIN_BATCH_SIZE = 64
 REWEIGHTING = True
-MODEL = EfficientNetWithLastLayerEmbedding  #  EfficientNetWithHallucinatedCrossEntropyEmbedding
-RESET_PARAMS = False
-LABELS = torch.arange(10)
+MODEL = (
+    SimpleCNNWithLastLayerEmbedding  #  SimpleCNNWithHallucinatedCrossEntropyEmbedding
+)
+RESET_PARAMS = True
+LABELS = torch.arange(3)
 IMBALANCED_TEST = (
     None  # ImbalancedTestConfig(drop_perc=0.5, drop_labels=torch.arange(5))
 )
@@ -33,9 +34,9 @@ MINI_BATCH_SIZE = 1_000
 NUM_WORKERS = 4
 NUM_ROUNDS = 100
 
-DEFAULT_NOISE_STD = 1.0
-DEFAULT_QUERY_BATCH_SIZE = 10
-DEFAULT_N_INIT = 100
+DEFAULT_NOISE_STD = 0.01
+DEFAULT_QUERY_BATCH_SIZE = 1
+DEFAULT_N_INIT = 30
 
 
 def experiment(
@@ -52,13 +53,14 @@ def experiment(
 ):
     wandb.init(
         name="First experiment",
-        dir="/cluster/scratch/jhuebotter/wandb/cifar-fine-tuning",
-        project="Fine-tuning CIFAR",
+        dir="/cluster/scratch/jhuebotter/wandb/mnist-fine-tuning",
+        project="Fine-tuning MNIST",
         config={
             "learning_rate": LR,
-            "architecture": "EfficientNet (partially frozen) with-bias",
-            "dataset": "CIFAR-100",
+            "architecture": "CNN",
+            "dataset": "MNIST",
             "epochs": EPOCHS,
+            "use_best_model": USE_BEST_MODEL,
             "train_batch_size": TRAIN_BATCH_SIZE,
             "model": MODEL,
             "reweighting": REWEIGHTING,
@@ -75,7 +77,6 @@ def experiment(
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
             "update_target": update_target,
-            "variation": "old-data",
         },
         mode="offline" if debug else "online",
     )
@@ -116,32 +117,16 @@ def experiment(
 
     print("validation labels:", torch.unique(valset.labels))
 
-    num_workers = NUM_WORKERS if not debug else 0
-    if alg == "Random" or alg == "OracleRandom":
-        acquisition_function = Random(
-            mini_batch_size=MINI_BATCH_SIZE,
-            num_workers=num_workers,
-        )
-    elif alg == "ITL" or alg == "ITL-nonsequential":
-        acquisition_function = ITL(
-            target=target,
-            noise_std=noise_std,
-            subsampled_target_frac=subsampled_target_frac,
-            max_target_size=max_target_size,
-            mini_batch_size=MINI_BATCH_SIZE,
-            num_workers=num_workers,
-            subsample=subsample_acquisition,
-            force_nonsequential=(alg == "ITL-nonsequential"),
-        )
-    elif alg == "UndirectedITL":
-        acquisition_function = UndirectedITL(
-            noise_std=noise_std,
-            mini_batch_size=MINI_BATCH_SIZE,
-            num_workers=num_workers,
-            subsample=subsample_acquisition,
-        )
-    else:
-        raise NotImplementedError
+    acquisition_function = get_acquisition_function(
+        alg=alg,
+        target=target,
+        noise_std=noise_std,
+        mini_batch_size=MINI_BATCH_SIZE,
+        num_workers=NUM_WORKERS if not debug else 0,
+        subsample_acquisition=subsample_acquisition,
+        subsampled_target_frac=subsampled_target_frac,
+        max_target_size=max_target_size,
+    )
 
     train_loop(
         model=model,
@@ -159,6 +144,7 @@ def experiment(
         update_target=update_target,
         reweighting=REWEIGHTING,
         reset_parameters=RESET_PARAMS,
+        use_best_model=USE_BEST_MODEL,
     )
     wandb.finish()
 

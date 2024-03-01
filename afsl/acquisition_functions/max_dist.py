@@ -8,6 +8,7 @@ from afsl.utils import (
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
     compute_embedding,
+    get_device,
 )
 
 __all__ = ["MaxDist", "DistanceState", "sqd_kernel_distance"]
@@ -92,7 +93,9 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
             )
 
         centroid_indices = torch.tensor([])
-        min_sqd_distances = torch.full(size=(data.size(0),), fill_value=torch.inf)
+        min_sqd_distances = torch.full(
+            size=(data.size(0),), fill_value=torch.inf, device=get_device(model)
+        )
 
         if isinstance(model, ModelWithEmbedding):
             kernel_matrix = embeddings @ embeddings.T
@@ -119,7 +122,7 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
             state.kernel_matrix[i, i]
             + torch.diag(state.kernel_matrix)
             - 2 * state.kernel_matrix[i, :]
-        )
+        ).to(state.min_sqd_distances.device)
         min_sqd_distances = torch.min(state.min_sqd_distances, new_sqd_distances)
         return DistanceState(
             centroid_indices=centroid_indices,
