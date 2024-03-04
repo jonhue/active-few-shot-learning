@@ -25,8 +25,9 @@ The following table provides an overview of the acquisition functions and their 
 | [MaxDist](acquisition_functions/max_dist)                          | ❌          | (✅)                | ✅          | embedding / kernel  |
 | [k-means++](acquisition_functions/kmeans_pp)                       | ❌          | (✅)                | ✅          | embedding / kernel  |
 | [Uncertainty Sampling](acquisition_functions/uncertainty_sampling) | ❌          | ✅                | ❌          | embedding / kernel  |
-| [MaxMargin](acquisition_functions/max_margin)                      | ❌          | (✅)              | ❌          | softmax             |
+| [MinMargin](acquisition_functions/min_margin)                      | ❌          | (✅)              | ❌          | softmax             |
 | [MaxEntropy](acquisition_functions/max_entropy)                    | ❌          | (✅)              | ❌          | softmax             |
+| [LeastConfidence](acquisition_functions/least_confidence)                    | ❌          | (✅)              | ❌          | softmax             |
 | [Information Density](acquisition_functions/information_density)   | (✅)        | (✅)              | ❌          | embedding & softmax |
 | [Random](acquisition_functions/random)                             | ❌          | ❌                | (✅)        | -                   |
 

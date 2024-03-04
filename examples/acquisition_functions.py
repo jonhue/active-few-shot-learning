@@ -5,9 +5,10 @@ from afsl.acquisition_functions.ctl import CTL
 from afsl.acquisition_functions.information_density import InformationDensity
 from afsl.acquisition_functions.itl import ITL
 from afsl.acquisition_functions.kmeans_pp import KMeansPP
+from afsl.acquisition_functions.least_confidence import LeastConfidence
 from afsl.acquisition_functions.max_dist import MaxDist
 from afsl.acquisition_functions.max_entropy import MaxEntropy
-from afsl.acquisition_functions.max_margin import MaxMargin
+from afsl.acquisition_functions.min_margin import MinMargin
 from afsl.acquisition_functions.random import Random
 from afsl.acquisition_functions.uncertainty_sampling import UncertaintySampling
 from afsl.acquisition_functions.undirected_itl import UndirectedITL
@@ -100,14 +101,20 @@ def get_acquisition_function(
             num_workers=num_workers,
             subsample=subsample_acquisition,
         )
-    elif alg == "MaxMargin":
-        acquisition_function = MaxMargin(
+    elif alg == "MinMargin":
+        acquisition_function = MinMargin(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
         )
     elif alg == "MaxEntropy":
         acquisition_function = MaxEntropy(
+            mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample_acquisition,
+        )
+    elif alg == "LeastConfidence":
+        acquisition_function = LeastConfidence(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,

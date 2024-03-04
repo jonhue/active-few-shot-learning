@@ -30,7 +30,8 @@ def train(
         running_loss = 0.0
         num_batches = 0
 
-        model.train()
+        if use_best_model:  # TODO: should refactor this
+            model.train()
         for _, data in enumerate(trainloader, 0):
             inputs, labels = data[0].to(device), data[1].to(device)
 
