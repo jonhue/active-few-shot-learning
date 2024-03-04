@@ -36,7 +36,7 @@ class ActiveDataLoader(Generic[M]):
     r"""Acquisition function to be used for data selection."""
 
     subsampled_target_frac: float
-    r"""Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$."""
+    r"""Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $1$."""
 
     max_target_size: int | None
     r"""
@@ -71,7 +71,7 @@ class ActiveDataLoader(Generic[M]):
         dataset: Dataset,
         target: torch.Tensor | None,
         batch_size: int,
-        subsampled_target_frac: float = 0.5,
+        subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
         mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
         embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE,
@@ -84,7 +84,7 @@ class ActiveDataLoader(Generic[M]):
         :param dataset: Inputs (shape $n \times d$) to be selected from.
         :param target: Tensor of prediction targets (shape $m \times d$) or `None`.
         :param batch_size: Size of the batch to be selected.
-        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$. Ignored if `target` is `None`.
+        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $1$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
         :param mini_batch_size: Size of mini batches used for computing the acquisition function.
         :param embedding_batch_size: Batch size used for computing the embeddings.

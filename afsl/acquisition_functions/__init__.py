@@ -346,12 +346,12 @@ class Targeted(ABC):
     def __init__(
         self,
         target: torch.Tensor,
-        subsampled_target_frac: float = 0.5,
+        subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
     ):
         r"""
         :param target: Tensor of prediction targets (shape $m \times d$).
-        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $0.5$.
+        :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $1$.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large.
         """
 
