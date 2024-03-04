@@ -32,7 +32,7 @@ class InformationDensity(BatchAcquisitionFunction):
         self,
         target: torch.Tensor,
         beta=1.0,
-        subsampled_target_frac: float = 0.5,
+        subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
         embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
