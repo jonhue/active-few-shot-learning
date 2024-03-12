@@ -1,6 +1,9 @@
+from __future__ import annotations
 from typing import Generic
 import torch
-from afsl.acquisition_functions import M, AcquisitionFunction
+from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
+from afsl.acquisition_functions.bace import BaCE
+from afsl.acquisition_functions.max_dist import MaxDist
 from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.acquisition_functions.itl import ITL
 from afsl.data import Dataset
@@ -8,6 +11,7 @@ from afsl.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
 )
 
 
@@ -24,6 +28,21 @@ class ActiveDataLoader(Generic[M]):
     - `model` is a PyTorch `nn.Module`,
     - `dataset` is a dataset of inputs (where `dataset[i]` returns a vector of length $d$), and
     - `target` is a tensor of prediction targets (shape $m \times d$) or `None`.
+
+    If `dataset` already includes pre-computed embeddings, `model` can be omitted:
+
+    ```python
+    data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=64)
+    batch = dataset[data_loader.next()]
+    ```
+
+    The target can also be updated sequentially:
+
+    ```python
+    data_loader = ActiveDataLoader.initialize(dataset, target=None, batch_size=64, force_targeted=True)
+    for target in targets:
+        batch = dataset[data_loader.with_target(target).next(model)]
+    ```
     """
 
     dataset: Dataset
@@ -34,18 +53,6 @@ class ActiveDataLoader(Generic[M]):
 
     acquisition_function: AcquisitionFunction[M]
     r"""Acquisition function to be used for data selection."""
-
-    subsampled_target_frac: float
-    r"""Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $1$."""
-
-    max_target_size: int | None
-    r"""
-    Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large.
-
-    .. warning::
-
-        The computational complexity of `next` scales cubically with the size of the target. If the target is large, it is recommended to set `max_target_size` to value other than `None`.
-    """
 
     def __init__(
         self,
@@ -76,7 +83,8 @@ class ActiveDataLoader(Generic[M]):
         mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
         embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers: int = DEFAULT_NUM_WORKERS,
-        subsample_acquisition: bool = False,
+        subsample_acquisition: bool = DEFAULT_SUBSAMPLE,
+        force_targeted: bool = False,
     ):
         r"""
         Initializes an active data loader.
@@ -90,11 +98,12 @@ class ActiveDataLoader(Generic[M]):
         :param embedding_batch_size: Batch size used for computing the embeddings.
         :param num_workers: Number of workers used for data loading.
         :param subsample_acquisition: Whether to subsample the data to a single mini batch before computing the acquisition function.
+        :param force_targeted: Whether to force targeted data selection. If `True`, `target` must be provided subsequently using `with_target`.
         """
 
-        if target is not None:
+        if target is not None or force_targeted:
             acquisition_function = ITL(
-                target=target,
+                target=target if target is not None else torch.tensor([]),
                 subsampled_target_frac=subsampled_target_frac,
                 max_target_size=max_target_size,
                 mini_batch_size=mini_batch_size,
@@ -115,16 +124,34 @@ class ActiveDataLoader(Generic[M]):
             acquisition_function=acquisition_function,
         )
 
-    def next(self, model: M) -> torch.Tensor:
+    def next(self, model: M | None = None) -> torch.Tensor:
         r"""
         Selects the next batch of data provided a `model` which is a PyTorch `nn.Module`.
 
-        :param model: Model to be used for data selection.
+        .. warning::
+
+            The computational complexity of `next` scales cubically with the size of the target. If the target is large, it is recommended to set `max_target_size` to value other than `None`.
+
+        :param model: Model to be used for data selection. For embedding-based acquisition functions, `model` can be `None` in which case the data is treated as if it was already embedded.
         :return: Indices of the selected data.
         """
 
         return self.acquisition_function.select(
             batch_size=self.batch_size,
-            model=model,
+            model=model,  # type: ignore
             dataset=self.dataset,
         )
+
+    def with_target(self, target: torch.Tensor) -> ActiveDataLoader[M]:
+        r"""
+        Returns the active data loader with a new target.
+
+        :param target: Tensor of prediction targets (shape $m \times d$).
+        :return: Updated active data loader.
+        """
+
+        assert isinstance(
+            self.acquisition_function, Targeted
+        ), "Acquisition function must be targeted"
+        self.acquisition_function.set_target(target)
+        return self

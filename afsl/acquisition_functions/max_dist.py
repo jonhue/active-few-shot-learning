@@ -1,13 +1,12 @@
 from typing import NamedTuple
 import torch
-from afsl.acquisition_functions import SequentialAcquisitionFunction
+from afsl.acquisition_functions import EmbeddingBased, SequentialAcquisitionFunction
 from afsl.model import ModelWithEmbedding, ModelWithEmbeddingOrKernel, ModelWithKernel
 from afsl.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
-    compute_embedding,
     get_device,
 )
 
@@ -25,7 +24,10 @@ class DistanceState(NamedTuple):
     r"""Kernel matrix of the data. Tensor of shape $n \times n$."""
 
 
-class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, DistanceState]):
+class MaxDist(
+    EmbeddingBased,
+    SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel | None, DistanceState],
+):
     r"""
     Given a model which for two inputs $\vx$ and $\vxp$ induces a distance $d(\vx,\vxp)$, `MaxDist`[^2] constructs the batch by choosing the point with the maximum distance to the nearest previously selected point: \\[ \vx_i = \argmax_{\vx} \min_{j < i} d(\vx, \vx_j). \\]
     The first point $\vx_1$ is chosen randomly.
@@ -55,9 +57,6 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
     [^3]: see `initialize_with_previous_samples` (deprecated)
     """
 
-    embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE
-    """Batch size used for computing the embeddings."""
-
     def __init__(
         self,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
@@ -74,30 +73,34 @@ class MaxDist(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, Distance
         :param subsample: Whether to subsample the data set.
         :param force_nonsequential: Whether to force non-sequential data selection.
         """
-        super().__init__(
+        SequentialAcquisitionFunction.__init__(
+            self,
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample,
             force_nonsequential=force_nonsequential,
         )
-        self.embedding_batch_size = embedding_batch_size
+        EmbeddingBased.__init__(self, embedding_batch_size=embedding_batch_size)
 
     def initialize(
         self,
-        model: ModelWithEmbeddingOrKernel,
+        model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
     ) -> DistanceState:
-        if isinstance(model, ModelWithEmbedding):
-            embeddings = compute_embedding(
-                model, data, batch_size=self.embedding_batch_size
+        if model is None or isinstance(model, ModelWithEmbedding):
+            embeddings = self.compute_embedding(
+                model=model, data=data, batch_size=self.embedding_batch_size
             )
+            device = embeddings.device
+        else:
+            device = get_device(model)
 
         centroid_indices = torch.tensor([])
         min_sqd_distances = torch.full(
-            size=(data.size(0),), fill_value=torch.inf, device=get_device(model)
+            size=(data.size(0),), fill_value=torch.inf, device=device
         )
 
-        if isinstance(model, ModelWithEmbedding):
+        if model is None or isinstance(model, ModelWithEmbedding):
             kernel_matrix = embeddings @ embeddings.T
         else:
             kernel_matrix = model.kernel(data, data)

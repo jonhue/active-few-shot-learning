@@ -45,15 +45,18 @@ from typing import Callable, Generic, Tuple, TypeVar
 import torch
 from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
 from afsl.data import Dataset
-from afsl.model import Model
+from afsl.model import Model, ModelWithEmbedding
 from afsl.utils import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
+    get_device,
+    mini_batch_wrapper,
 )
 import warnings
 
-M = TypeVar("M", bound=Model)
+M = TypeVar("M", bound=Model | None)
 
 
 class _IndexedDataset(TorchDataset[Tuple[torch.Tensor, int]]):
@@ -332,6 +335,53 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         return torch.tensor(selected_indices)
 
 
+class EmbeddingBased(ABC):
+    r"""
+    Abstract base class for acquisition functions that require an embedding of the data.
+    """
+
+    embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE
+    """Batch size used for computing the embeddings."""
+
+    def __init__(
+        self,
+        embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
+    ):
+        """
+        :param embedding_batch_size: Batch size used for computing the embeddings.
+        """
+        self.embedding_batch_size = embedding_batch_size
+
+    @staticmethod
+    def compute_embedding(
+        model: ModelWithEmbedding | None,
+        data: torch.Tensor,
+        batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE,
+    ) -> torch.Tensor:
+        r"""
+        Returns the embedding of the given data. If `model` is `None`, the data is returned as is (i.e., the data is assumed to be already embedded).
+
+        :param model: Model used for computing the embedding.
+        :param data: Tensor of inputs (shape $n \times d$) to be embedded.
+        :param batch_size: Batch size used for computing the embeddings.
+        :return: Embedding of the given data.
+        """
+        if model is None:
+            return data
+
+        device = get_device(model)
+        model.eval()
+        with torch.no_grad():
+            embeddings = mini_batch_wrapper(
+                fn=lambda batch: model.embed(
+                    batch.to(device, non_blocking=True)
+                ),  # TODO: handle device internally
+                data=data,
+                batch_size=batch_size,
+            )
+            return embeddings
+
+
 class Targeted(ABC):
     r"""
     Abstract base class for acquisition functions that take into account the relevance of data with respect to a specified target (denoted $\spA$).
@@ -368,8 +418,20 @@ class Targeted(ABC):
         self.subsampled_target_frac = subsampled_target_frac
 
     def add_to_target(self, new_target: torch.Tensor):
-        """Appends new target data to the target."""
+        r"""
+        Appends new target data to the target.
+
+        :param new_target: Tensor of new prediction targets (shape $m \times d$).
+        """
         self._target = torch.cat([self._target, new_target])
+
+    def set_target(self, new_target: torch.Tensor):
+        r"""
+        Updates the target.
+
+        :param new_target: Tensor of new prediction targets (shape $m \times d$).
+        """
+        self._target = new_target
 
     def get_target(self) -> torch.Tensor:
         r"""
