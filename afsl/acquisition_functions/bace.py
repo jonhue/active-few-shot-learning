@@ -1,6 +1,7 @@
 from typing import NamedTuple
 import torch
 from afsl.acquisition_functions import (
+    EmbeddingBased,
     SequentialAcquisitionFunction,
     Targeted,
 )
@@ -15,7 +16,6 @@ from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
-    compute_embedding,
 )
 
 __all__ = ["BaCE", "BaCEState", "TargetedBaCE"]
@@ -30,7 +30,10 @@ class BaCEState(NamedTuple):
     """Length of the data set."""
 
 
-class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState]):
+class BaCE(
+    EmbeddingBased,
+    SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel | None, BaCEState],
+):
     r"""
     `BaCE` [^1] (*Batch selection via Conditional Embeddings*)
 
@@ -50,9 +53,6 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
     noise_std: float
     """Standard deviation of the noise."""
 
-    embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE
-    """Batch size used for computing the embeddings."""
-
     def __init__(
         self,
         noise_std=1.0,
@@ -70,18 +70,19 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
         :param subsample: Whether to subsample the data set.
         :param force_nonsequential: Whether to force non-sequential data selection.
         """
-        super().__init__(
+        SequentialAcquisitionFunction.__init__(
+            self,
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample,
             force_nonsequential=force_nonsequential,
         )
+        EmbeddingBased.__init__(self, embedding_batch_size=embedding_batch_size)
         self.noise_std = noise_std
-        self.embedding_batch_size = embedding_batch_size
 
     def initialize(
         self,
-        model: ModelWithEmbeddingOrKernel,
+        model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
@@ -90,12 +91,12 @@ class BaCE(SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel, BaCEState])
                 model.kernel(data, data), noise_std=self.noise_std
             )
         else:
-            data_embeddings = compute_embedding(
-                model, data, batch_size=self.embedding_batch_size
+            embeddings = self.compute_embedding(
+                model=model, data=data, batch_size=self.embedding_batch_size
             )
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 noise_std=self.noise_std,
-                Embeddings=data_embeddings,
+                Embeddings=embeddings,
                 Sigma=(
                     model.latent_covariance()
                     if isinstance(model, ModelWithLatentCovariance)
@@ -155,7 +156,7 @@ class TargetedBaCE(Targeted, BaCE):
 
     def initialize(
         self,
-        model: ModelWithEmbeddingOrKernel,
+        model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
@@ -167,20 +168,14 @@ class TargetedBaCE(Targeted, BaCE):
                 noise_std=self.noise_std,
             )
         else:
-            data_embeddings = compute_embedding(
-                model, data=data, batch_size=self.embedding_batch_size
+            embeddings = self.compute_embedding(
+                model=model,
+                data=torch.cat((data, target)),
+                batch_size=self.embedding_batch_size,
             )
-            target_embeddings = (
-                compute_embedding(
-                    model, data=target, batch_size=self.embedding_batch_size
-                )
-                if target.size(0) > 0
-                else torch.tensor([], device=data_embeddings.device)
-            )
-            joint_embeddings = torch.cat((data_embeddings, target_embeddings))
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 noise_std=self.noise_std,
-                Embeddings=joint_embeddings,
+                Embeddings=embeddings,
                 Sigma=(
                     model.latent_covariance()
                     if isinstance(model, ModelWithLatentCovariance)

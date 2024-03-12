@@ -1,6 +1,6 @@
 import torch
+from afsl.acquisition_functions import EmbeddingBased
 from afsl.models.simple_mlp import SimpleMLP
-from afsl.utils import compute_embedding
 
 
 class SimpleMLPWithEmbedding(SimpleMLP):
@@ -14,5 +14,5 @@ data = torch.randn(100, 10)
 
 
 def test_last_layer():
-    embeddings = compute_embedding(model, data, batch_size=99)
+    embeddings = EmbeddingBased.compute_embedding(model, data, batch_size=99)
     assert embeddings.shape == (100, 32)

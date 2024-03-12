@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from afsl.acquisition_functions import (
     BatchAcquisitionFunction,
+    EmbeddingBased,
     Targeted,
 )
 from afsl.model import ModelWithEmbedding
@@ -10,11 +11,12 @@ from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
-    compute_embedding,
 )
 
 
-class CosineSimilarity(Targeted, BatchAcquisitionFunction):
+class CosineSimilarity(
+    EmbeddingBased, Targeted, BatchAcquisitionFunction[ModelWithEmbedding | None]
+):
     r"""
     The cosine similarity between two vectors $\vphi$ and $\vphip$ is \\[\angle(\vphi, \vphip) \defeq \frac{\vphi^\top \vphip}{\|\vphi\|_2 \|\vphip\|_2}.\\]
 
@@ -31,9 +33,6 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
 
     [^1]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
     """
-
-    embedding_batch_size: int = DEFAULT_EMBEDDING_BATCH_SIZE
-    """Batch size used for computing the embeddings."""
 
     def __init__(
         self,
@@ -59,34 +58,32 @@ class CosineSimilarity(Targeted, BatchAcquisitionFunction):
             num_workers=num_workers,
             subsample=subsample,
         )
+        EmbeddingBased.__init__(self, embedding_batch_size=embedding_batch_size)
         Targeted.__init__(
             self,
             target=target,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
         )
-        self.embedding_batch_size = embedding_batch_size
 
     def compute(
         self,
-        model: ModelWithEmbedding,
+        model: ModelWithEmbedding | None,
         data: torch.Tensor,
     ) -> torch.Tensor:
-        model.eval()
-        with torch.no_grad():
-            data_latent = compute_embedding(
-                model, data=data, batch_size=self.embedding_batch_size
-            )
-            target_latent = compute_embedding(
-                model, data=self.get_target(), batch_size=self.embedding_batch_size
-            )
+        data_latent = self.compute_embedding(
+            model=model, data=data, batch_size=self.embedding_batch_size
+        )
+        target_latent = self.compute_embedding(
+            model=model, data=self.get_target(), batch_size=self.embedding_batch_size
+        )
 
-            data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
-            target_latent_normalized = F.normalize(target_latent, p=2, dim=1)
+        data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
+        target_latent_normalized = F.normalize(target_latent, p=2, dim=1)
 
-            cosine_similarities = torch.matmul(
-                data_latent_normalized, target_latent_normalized.T
-            )
+        cosine_similarities = torch.matmul(
+            data_latent_normalized, target_latent_normalized.T
+        )
 
-            average_cosine_similarities = torch.mean(cosine_similarities, dim=1)
-            return average_cosine_similarities
+        average_cosine_similarities = torch.mean(cosine_similarities, dim=1)
+        return average_cosine_similarities
