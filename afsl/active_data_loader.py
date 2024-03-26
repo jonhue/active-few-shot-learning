@@ -124,7 +124,11 @@ class ActiveDataLoader(Generic[M]):
             acquisition_function=acquisition_function,
         )
 
-    def next(self, model: M | None = None) -> torch.Tensor:
+    def next(
+        self,
+        model: M | None = None,
+        selected_indices: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         r"""
         Selects the next batch of data provided a `model` which is a PyTorch `nn.Module`.
 
@@ -133,6 +137,7 @@ class ActiveDataLoader(Generic[M]):
             The computational complexity of `next` scales cubically with the size of the target. If the target is large, it is recommended to set `max_target_size` to value other than `None`.
 
         :param model: Model to be used for data selection. For embedding-based acquisition functions, `model` can be `None` in which case the data is treated as if it was already embedded.
+        :param selected_indices: Indices of the data that have already been selected.
         :return: Indices of the selected data.
         """
 
@@ -140,6 +145,7 @@ class ActiveDataLoader(Generic[M]):
             batch_size=self.batch_size,
             model=model,  # type: ignore
             dataset=self.dataset,
+            selected_indices=selected_indices,
         )
 
     def with_target(self, target: torch.Tensor) -> ActiveDataLoader[M]:

@@ -84,6 +84,8 @@ class BaCE(
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        selected_data: torch.Tensor | None,
+        batch_size: int,
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
@@ -158,6 +160,8 @@ class TargetedBaCE(Targeted, BaCE):
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        selected_data: torch.Tensor | None,
+        batch_size: int,
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
