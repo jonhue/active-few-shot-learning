@@ -57,6 +57,9 @@ class MaxDist(
     [^3]: see `initialize_with_previous_samples` (deprecated)
     """
 
+    initialize_with_previous_samples: bool = True
+    """Whether to initialize the centroids with the samples from previous batches."""
+
     def __init__(
         self,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
@@ -64,6 +67,7 @@ class MaxDist(
         num_workers=DEFAULT_NUM_WORKERS,
         subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
+        initialize_with_previous_samples=True,
     ):
         """
         :param mini_batch_size: Size of mini-batch used for computing the acquisition function.
@@ -72,6 +76,7 @@ class MaxDist(
         :param num_workers: Number of workers used for parallel computation.
         :param subsample: Whether to subsample the data set.
         :param force_nonsequential: Whether to force non-sequential data selection.
+        :param initialize_with_previous_samples: Whether to initialize the centroids with the samples from previous batches.
         """
         SequentialAcquisitionFunction.__init__(
             self,
@@ -81,11 +86,14 @@ class MaxDist(
             force_nonsequential=force_nonsequential,
         )
         EmbeddingBased.__init__(self, embedding_batch_size=embedding_batch_size)
+        self.initialize_with_previous_samples = initialize_with_previous_samples
 
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        selected_data: torch.Tensor | None,
+        batch_size: int,
     ) -> DistanceState:
         if model is None or isinstance(model, ModelWithEmbedding):
             embeddings = self.compute_embedding(
@@ -95,10 +103,31 @@ class MaxDist(
         else:
             device = get_device(model)
 
-        centroid_indices = torch.tensor([])
-        min_sqd_distances = torch.full(
-            size=(data.size(0),), fill_value=torch.inf, device=device
-        )
+        if self.initialize_with_previous_samples and selected_data is not None:
+            centroid_indices = torch.arange(
+                data.size(0), data.size(0) + selected_data.size(0)
+            )
+            data = torch.cat([data, selected_data], dim=0)
+            if model is None or isinstance(model, ModelWithEmbedding):
+                selected_embeddings = self.compute_embedding(
+                    model=model,
+                    data=selected_data,
+                    batch_size=self.embedding_batch_size,
+                )
+                embeddings = torch.cat([embeddings, selected_embeddings], dim=0)
+                centroids = embeddings[centroid_indices.to(embeddings.device)]
+                distances = torch.square(
+                    torch.cdist(embeddings.unsqueeze(0), centroids.unsqueeze(0), p=2)[0]
+                )
+            else:
+                centroids = data[centroid_indices.to(data.device)]
+                distances = sqd_kernel_distance(data, centroids, model)
+            min_sqd_distances = torch.min(distances, dim=1).values
+        else:
+            centroid_indices = torch.tensor([], dtype=torch.long)
+            min_sqd_distances = torch.full(
+                size=(data.size(0),), fill_value=torch.inf, device=device
+            )
 
         if model is None or isinstance(model, ModelWithEmbedding):
             kernel_matrix = embeddings @ embeddings.T
@@ -112,7 +141,10 @@ class MaxDist(
         )
 
     def compute(self, state: DistanceState) -> torch.Tensor:
-        return state.min_sqd_distances
+        min_sqd_distances = torch.clone(state.min_sqd_distances)
+        if state.centroid_indices.size(0) > 0:
+            min_sqd_distances[state.centroid_indices] = 0
+        return min_sqd_distances
 
     def step(self, state: DistanceState, i: int) -> DistanceState:
         centroid_indices = torch.cat(

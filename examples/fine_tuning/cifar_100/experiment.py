@@ -98,8 +98,8 @@ def experiment(
         trainset.data = trainset.data[mask]
         train_labels = train_labels[mask]
     if debug:
-        trainset.data = trainset.data[:10]
-        train_labels = train_labels[:10]
+        trainset.data = trainset.data[:100]
+        train_labels = train_labels[:100]
     train_inputs = InputDataset(trainset)
 
     # Define testset and valset
@@ -134,7 +134,7 @@ def experiment(
         optimizer=optimizer,
         acquisition_function=acquisition_function,
         num_rounds=NUM_ROUNDS,
-        num_epochs=EPOCHS,
+        num_epochs=0 if debug else EPOCHS,
         query_batch_size=query_batch_size,
         train_batch_size=TRAIN_BATCH_SIZE,
         update_target=update_target,
@@ -164,7 +164,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--alg", type=str, default="ITL")
+    parser.add_argument("--alg", type=str, default="TypiClust")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
     parser.add_argument(
