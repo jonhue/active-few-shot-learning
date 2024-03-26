@@ -91,7 +91,7 @@ class ProbCover(
             i=0,
             n=n,
             m=data.size(0),
-            cur_df=cur_df,
+            cur_df=cur_df,  # type: ignore
             covered_samples=covered_samples,
         )
 
@@ -115,7 +115,7 @@ class ProbCover(
             i=state.i + 1,
             n=state.n,
             m=state.m,
-            cur_df=cur_df,
+            cur_df=cur_df,  # type: ignore
             covered_samples=covered_samples,
         )
 

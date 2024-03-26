@@ -89,7 +89,7 @@ class TypiClust(
         clusters = kmeans(features=features, num_clusters=num_clusters)
 
         # using only labeled+unlabeled indices, without validation set.
-        labels = np.copy(clusters)
+        labels = np.copy(clusters)  # type: ignore
 
         # FIXED BUG: cluster_labeled_counts not matching cluster_ids when there are missing cluster numbers
         id_mapping = {
@@ -117,7 +117,7 @@ class TypiClust(
         # drop too small clusters
         clusters_df = clusters_df[clusters_df.cluster_size > MIN_CLUSTER_SIZE]
         # sort clusters by lowest number of existing samples, and then by cluster sizes (large to small)
-        clusters_df = clusters_df.sort_values(["existing_count", "neg_cluster_size"])
+        clusters_df = clusters_df.sort_values(["existing_count", "neg_cluster_size"])  # type: ignore
         labels[existing_indices] = -1
 
         return TypiClustState(
