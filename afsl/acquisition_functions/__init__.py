@@ -173,7 +173,9 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         _values = []
         _original_indices = []
         for data, idx in data_loader:
-            _values.append(compute_fn(model, data))
+            _indiv_values = compute_fn(model, data)
+            assert _indiv_values.size(0) == data.size(0)
+            _values.append(_indiv_values)
             _original_indices.append(idx)
             if subsample:
                 break
@@ -280,6 +282,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         indices = []
         for _ in range(batch_size):
             values = self.compute(state)
+            assert values.size(0) == data.size(0)
             i = self.selector(values)
             indices.append(i)
             state = self.step(state, i)
