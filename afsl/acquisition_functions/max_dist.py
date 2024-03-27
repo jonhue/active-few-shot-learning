@@ -16,6 +16,7 @@ __all__ = ["MaxDist", "DistanceState", "sqd_kernel_distance"]
 class DistanceState(NamedTuple):
     """State of sequential batch selection."""
 
+    n: int
     centroid_indices: torch.Tensor
     """Indices of previously selected centroids."""
     min_sqd_distances: torch.Tensor
@@ -95,6 +96,8 @@ class MaxDist(
         selected_data: torch.Tensor | None,
         batch_size: int,
     ) -> DistanceState:
+        n = data.size(0)
+
         if model is None or isinstance(model, ModelWithEmbedding):
             embeddings = self.compute_embedding(
                 model=model, data=data, batch_size=self.embedding_batch_size
@@ -135,6 +138,7 @@ class MaxDist(
             kernel_matrix = model.kernel(data, data)
 
         return DistanceState(
+            n=n,
             centroid_indices=centroid_indices,
             min_sqd_distances=min_sqd_distances,
             kernel_matrix=kernel_matrix,
@@ -144,7 +148,7 @@ class MaxDist(
         min_sqd_distances = torch.clone(state.min_sqd_distances)
         if state.centroid_indices.size(0) > 0:
             min_sqd_distances[state.centroid_indices] = 0
-        return min_sqd_distances
+        return min_sqd_distances[:state.n]
 
     def step(self, state: DistanceState, i: int) -> DistanceState:
         centroid_indices = torch.cat(
@@ -160,6 +164,7 @@ class MaxDist(
         ).to(state.min_sqd_distances.device)
         min_sqd_distances = torch.min(state.min_sqd_distances, new_sqd_distances)
         return DistanceState(
+            n=state.n,
             centroid_indices=centroid_indices,
             min_sqd_distances=min_sqd_distances,
             kernel_matrix=state.kernel_matrix,

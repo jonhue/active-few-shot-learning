@@ -107,6 +107,8 @@ class ProbCover(
         return degrees
 
     def step(self, state: ProbCoverState, i: int) -> ProbCoverState:
+        # shift i
+        i = i + state.num_selected
         # removing incoming edges to newly covered samples
         new_covered_samples = state.cur_df.y[(state.cur_df.x == i)].values
         assert len(np.intersect1d(state.covered_samples, new_covered_samples)) == 0, "all samples should be new"  # type: ignore
