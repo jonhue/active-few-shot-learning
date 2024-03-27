@@ -107,6 +107,8 @@ class ProbCover(
         return degrees
 
     def step(self, state: ProbCoverState, i: int) -> ProbCoverState:
+        # shift i
+        i = i + state.num_selected
         # removing incoming edges to newly covered samples
         new_covered_samples = state.cur_df.y[(state.cur_df.x == i)].values
         assert len(np.intersect1d(state.covered_samples, new_covered_samples)) == 0, "all samples should be new"  # type: ignore
@@ -133,7 +135,7 @@ def construct_graph(features, delta, batch_size=500):
     print(f"Start constructing graph using delta={delta}")
     # distance computations are done in GPU
     cuda_feats = torch.tensor(features).cuda()
-    for i in range(len(features) // batch_size): # FIXED BUG: added +1
+    for i in range(len(features) // batch_size):
         # distance comparisons are done in batches to reduce memory consumption
         cur_feats = cuda_feats[i * batch_size : (i + 1) * batch_size]
         dist = torch.cdist(cur_feats, cuda_feats)
