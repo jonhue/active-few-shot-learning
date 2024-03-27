@@ -24,6 +24,7 @@ class TypiClustState(NamedTuple):
     """State of sequential batch selection."""
 
     i: int
+    num_selected: int
     n: int
     clusters_df: pd.DataFrame
     labels: np.ndarray
@@ -70,7 +71,6 @@ class TypiClust(
         selected_data: torch.Tensor | None,
         batch_size: int,
     ) -> TypiClustState:
-        n = data.size(0)
         num_selected = selected_data.size(0) if selected_data is not None else 0
         num_clusters = min(num_selected + batch_size, MAX_NUM_CLUSTERS)
         print(f"Clustering into {num_clusters} clusters.")
@@ -114,15 +114,17 @@ class TypiClust(
                 "neg_cluster_size": -1 * cluster_sizes,
             }
         )
-        # drop too small clusters
-        clusters_df = clusters_df[clusters_df.cluster_size > MIN_CLUSTER_SIZE]
+        # drop too small clusters, FIXED BUG: prevented zero remaining clusters
+        if len(clusters_df[clusters_df.cluster_size > MIN_CLUSTER_SIZE]) > 0:
+            clusters_df = clusters_df[clusters_df.cluster_size > MIN_CLUSTER_SIZE]
         # sort clusters by lowest number of existing samples, and then by cluster sizes (large to small)
         clusters_df = clusters_df.sort_values(["existing_count", "neg_cluster_size"])  # type: ignore
         labels[existing_indices] = -1
 
         return TypiClustState(
             i=0,
-            n=n,
+            num_selected=num_selected,
+            n=data.size(0),
             clusters_df=clusters_df,
             labels=labels,
             features=features,
@@ -132,17 +134,21 @@ class TypiClust(
         cluster = state.clusters_df.iloc[state.i % len(state.clusters_df)].cluster_id
         indices = (state.labels == cluster).nonzero()[0]
         rel_feats = state.features[indices]
+        typicality = torch.zeros(state.n)
         # in case we have too small cluster, calculate density among half of the cluster
-        typicality = torch.tensor(
+        typicality[indices] = torch.tensor(
             calculate_typicality(rel_feats, min(K_NN, len(indices) // 2))
         )
-        typicality[state.n :] = 0
+        # remove already selected samples
+        typicality = typicality[state.num_selected:]
+        assert typicality.size(0) == state.n - state.num_selected
         return typicality
 
     def step(self, state: TypiClustState, i: int) -> TypiClustState:
         state.labels[i] = -1
         return TypiClustState(
             i=state.i + 1,
+            num_selected=state.num_selected,
             n=state.n,
             clusters_df=state.clusters_df,
             labels=state.labels,

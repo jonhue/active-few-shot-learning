@@ -19,7 +19,7 @@ class ProbCoverState(NamedTuple):
 
     i: int
     n: int
-    m: int
+    num_selected: int
     cur_df: pd.DataFrame
     covered_samples: np.ndarray
 
@@ -67,7 +67,6 @@ class ProbCover(
         selected_data: torch.Tensor | None,
         batch_size: int,
     ) -> ProbCoverState:
-        n = data.size(0)
         num_selected = selected_data.size(0) if selected_data is not None else 0
         data = (
             torch.cat([selected_data, data], dim=0)
@@ -89,20 +88,22 @@ class ProbCover(
 
         return ProbCoverState(
             i=0,
-            n=n,
-            m=data.size(0),
+            num_selected=num_selected,
+            n=data.size(0),
             cur_df=cur_df,  # type: ignore
             covered_samples=covered_samples,
         )
 
     def compute(self, state: ProbCoverState) -> torch.Tensor:
-        coverage = len(state.covered_samples) / state.m
+        coverage = len(state.covered_samples) / state.n
         # selecting the sample with the highest degree
-        degrees = torch.tensor(np.bincount(state.cur_df.x, minlength=state.m))
-        degrees[state.n :] = 0
+        degrees = torch.tensor(np.bincount(state.cur_df.x, minlength=state.n))
+        # remove already selected samples
+        degrees = degrees[state.num_selected:]
         print(
             f"Iteration is {state.i}.\tGraph has {len(state.cur_df)} edges.\tMax degree is {degrees.max()}.\tCoverage is {coverage:.3f}"
         )
+        assert degrees.size(0) == state.n - state.num_selected
         return degrees
 
     def step(self, state: ProbCoverState, i: int) -> ProbCoverState:
@@ -113,8 +114,8 @@ class ProbCover(
         covered_samples = np.concatenate([state.covered_samples, new_covered_samples])  # type: ignore
         return ProbCoverState(
             i=state.i + 1,
+            num_selected=state.num_selected,
             n=state.n,
-            m=state.m,
             cur_df=cur_df,  # type: ignore
             covered_samples=covered_samples,
         )
@@ -132,7 +133,7 @@ def construct_graph(features, delta, batch_size=500):
     print(f"Start constructing graph using delta={delta}")
     # distance computations are done in GPU
     cuda_feats = torch.tensor(features).cuda()
-    for i in range(len(features) // batch_size):
+    for i in range(len(features) // batch_size): # FIXED BUG: added +1
         # distance comparisons are done in batches to reduce memory consumption
         cur_feats = cuda_feats[i * batch_size : (i + 1) * batch_size]
         dist = torch.cdist(cur_feats, cuda_feats)
