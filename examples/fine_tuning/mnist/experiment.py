@@ -54,7 +54,7 @@ def experiment(
     wandb.init(
         name="First experiment",
         dir="/cluster/scratch/jhuebotter/wandb/mnist-fine-tuning",
-        project="Fine-tuning MNIST",
+        project="Fine-tuning MNIST-2",
         config={
             "learning_rate": LR,
             "architecture": "CNN",
@@ -77,6 +77,7 @@ def experiment(
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
             "update_target": update_target,
+            "force_target_selectin_in_each_round": False,
         },
         mode="offline" if debug else "online",
     )
@@ -94,8 +95,17 @@ def experiment(
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
-    # Define trainset
+    # Define testset and valset
     trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
+    testset, valset = collect_test_data(
+        _testset,
+        n_test=n_init,
+        restrict_to_labels=LABELS,
+        imbalanced_test_config=IMBALANCED_TEST,
+    )
+    target = testset.inputs
+
+    # Define trainset
     train_labels = torch.tensor(trainset.targets)
     if alg == "OracleRandom":
         mask = (train_labels[:, None] == LABELS).any(dim=1)
@@ -104,16 +114,9 @@ def experiment(
     if debug:
         trainset.data = trainset.data[:10]
         train_labels = train_labels[:10]
+    train_labels = torch.cat([testset.labels, train_labels], dim=0)
     train_inputs = InputDataset(trainset)
-
-    # Define testset and valset
-    testset, valset = collect_test_data(
-        _testset,
-        n_test=n_init,
-        restrict_to_labels=LABELS,
-        imbalanced_test_config=IMBALANCED_TEST,
-    )
-    target = testset.inputs
+    train_inputs.prepend(target)
 
     print("validation labels:", torch.unique(valset.labels))
 
@@ -138,7 +141,7 @@ def experiment(
         optimizer=optimizer,
         acquisition_function=acquisition_function,
         num_rounds=NUM_ROUNDS,
-        num_epochs=EPOCHS,
+        num_epochs=0 if debug else EPOCHS,
         query_batch_size=query_batch_size,
         train_batch_size=TRAIN_BATCH_SIZE,
         update_target=update_target,
@@ -169,7 +172,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--alg", type=str, default="ITL")
+    parser.add_argument("--alg", type=str, default="ProbCover")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
     parser.add_argument(

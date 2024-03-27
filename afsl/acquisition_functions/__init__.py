@@ -177,6 +177,11 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
             _original_indices.append(idx)
             if subsample:
                 break
+
+        # data = torch.stack([dataset[i] for i in range(30)])
+        # _values.append(compute_fn(model, data))
+        # _original_indices.append(torch.arange(30))
+
         values = torch.cat(_values)
         original_indices = torch.cat(_original_indices)
 
@@ -357,6 +362,12 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
                 if self.subsample:
                     break
             indexed_dataset = Subset(indexed_dataset, new_selected_indices)
+
+        # data = torch.cat((torch.stack([dataset[i] for i in range(30)]), torch.stack([dataset[i] for i in new_selected_indices])))
+        # idx = torch.cat([torch.arange(30), torch.tensor(new_selected_indices)])
+        # return idx[self.select_from_minibatch(
+        #     batch_size, model, data, selected_data
+        # ).cpu()]
         return torch.tensor(new_selected_indices)
 
 
