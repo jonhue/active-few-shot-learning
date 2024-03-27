@@ -134,8 +134,8 @@ def construct_graph(features, delta, batch_size=500):
     xs, ys, ds = [], [], []
     print(f"Start constructing graph using delta={delta}")
     # distance computations are done in GPU
-    cuda_feats = torch.tensor(features).cuda()
-    for i in range(len(features) // batch_size):
+    cuda_feats = torch.tensor(features)#.cuda()
+    for i in range(len(features) // batch_size + 1): # FIXED BUG: added +1
         # distance comparisons are done in batches to reduce memory consumption
         cur_feats = cuda_feats[i * batch_size : (i + 1) * batch_size]
         dist = torch.cdist(cur_feats, cuda_feats)

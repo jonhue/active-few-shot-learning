@@ -51,7 +51,7 @@ def experiment(
     wandb.init(
         name="First experiment",
         dir="/cluster/scratch/jhuebotter/wandb/cifar-fine-tuning",
-        project="Fine-tuning CIFAR",
+        project="Fine-tuning CIFAR-2",
         config={
             "learning_rate": LR,
             "architecture": "EfficientNet (partially frozen) with-bias",
@@ -73,6 +73,7 @@ def experiment(
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
             "update_target": update_target,
+            "force_target_selectin_in_each_round": False,
         },
         mode="offline" if debug else "online",
     )
@@ -90,19 +91,8 @@ def experiment(
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
-    # Define trainset
-    trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
-    train_labels = torch.tensor(trainset.targets)
-    if alg == "OracleRandom":
-        mask = (train_labels[:, None] == LABELS).any(dim=1)
-        trainset.data = trainset.data[mask]
-        train_labels = train_labels[mask]
-    if debug:
-        trainset.data = trainset.data[:100]
-        train_labels = train_labels[:100]
-    train_inputs = InputDataset(trainset)
-
     # Define testset and valset
+    trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
     testset, valset = collect_test_data(
         _testset,
         n_test=n_init,
@@ -110,6 +100,19 @@ def experiment(
         imbalanced_test_config=IMBALANCED_TEST,
     )
     target = testset.inputs
+
+    # Define trainset
+    train_labels = torch.tensor(trainset.targets)
+    if alg == "OracleRandom":
+        mask = (train_labels[:, None] == LABELS).any(dim=1)
+        trainset.data = trainset.data[mask]
+        train_labels = train_labels[mask]
+    if debug:
+        trainset.data = trainset.data[:10]
+        train_labels = train_labels[:10]
+    train_labels = torch.cat([testset.labels, train_labels], dim=0)
+    train_inputs = InputDataset(trainset)
+    train_inputs.prepend(target)
 
     print("validation labels:", torch.unique(valset.labels))
 
