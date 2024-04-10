@@ -52,8 +52,8 @@ def experiment(
     debug: bool,
 ):
     wandb.init(
-        name="First experiment",
-        dir="/cluster/scratch/jhuebotter/wandb/mnist-fine-tuning",
+        name="MNIST First Test",
+        dir="/cluster/scratch/sbongni/wandb/mnist",
         project="Fine-tuning MNIST",
         config={
             "learning_rate": LR,
