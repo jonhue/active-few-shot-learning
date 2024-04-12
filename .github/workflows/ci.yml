@@ -33,7 +33,7 @@ jobs:
     - name: Run Black
       run: black . --check
     - name: Run pyright
-      uses: jakebailey/pyright-action@v2.3.0
+      uses: jakebailey/pyright-action@v2.3.1
     - name: Run pytest
       run: |
         export PYTHONPATH=$(pwd)
