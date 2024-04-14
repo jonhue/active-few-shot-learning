@@ -254,7 +254,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         self,
         batch_size: int,
         model: M,
-        data: torch.Tensor,
+        data: torch.Tensor
     ) -> torch.Tensor:
         r"""
         Selects the next batch from the given mini batch `data`.

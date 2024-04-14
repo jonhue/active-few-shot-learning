@@ -28,6 +28,8 @@ class BaCEState(NamedTuple):
     r"""Kernel matrix of the data. Tensor of shape $n \times n$."""
     n: int
     """Length of the data set."""
+    observed_points: list
+    """Points that were already observed."""
 
 
 class BaCE(
@@ -103,11 +105,12 @@ class BaCE(
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n)
+        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[])
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)
+        state.observed_points.append(i)
+        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n, observed_points=state.observed_points)
 
 
 class TargetedBaCE(Targeted, BaCE):
@@ -182,4 +185,4 @@ class TargetedBaCE(Targeted, BaCE):
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n)
+        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[])
