@@ -1,5 +1,6 @@
 import torch
 import wandb
+import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
@@ -51,8 +52,14 @@ class ITLNoiseless(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
+        # DONE set observed points to -\infty
+        # TODO points that are in the target space and the sample space can occur twice in the covariance matrix
+        # DONE add sample and target points tensor to the state (n + m * d)
+        # DONE Save x's and not indices in observed points
+
         conditional_variances = torch.empty_like(variances)
-        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if i not in state.observed_points])
+        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)])
+        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)])
 
         for i in unobserved_points:
             conditional_covariance_matrix = state.covariance_matrix.condition_on(
@@ -62,6 +69,8 @@ class ITLNoiseless(TargetedBaCE):
             conditional_variances[i] = torch.diag(conditional_covariance_matrix)
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
+        for i in observed_points:
+            mi[i] = -1 * float('inf')
 
         wandb.log(
             {
@@ -73,5 +82,30 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def adapted_target_space(state: BaCEState, i) -> torch.Tensor:
-        return torch.tensor([x for x in torch.arange(start=state.n, end=state.covariance_matrix.dim) if x not in state.observed_points and not x == i])
+        return torch.tensor([x for x in torch.arange(start=len(state.observed_points), end=state.covariance_matrix.dim - state.n + len(state.observed_points)) if not ITLNoiseless.observed(x, state) and not x == i])
+    
+    @staticmethod
+    def observed(idx, state: BaCEState):
+        return any(ITLNoiseless.isClose(state.joint_data[idx], x) for x in state.observed_points)
+    
+    @staticmethod
+    def isClose(x, y, rel_tol=1e-09, abs_tol=0.0):
+        """Checks if two float vectors are almost equal
+
+        Parameters
+        ----------
+        x : vector, value 1 to check
+        y : vector, value 2 to check
+        rel_tol : float, optional
+            standard value is 0.000001
+        abs_tol : float, optional
+            standard value is 0.000001
+
+        Returns
+        ------
+        If the vector x is close to the vector y
+        """
+        
+        return np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)
+
 

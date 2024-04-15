@@ -30,6 +30,8 @@ class BaCEState(NamedTuple):
     """Length of the data set."""
     observed_points: list
     """Points that were already observed."""
+    joint_data: torch.Tensor
+    
 
 
 class BaCE(
@@ -85,7 +87,7 @@ class BaCE(
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor,
+        data: torch.Tensor, #  sample space
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
@@ -105,12 +107,12 @@ class BaCE(
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[])
+        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[], joint_data=data)
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        state.observed_points.append(i)
-        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n, observed_points=state.observed_points)
+        observed_points = state.observed_points + [state.joint_data[i]]
+        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n, observed_points=observed_points, joint_data=state.joint_data)
 
 
 class TargetedBaCE(Targeted, BaCE):
@@ -160,12 +162,12 @@ class TargetedBaCE(Targeted, BaCE):
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor,
+        data: torch.Tensor, # sample space
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
+        joint_data = torch.cat((data, target))
         if isinstance(model, ModelWithKernel):
-            joint_data = torch.cat((data, target))
             covariance_matrix = GaussianCovarianceMatrix(
                 model.kernel(joint_data, joint_data),
                 noise_std=self.noise_std,
@@ -185,4 +187,4 @@ class TargetedBaCE(Targeted, BaCE):
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[])
+        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[], joint_data=joint_data)
