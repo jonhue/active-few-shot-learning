@@ -1,6 +1,6 @@
 import argparse
 from examples.launch_utils import generate_base_command, generate_run_commands
-import examples.fine_tuning.mnist.experiment as experiment
+import examples.fine_tuning.cifar_100.experiment as experiment
 
 applicable_configs = {
     "seed": [i for i in range(10)],

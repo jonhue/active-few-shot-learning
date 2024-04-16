@@ -54,7 +54,7 @@ class ITLNoiseless(TargetedBaCE):
 
         # DONE set observed points to -\infty
         # TODO points that are in the target space and the sample space can occur twice in the covariance matrix
-        # DONE add sample and target points tensor to the state (n + m * d)
+        # DONE add sample and target points tensor to the state ((n + m) * d)
         # DONE Save x's and not indices in observed points
 
         conditional_variances = torch.empty_like(variances)
@@ -82,7 +82,7 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def adapted_target_space(state: BaCEState, i) -> torch.Tensor:
-        return torch.tensor([x for x in torch.arange(start=len(state.observed_points), end=state.covariance_matrix.dim - state.n + len(state.observed_points)) if not ITLNoiseless.observed(x, state) and not x == i])
+        return torch.tensor([x for x in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(x, state) and not x == i])
     
     @staticmethod
     def observed(idx, state: BaCEState):
