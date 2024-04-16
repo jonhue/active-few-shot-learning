@@ -69,8 +69,7 @@ class ITLNoiseless(TargetedBaCE):
             conditional_variances[i] = torch.diag(conditional_covariance_matrix)
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
-        for i in observed_points:
-            mi[i] = -1 * float('inf')
+        mi.index_fill_(0, observed_points, -float('inf'))
 
         wandb.log(
             {
