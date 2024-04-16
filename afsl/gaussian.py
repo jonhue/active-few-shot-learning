@@ -37,7 +37,7 @@ class GaussianCovarianceMatrix:
 
         Parameters
         ----------
-        indices : vector, observedPoints on which to condition
+        indices : vector, points on which to condition
         target_indices: matrix, location to get posterior covariance
 
         Returns

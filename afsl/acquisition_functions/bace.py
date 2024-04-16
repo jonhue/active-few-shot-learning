@@ -31,6 +31,8 @@ class BaCEState(NamedTuple):
     observed_points: list
     """Points that were already observed."""
     joint_data: torch.Tensor
+    target_points: torch.Tensor
+    sample_points: torch.Tensor
     
 
 
@@ -107,12 +109,26 @@ class BaCE(
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[], joint_data=data)
+        return BaCEState(
+            covariance_matrix=covariance_matrix, 
+            n=n, 
+            observed_points=[], 
+            joint_data=data,
+            target_points=torch.tensor([]),
+            sample_points=data
+        )
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
         observed_points = state.observed_points + [state.joint_data[i]]
-        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n, observed_points=observed_points, joint_data=state.joint_data)
+        return BaCEState(
+            covariance_matrix=posterior_covariance_matrix, 
+            n=state.n, 
+            observed_points=observed_points, 
+            joint_data=state.joint_data, 
+            target_points=state.target_points, 
+            sample_points=state.sample_points
+        )
 
 
 class TargetedBaCE(Targeted, BaCE):
@@ -187,4 +203,11 @@ class TargetedBaCE(Targeted, BaCE):
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n, observed_points=[], joint_data=joint_data)
+        return BaCEState(
+            covariance_matrix=covariance_matrix, 
+            n=n, 
+            observed_points=[], 
+            joint_data=joint_data,
+            target_points=target,
+            sample_points=data
+        )

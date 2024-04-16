@@ -52,24 +52,40 @@ class ITLNoiseless(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
-        # DONE set observed points to -\infty
-        # TODO points that are in the target space and the sample space can occur twice in the covariance matrix
-        # DONE add sample and target points tensor to the state ((n + m) * d)
-        # DONE Save x's and not indices in observed points
-
         conditional_variances = torch.empty_like(variances)
         unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)])
         observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)])
 
-        for i in unobserved_points:
-            conditional_covariance_matrix = state.covariance_matrix.condition_on(
-                indices=ITLNoiseless.adapted_target_space(state, i),
-                target_indices=torch.reshape(i, [1]),
-            )[:, :]
-            conditional_variances[i] = torch.diag(conditional_covariance_matrix)
+        adapted_target_space = ITLNoiseless.adapted_target_space(state)
+
+        #
+        #   Compute conditional_variances
+        #
+
+        #   Unobserved indices contained in sample and target space
+
+        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, unobserved_points)
+
+        if unobserved_target_indices.size(dim=0) > 0:
+            conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices, adapted_target_space)
+
+        #   Unobserved indices contained only in sample space
+
+        unobserved_sample_indices = ITLNoiseless.get_unobserved_sample_indices(state, unobserved_points)
+
+        if unobserved_sample_indices.size(dim=0) > 0:
+            conditional_variances[unobserved_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
+                indices=adapted_target_space,
+                target_indices=unobserved_sample_indices,
+            )[:, :])
+
+        #
+        #   Comput mutual information
+        #
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
-        mi.index_fill_(0, observed_points, -float('inf'))
+        if observed_points.size(dim = 0) > 0:
+            mi.index_fill_(0, observed_points, -float('inf'))
 
         wandb.log(
             {
@@ -80,15 +96,15 @@ class ITLNoiseless(TargetedBaCE):
         return mi
     
     @staticmethod
-    def adapted_target_space(state: BaCEState, i) -> torch.Tensor:
-        return torch.tensor([x for x in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(x, state) and not x == i])
+    def observed(idx, state: BaCEState) -> bool:
+        return ITLNoiseless.contains(state.joint_data[idx], state.observed_points)
     
     @staticmethod
-    def observed(idx, state: BaCEState):
-        return any(ITLNoiseless.isClose(state.joint_data[idx], x) for x in state.observed_points)
+    def contains(x, set) -> bool:
+        return any(ITLNoiseless.isClose(x, y) for y in set)
     
     @staticmethod
-    def isClose(x, y, rel_tol=1e-09, abs_tol=0.0):
+    def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
         """Checks if two float vectors are almost equal
 
         Parameters
@@ -105,6 +121,69 @@ class ITLNoiseless(TargetedBaCE):
         If the vector x is close to the vector y
         """
         
-        return np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)
+        return  np.bool_(np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)).item()
+    
+    @staticmethod
+    def adapted_target_space(state: BaCEState) -> torch.Tensor:
+        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)])
+    
+    @staticmethod
+    def get_unobserved_target_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
+        return torch.tensor(
+            [i for i in unobserved_points if 
+                ITLNoiseless.contains(state.joint_data[i], state.sample_points) and 
+                ITLNoiseless.contains(state.joint_data[i], state.target_points)
+            ]
+        )
+    
+    @staticmethod
+    def get_unobserved_sample_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
+        return torch.tensor(
+            [i for i in unobserved_points if 
+                ITLNoiseless.contains(state.joint_data[i], state.sample_points) and 
+                not ITLNoiseless.contains(state.joint_data[i], state.target_points)
+            ]
+        )
+    
+    @staticmethod
+    def compute_conditional_variance(state: BaCEState, unobserved_sample_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
+
+        #
+        #   Vectorize conditional_covariance computation
+        #
+
+        def conditional_variance(i, adapted_target_space) -> torch.Tensor:
+            conditional_covariance_matrix = state.covariance_matrix.condition_on(
+                indices=adapted_target_space,
+                target_indices=torch.reshape(i, [1]),
+            )[:, :]
+            return torch.diag(conditional_covariance_matrix)
+
+        batch_conditional_variance = torch.vmap(conditional_variance)
+
+        #   Prepare adapted target spaces
+
+        adapted_target_spaces = torch.empty(unobserved_sample_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
+
+        for idx, i in enumerate(unobserved_sample_indices):
+            target_index = ITLNoiseless.to_target_index(state, unobserved_sample_indices, idx)
+            adapted_target_spaces[i] = adapted_target_space[adapted_target_space != target_index]
+
+        #   Compute conditional variances
+
+        return batch_conditional_variance(unobserved_sample_indices, adapted_target_spaces)
+
+    @staticmethod
+    def to_target_index(state: BaCEState, unobserved_sample_indices: torch.Tensor, idx):
+        return [i for i in unobserved_sample_indices if ITLNoiseless.isClose(state.sample_points[idx], state.joint_data[i])][0]
+
+
+# TODO delete this when done
+        #for i in unobserved_points:
+        #    conditional_covariance_matrix = state.covariance_matrix.condition_on(
+        #        indices=ITLNoiseless.adapted_target_space(state, i),
+        #        target_indices=torch.reshape(i, [1]),
+        #    )[:, :]
+        #    conditional_variances[i] = torch.diag(conditional_covariance_matrix)
 
 
