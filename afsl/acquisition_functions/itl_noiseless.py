@@ -167,12 +167,15 @@ class ITLNoiseless(TargetedBaCE):
 
         adapted_target_spaces = torch.empty(unobserved_target_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
 
-        for idx, i in enumerate(unobserved_target_indices):
+        for i, idx in enumerate(unobserved_target_indices):
             adapted_target_spaces[i] = adapted_target_space[adapted_target_space != idx]
 
         #   Compute conditional variances
 
-        return batch_conditional_variance(unobserved_target_indices, adapted_target_spaces)
+        if adapted_target_space.size(dim=0) > 1:
+            return batch_conditional_variance(unobserved_target_indices, adapted_target_spaces)
+        else:
+            return torch.diag(state.covariance_matrix[:, :])
 
     @staticmethod
     def to_target_index(state: BaCEState, unobserved_target_indices: torch.Tensor, idx):
