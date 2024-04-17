@@ -1,11 +1,10 @@
 import torch
 import wandb
+import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
-import time
 
-
-class ITL(TargetedBaCE):
+class ITLNoiseless(TargetedBaCE):
     r"""
     `ITL` [^3] (*information-based transductive learning*) composes the batch by sequentially selecting the samples with the largest information gain about the prediction targets $\spA$: \\[\begin{align}
         \vx_{i+1} &= \argmax_{\vx \in \spS}\ \I{\vf(\spA)}{y(\vx) \mid \spD_i}.
@@ -53,19 +52,21 @@ class ITL(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
-        start = time.time()
+        conditional_variances = torch.empty_like(variances)
+        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)])
+        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)])
 
-        conditional_covariance_matrix = state.covariance_matrix.condition_on(
-            torch.arange(start=state.n, end=state.covariance_matrix.dim),
-            target_indices=torch.arange(state.n),
-        )[:, :]
-        conditional_variances = torch.diag(conditional_covariance_matrix)
-
-        end = time.time()
-
-        print("ITL " + str(end - start))
+        for i in unobserved_points:
+            conditional_covariance_matrix = state.covariance_matrix.condition_on(
+                indices=ITLNoiseless.adapted_target_space(state, i),
+                target_indices=torch.reshape(i, [1]),
+            )[:, :]
+            conditional_variances[i] = torch.diag(conditional_covariance_matrix)
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
+        if observed_points.size(dim = 0) > 0:
+            mi.index_fill_(0, observed_points, -float('inf'))
+
         wandb.log(
             {
                 "max_mi": torch.max(mi),
@@ -73,3 +74,29 @@ class ITL(TargetedBaCE):
             }
         )
         return mi
+
+    @staticmethod
+    def adapted_target_space(state: BaCEState, i) -> torch.Tensor:
+        return torch.tensor([x for x in torch.arange(start=state.n, end=state.covariance_matrix.dim) if x not in state.observed_points and not x == i])
+
+    @staticmethod
+    def observed(idx, state: BaCEState):
+        return any(ITLNoiseless.isClose(state.joint_data[idx], x) for x in state.observed_points)
+
+    @staticmethod
+    def isClose(x, y, rel_tol=1e-09, abs_tol=0.0):
+        """Checks if two float vectors are almost equal
+        Parameters
+        ----------
+        x : vector, value 1 to check
+        y : vector, value 2 to check
+        rel_tol : float, optional
+            standard value is 0.000001
+        abs_tol : float, optional
+            standard value is 0.000001
+        Returns
+        ------
+        If the vector x is close to the vector y
+        """
+
+        return np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)

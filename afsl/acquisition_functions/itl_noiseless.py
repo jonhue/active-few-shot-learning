@@ -3,6 +3,8 @@ import wandb
 import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
+import time
+
 
 class ITLNoiseless(TargetedBaCE):
     r"""
@@ -52,11 +54,17 @@ class ITLNoiseless(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
+        start = time.time()
+
         conditional_variances = torch.empty_like(variances)
-        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)])
-        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)])
+        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
         adapted_target_space = ITLNoiseless.adapted_target_space(state)
+
+        end = time.time()
+
+        print("Prefix: " + str(end - start))
 
         #
         #   Compute conditional_variances
@@ -64,20 +72,44 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Unobserved indices contained in sample and target space
 
-        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, unobserved_points)
+        start = time.time()
+
+        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space)
+
+        end = time.time()
+
+        print("unobserved_target_indices: " + str(end - start))
+
+        start = time.time()
 
         if unobserved_target_indices.size(dim=0) > 0:
             conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices, adapted_target_space)
 
+        end = time.time()
+
+        print("Vectorized function: " + str(end - start))
+
         #   Unobserved indices contained only in sample space
 
+        start = time.time()
+
         unobserved_sample_indices = ITLNoiseless.get_unobserved_sample_indices(state, unobserved_points)
+
+        end = time.time()
+
+        print("unobserved_sample_indices: " + str(end - start))
+
+        start = time.time()
 
         if unobserved_sample_indices.size(dim=0) > 0:
             conditional_variances[unobserved_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
                 indices=adapted_target_space,
                 target_indices=unobserved_sample_indices,
             )[:, :])
+
+        end = time.time()
+
+        print("Fully vectorized: " + str(end - start))
 
         #
         #   Comput mutual information
@@ -125,15 +157,15 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def adapted_target_space(state: BaCEState) -> torch.Tensor:
-        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)])
+        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
     
     @staticmethod
-    def get_unobserved_target_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
+    def get_unobserved_target_indices(state: BaCEState, adapted_target_space: torch.Tensor) -> torch.Tensor:
         return torch.tensor(
-            [i for i in unobserved_points if 
-                ITLNoiseless.contains(state.joint_data[i], state.sample_points) and 
-                ITLNoiseless.contains(state.joint_data[i], state.target_points)
-            ]
+            [i for i in adapted_target_space if 
+                ITLNoiseless.contains(state.joint_data[i], state.sample_points)
+            ],
+            device=ITLNoiseless.get_device()
         )
     
     @staticmethod
@@ -142,11 +174,12 @@ class ITLNoiseless(TargetedBaCE):
             [i for i in unobserved_points if 
                 ITLNoiseless.contains(state.joint_data[i], state.sample_points) and 
                 not ITLNoiseless.contains(state.joint_data[i], state.target_points)
-            ]
+            ], 
+            device=ITLNoiseless.get_device()
         )
     
     @staticmethod
-    def compute_conditional_variance(state: BaCEState, unobserved_sample_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
+    def compute_conditional_variance(state: BaCEState, unobserved_target_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
 
         #
         #   Vectorize conditional_covariance computation
@@ -163,27 +196,20 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Prepare adapted target spaces
 
-        adapted_target_spaces = torch.empty(unobserved_sample_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
+        adapted_target_spaces = torch.empty(unobserved_target_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
 
-        for idx, i in enumerate(unobserved_sample_indices):
-            target_index = ITLNoiseless.to_target_index(state, unobserved_sample_indices, idx)
+        for idx, i in enumerate(unobserved_target_indices):
+            target_index = ITLNoiseless.to_target_index(state, unobserved_target_indices, idx)
             adapted_target_spaces[i] = adapted_target_space[adapted_target_space != target_index]
 
         #   Compute conditional variances
 
-        return batch_conditional_variance(unobserved_sample_indices, adapted_target_spaces)
+        return batch_conditional_variance(unobserved_target_indices, adapted_target_spaces)
 
     @staticmethod
-    def to_target_index(state: BaCEState, unobserved_sample_indices: torch.Tensor, idx):
-        return [i for i in unobserved_sample_indices if ITLNoiseless.isClose(state.sample_points[idx], state.joint_data[i])][0]
-
-
-# TODO delete this when done
-        #for i in unobserved_points:
-        #    conditional_covariance_matrix = state.covariance_matrix.condition_on(
-        #        indices=ITLNoiseless.adapted_target_space(state, i),
-        #        target_indices=torch.reshape(i, [1]),
-        #    )[:, :]
-        #    conditional_variances[i] = torch.diag(conditional_covariance_matrix)
-
-
+    def to_target_index(state: BaCEState, unobserved_target_indices: torch.Tensor, idx):
+        return [i for i in unobserved_target_indices if ITLNoiseless.isClose(state.sample_points[idx], state.joint_data[i])][0]
+    
+    @staticmethod
+    def get_device():
+        return torch.device("cuda:0" if torch.cuda.is_available else "cpu")
