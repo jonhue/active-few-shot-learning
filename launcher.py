@@ -3,7 +3,7 @@ from examples.launch_utils import generate_base_command, generate_run_commands
 import examples.fine_tuning.cifar_100.experiment as experiment
 
 applicable_configs = {
-    "seed": [42], #[i for i in range(10)],
+    "seed": [4], #[i for i in range(10)],
     "noise-std": [1],
     "n-init": [100],  # [4, 10, 20, 50, 100, 200, 500]
     "query-batch-size": [10],
@@ -16,6 +16,7 @@ applicable_configs = {
         #"Random",
         #"ITL",
         "ITL-noiseless",
+        #"ITL-noiseless-old",
         # "ITL-nonsequential",
         # "VTL",
         # "CTL",

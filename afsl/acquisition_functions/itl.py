@@ -51,6 +51,7 @@ class ITL(TargetedBaCE):
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:
+        start_total = time.time()
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
         start = time.time()
@@ -63,7 +64,7 @@ class ITL(TargetedBaCE):
 
         end = time.time()
 
-        print("ITL " + str(end - start))
+        #print("ITL " + str(end - start))
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         wandb.log(
@@ -72,4 +73,7 @@ class ITL(TargetedBaCE):
                 "min_mi": torch.min(mi),
             }
         )
+
+        end_total = time.time()
+        print("Total: " + str(end_total - start_total))
         return mi

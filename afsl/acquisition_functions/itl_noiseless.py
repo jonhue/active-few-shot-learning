@@ -3,7 +3,6 @@ import wandb
 import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
-import time
 
 
 class ITLNoiseless(TargetedBaCE):
@@ -54,17 +53,11 @@ class ITLNoiseless(TargetedBaCE):
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
-        start = time.time()
-
         conditional_variances = torch.empty_like(variances)
         unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
         observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
         adapted_target_space = ITLNoiseless.adapted_target_space(state)
-
-        end = time.time()
-
-        print("Prefix: " + str(end - start))
 
         #
         #   Compute conditional_variances
@@ -72,44 +65,20 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Unobserved indices contained in sample and target space
 
-        start = time.time()
-
-        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space)
-
-        end = time.time()
-
-        print("unobserved_target_indices: " + str(end - start))
-
-        start = time.time()
+        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space) #TODO try to improve
 
         if unobserved_target_indices.size(dim=0) > 0:
             conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices, adapted_target_space)
 
-        end = time.time()
-
-        print("Vectorized function: " + str(end - start))
-
         #   Unobserved indices contained only in sample space
 
-        start = time.time()
-
-        unobserved_sample_indices = ITLNoiseless.get_unobserved_sample_indices(state, unobserved_points)
-
-        end = time.time()
-
-        print("unobserved_sample_indices: " + str(end - start))
-
-        start = time.time()
+        unobserved_sample_indices = ITLNoiseless.get_unobserved_sample_indices(state, unobserved_points) #TODO try to improve
 
         if unobserved_sample_indices.size(dim=0) > 0:
             conditional_variances[unobserved_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
                 indices=adapted_target_space,
                 target_indices=unobserved_sample_indices,
             )[:, :])
-
-        end = time.time()
-
-        print("Fully vectorized: " + str(end - start))
 
         #
         #   Comput mutual information
@@ -125,6 +94,7 @@ class ITLNoiseless(TargetedBaCE):
                 "min_mi": torch.min(mi),
             }
         )
+
         return mi
     
     @staticmethod
@@ -172,7 +142,6 @@ class ITLNoiseless(TargetedBaCE):
     def get_unobserved_sample_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
         return torch.tensor(
             [i for i in unobserved_points if 
-                ITLNoiseless.contains(state.joint_data[i], state.sample_points) and 
                 not ITLNoiseless.contains(state.joint_data[i], state.target_points)
             ], 
             device=ITLNoiseless.get_device()
@@ -199,8 +168,7 @@ class ITLNoiseless(TargetedBaCE):
         adapted_target_spaces = torch.empty(unobserved_target_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
 
         for idx, i in enumerate(unobserved_target_indices):
-            target_index = ITLNoiseless.to_target_index(state, unobserved_target_indices, idx)
-            adapted_target_spaces[i] = adapted_target_space[adapted_target_space != target_index]
+            adapted_target_spaces[i] = adapted_target_space[adapted_target_space != idx]
 
         #   Compute conditional variances
 
