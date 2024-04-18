@@ -99,7 +99,7 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def observed(idx, state: BaCEState) -> bool:
-        return ITLNoiseless.contains(state.joint_data[idx], state.observed_points) >= 0
+        return any(ITLNoiseless.isClose(state.joint_data[idx], y) for y in state.observed_points)
     
     @staticmethod
     def contains(x, set) -> int:
@@ -135,12 +135,15 @@ class ITLNoiseless(TargetedBaCE):
             [sample_index, target_index] for target_index in adapted_target_space if 
             (sample_index := ITLNoiseless.contains(state.joint_data[target_index], state.sample_points)) > -1
         ]
+
+        if len(indices) == 0:
+            return torch.tensor([], device=ITLNoiseless.get_device()), torch.tensor([], device=ITLNoiseless.get_device())
         
         return torch.tensor(indices[:][0], device=ITLNoiseless.get_device()), torch.tensor(indices[:][1], device=ITLNoiseless.get_device())
     
     @staticmethod
     def get_unobserved_sample_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
-        print("unobserved_points " + str(unobserved_points))
+        #print("unobserved_points " + str(unobserved_points))
         return torch.tensor(
             [i for i in unobserved_points if 
                 not ITLNoiseless.contains(state.joint_data[i], state.target_points)
@@ -180,4 +183,4 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def get_device():
-        return torch.device("cuda:0" if torch.cuda.is_available else "cpu")
+        return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
