@@ -52,32 +52,30 @@ class ITLNoiseless(TargetedBaCE):
 
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
-
         conditional_variances = torch.empty_like(variances)
+
         unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
         observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
-        adapted_target_space = ITLNoiseless.adapted_target_space(state)
+        adapted_target_space = torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
+        only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_index = ITLNoiseless.split(state, unobserved_points)
+        
         #
         #   Compute conditional_variances
         #
 
         #   Unobserved indices contained in sample and target space
 
-        unobserved_target_indices, unobserved_target_indices_target_index = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space) #TODO try to improve
-
-        if unobserved_target_indices.size(dim=0) > 0:
-            conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices_target_index, adapted_target_space)
+        if target_and_sample_indices_sample_indexing.size(dim=0) > 0:
+            conditional_variances[target_and_sample_indices_sample_indexing] = ITLNoiseless.compute_conditional_variance(state, target_and_sample_indices_target_index, adapted_target_space)
 
         #   Unobserved indices contained only in sample space
 
-        unobserved_sample_indices = ITLNoiseless.get_unobserved_sample_indices(state, unobserved_points) #TODO try to improve
-
-        if unobserved_sample_indices.size(dim=0) > 0:
-            conditional_variances[unobserved_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
+        if only_sample_indices.size(dim=0) > 0:
+            conditional_variances[only_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
                 indices=adapted_target_space,
-                target_indices=unobserved_sample_indices,
+                target_indices=only_sample_indices,
             )[:, :])
 
         #
@@ -95,15 +93,52 @@ class ITLNoiseless(TargetedBaCE):
             }
         )
 
-        return mi
+        return mi          
     
     @staticmethod
     def observed(idx, state: BaCEState) -> bool:
+        """Checks if point has been observed yet
+
+        Parameters
+        ----------
+        idx : int, index of the point
+        state : BaCEState
+
+        Returns
+        ------
+        True if points has already been observed
+        """
         return any(ITLNoiseless.isClose(state.joint_data[idx], y) for y in state.observed_points)
     
     @staticmethod
-    def contains(x, set) -> int:
+    def containsFloat(x, set):
+        """Checks if x is in set
+
+        Parameters
+        ----------
+        x : float, value to search in set
+        set : list, set to search in
+
+        Returns
+        ------
+        Returns value that was found
+        """
         return next((y for y in set if ITLNoiseless.isClose(x, y)), -1)
+    
+    @staticmethod
+    def containsInt(x, set):
+        """Checks if x is in set
+
+        Parameters
+        ----------
+        x : int, value to search in set
+        set : list, set to search in
+
+        Returns
+        ------
+        Returns value that was found
+        """
+        return next((y for y in set if x == y), -1)
     
     @staticmethod
     def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
@@ -126,30 +161,23 @@ class ITLNoiseless(TargetedBaCE):
         return  np.bool_(np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)).item()
     
     @staticmethod
-    def adapted_target_space(state: BaCEState) -> torch.Tensor:
-        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
-    
-    @staticmethod
-    def get_unobserved_target_indices(state: BaCEState, adapted_target_space: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        indices = [
-            [sample_index, target_index] for target_index in adapted_target_space if 
-            (sample_index := ITLNoiseless.contains(state.joint_data[target_index], state.sample_points)) > -1
-        ]
+    def split(state: BaCEState, unobserved_points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        only_sample_indices = []
+        target_and_sample_indices_sample_indexing = []
+        target_and_sample_indices_target_indexing = []
 
-        if len(indices) == 0:
-            return torch.tensor([], device=ITLNoiseless.get_device()), torch.tensor([], device=ITLNoiseless.get_device())
-        
-        return torch.tensor(indices[:][0], device=ITLNoiseless.get_device()), torch.tensor(indices[:][1], device=ITLNoiseless.get_device())
-    
+        for i in unobserved_points:
+            if ITLNoiseless.containsFloat(state.sample_points[i], state.target_points):
+                target_and_sample_indices_sample_indexing.append(i)
+                target_and_sample_indices_target_indexing.append(ITLNoiseless.to_target_index(state, i))
+            else:
+                only_sample_indices.append(i)
+
+        return torch.tensor(only_sample_indices), torch.tensor(target_and_sample_indices_sample_indexing), torch.tensor(target_and_sample_indices_target_indexing)
+            
     @staticmethod
-    def get_unobserved_sample_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
-        #print("unobserved_points " + str(unobserved_points))
-        return torch.tensor(
-            [i for i in unobserved_points if 
-                not ITLNoiseless.contains(state.joint_data[i], state.target_points)
-            ], 
-            device=ITLNoiseless.get_device()
-        )
+    def to_target_index(state: BaCEState, i):
+        return next((j for j in torch.arange(start=state.n, end=state.covariance_matrix.dim) if ITLNoiseless.isClose(state.sample_points[i], state.target_points[j])), -1)
     
     @staticmethod
     def compute_conditional_variance(state: BaCEState, unobserved_target_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
