@@ -65,10 +65,10 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Unobserved indices contained in sample and target space
 
-        unobserved_target_indices = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space) #TODO try to improve
+        unobserved_target_indices, unobserved_target_indices_target_index = ITLNoiseless.get_unobserved_target_indices(state, adapted_target_space) #TODO try to improve
 
         if unobserved_target_indices.size(dim=0) > 0:
-            conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices, adapted_target_space)
+            conditional_variances[unobserved_target_indices] = ITLNoiseless.compute_conditional_variance(state, unobserved_target_indices_target_index, adapted_target_space)
 
         #   Unobserved indices contained only in sample space
 
@@ -81,7 +81,7 @@ class ITLNoiseless(TargetedBaCE):
             )[:, :])
 
         #
-        #   Comput mutual information
+        #   Compute mutual information
         #
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
@@ -99,11 +99,11 @@ class ITLNoiseless(TargetedBaCE):
     
     @staticmethod
     def observed(idx, state: BaCEState) -> bool:
-        return ITLNoiseless.contains(state.joint_data[idx], state.observed_points)
+        return ITLNoiseless.contains(state.joint_data[idx], state.observed_points) >= 0
     
     @staticmethod
-    def contains(x, set) -> bool:
-        return any(ITLNoiseless.isClose(x, y) for y in set)
+    def contains(x, set) -> int:
+        return next((y for y in set if ITLNoiseless.isClose(x, y)), -1)
     
     @staticmethod
     def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
@@ -130,16 +130,17 @@ class ITLNoiseless(TargetedBaCE):
         return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
     
     @staticmethod
-    def get_unobserved_target_indices(state: BaCEState, adapted_target_space: torch.Tensor) -> torch.Tensor:
-        return torch.tensor(
-            [i for i in adapted_target_space if 
-                ITLNoiseless.contains(state.joint_data[i], state.sample_points)
-            ],
-            device=ITLNoiseless.get_device()
-        )
+    def get_unobserved_target_indices(state: BaCEState, adapted_target_space: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        indices = [
+            [sample_index, target_index] for target_index in adapted_target_space if 
+            (sample_index := ITLNoiseless.contains(state.joint_data[target_index], state.sample_points)) > -1
+        ]
+        
+        return torch.tensor(indices[:][0], device=ITLNoiseless.get_device()), torch.tensor(indices[:][1], device=ITLNoiseless.get_device())
     
     @staticmethod
     def get_unobserved_sample_indices(state: BaCEState, unobserved_points: torch.Tensor) -> torch.Tensor:
+        print("unobserved_points " + str(unobserved_points))
         return torch.tensor(
             [i for i in unobserved_points if 
                 not ITLNoiseless.contains(state.joint_data[i], state.target_points)
@@ -156,7 +157,7 @@ class ITLNoiseless(TargetedBaCE):
 
         def conditional_variance(i, adapted_target_space) -> torch.Tensor:
             conditional_covariance_matrix = state.covariance_matrix.condition_on(
-                indices=adapted_target_space,
+                indices=adapted_target_space.int(),
                 target_indices=torch.reshape(i, [1]),
             )[:, :]
             return torch.diag(conditional_covariance_matrix)
@@ -176,10 +177,6 @@ class ITLNoiseless(TargetedBaCE):
             return batch_conditional_variance(unobserved_target_indices, adapted_target_spaces)
         else:
             return torch.diag(state.covariance_matrix[:, :])
-
-    @staticmethod
-    def to_target_index(state: BaCEState, unobserved_target_indices: torch.Tensor, idx):
-        return [i for i in unobserved_target_indices if ITLNoiseless.isClose(state.sample_points[idx], state.joint_data[i])][0]
     
     @staticmethod
     def get_device():

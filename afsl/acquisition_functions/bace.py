@@ -126,7 +126,7 @@ class BaCE(
             n=state.n, 
             observed_points=observed_points, 
             joint_data=state.joint_data, 
-            target_points=state.target_points, 
+            target_points=state.target_points,
             sample_points=state.sample_points
         )
 
