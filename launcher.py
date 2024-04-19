@@ -56,7 +56,7 @@ def main(args):
                                             flags = {
                                                 "seed": seed,
                                                 "noise-std": noise_std,
-                                                "itl-noise_itl": noise_itl,
+                                                "noise_itl": noise_itl,
                                                 "n-init": n_init,
                                                 "query-batch-size": query_batch_size,
                                                 "subsampled-target-frac": subsampled_target_frac,
