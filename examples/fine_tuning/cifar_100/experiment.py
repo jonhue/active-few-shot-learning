@@ -40,6 +40,7 @@ def experiment(
     seed: int,
     alg: str,
     noise_std: float,
+    noise_itl: float,
     n_init: int,
     query_batch_size: int,
     subsampled_target_frac: float,
@@ -62,6 +63,7 @@ def experiment(
             "reweighting": REWEIGHTING,
             "subsample_acquisition": subsample_acquisition,
             "noise_std": noise_std,
+            "noise_itl": noise_itl,
             "seed": seed,
             "alg": alg,
             "validation": "hold-out",
@@ -117,6 +119,7 @@ def experiment(
         alg=alg,
         target=target,
         noise_std=noise_std,
+        noise_itl=noise_itl,
         mini_batch_size=MINI_BATCH_SIZE,
         num_workers=NUM_WORKERS if not debug else 0,
         subsample_acquisition=subsample_acquisition,
@@ -150,6 +153,7 @@ def main(args):
         seed=args.seed,
         alg=args.alg,
         noise_std=args.noise_std,
+        noise_itl=args.noise_itl,
         n_init=args.n_init,
         query_batch_size=args.query_batch_size,
         subsampled_target_frac=args.subsampled_target_frac,
@@ -166,6 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--alg", type=str, default="ITL")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
+    parser.add_argument("--noise_itl", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
     parser.add_argument(
         "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE

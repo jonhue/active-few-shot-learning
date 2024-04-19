@@ -22,6 +22,7 @@ def get_acquisition_function(
     alg: str,
     target: torch.Tensor,
     noise_std: float,
+    noise_itl: float,
     mini_batch_size: int,
     num_workers: int,
     subsample_acquisition: bool,
@@ -37,6 +38,7 @@ def get_acquisition_function(
         acquisition_function = ITL(
             target=target,
             noise_std=noise_std,
+            noise_itl=noise_itl,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
             mini_batch_size=mini_batch_size,

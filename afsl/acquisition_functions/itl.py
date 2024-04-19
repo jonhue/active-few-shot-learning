@@ -50,11 +50,15 @@ class ITL(TargetedBaCE):
     [^4]: see afsl.acquisition_functions.bace.BaCE
     """
 
+    def __init__(self, target, noise_std, noise_itl, subsampled_target_frac, max_target_size, mini_batch_size, num_workers, subsample, force_nonsequential):
+        super().__init__(target, noise_std, subsampled_target_frac, max_target_size, mini_batch_size, num_workers, subsample, force_nonsequential)
+        self.noise_itl = noise_itl
+    
     def compute(self, state: BaCEState) -> torch.Tensor:
-        start_total = time.time()
-        variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
+        noise_std = self.noise_itl
 
         start = time.time()
+        variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
         conditional_covariance_matrix = state.covariance_matrix.condition_on(
             torch.arange(start=state.n, end=state.covariance_matrix.dim),
@@ -62,11 +66,7 @@ class ITL(TargetedBaCE):
         )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
-        end = time.time()
-
-        #print("ITL " + str(end - start))
-
-        mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
+        mi = 0.5 * torch.clamp(torch.log((variances + noise_std) / (conditional_variances + noise_std)), min=0)
         wandb.log(
             {
                 "max_mi": torch.max(mi),
@@ -74,6 +74,6 @@ class ITL(TargetedBaCE):
             }
         )
 
-        end_total = time.time()
-        print("Total: " + str(end_total - start_total))
+        end = time.time()
+        print("Total: " + str(end - start))
         return mi

@@ -59,7 +59,7 @@ class ITLNoiseless(TargetedBaCE):
 
         adapted_target_space = torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
-        only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_index = ITLNoiseless.split(state, unobserved_points)
+        only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
         
         #
         #   Compute conditional_variances
@@ -68,7 +68,7 @@ class ITLNoiseless(TargetedBaCE):
         #   Unobserved indices contained in sample and target space
 
         if target_and_sample_indices_sample_indexing.size(dim=0) > 0:
-            conditional_variances[target_and_sample_indices_sample_indexing] = ITLNoiseless.compute_conditional_variance(state, target_and_sample_indices_target_index, adapted_target_space)
+            conditional_variances[target_and_sample_indices_sample_indexing] = ITLNoiseless.compute_conditional_variance(state, target_and_sample_indices_target_indexing, adapted_target_space)
 
         #   Unobserved indices contained only in sample space
 
@@ -105,10 +105,10 @@ class ITLNoiseless(TargetedBaCE):
         state : BaCEState
 
         Returns
-        ------
+        -------
         True if points has already been observed
         """
-        return any(ITLNoiseless.isClose(state.joint_data[idx], y) for y in state.observed_points)
+        return ITLNoiseless.containsFloat(state.joint_data[idx], state.observed_points)
     
     @staticmethod
     def containsFloat(x, set):
@@ -120,10 +120,10 @@ class ITLNoiseless(TargetedBaCE):
         set : list, set to search in
 
         Returns
-        ------
-        Returns value that was found
+        -------
+        Returns True if value was found
         """
-        return next((y for y in set if ITLNoiseless.isClose(x, y)), -1)
+        return any(ITLNoiseless.isClose(x, y) for y in set)
     
     @staticmethod
     def containsInt(x, set):
@@ -135,10 +135,10 @@ class ITLNoiseless(TargetedBaCE):
         set : list, set to search in
 
         Returns
-        ------
-        Returns value that was found
+        -------
+        Returns True if value was found
         """
-        return next((y for y in set if x == y), -1)
+        return any(x == y for y in set)
     
     @staticmethod
     def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
@@ -154,7 +154,7 @@ class ITLNoiseless(TargetedBaCE):
             standard value is 0.000001
 
         Returns
-        ------
+        -------
         If the vector x is close to the vector y
         """
         
@@ -177,7 +177,7 @@ class ITLNoiseless(TargetedBaCE):
             
     @staticmethod
     def to_target_index(state: BaCEState, i):
-        return next((j for j in torch.arange(start=state.n, end=state.covariance_matrix.dim) if ITLNoiseless.isClose(state.sample_points[i], state.target_points[j])), -1)
+        return next((j for j in torch.arange(start=state.n, end=state.covariance_matrix.dim) if ITLNoiseless.isClose(state.sample_points[i], state.joint_data[j])), -1)
     
     @staticmethod
     def compute_conditional_variance(state: BaCEState, unobserved_target_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
