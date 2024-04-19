@@ -57,7 +57,7 @@ class ITLNoiseless(TargetedBaCE):
         unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
         observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
-        adapted_target_space = torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+        adapted_target_space = ITLNoiseless.get_adapted_target_space(state)
 
         only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
         
@@ -95,6 +95,7 @@ class ITLNoiseless(TargetedBaCE):
 
         return mi          
     
+
     @staticmethod
     def observed(idx, state: BaCEState) -> bool:
         """Checks if point has been observed yet
@@ -126,21 +127,6 @@ class ITLNoiseless(TargetedBaCE):
         return any(ITLNoiseless.isClose(x, y) for y in set)
     
     @staticmethod
-    def containsInt(x, set):
-        """Checks if x is in set
-
-        Parameters
-        ----------
-        x : int, value to search in set
-        set : list, set to search in
-
-        Returns
-        -------
-        Returns True if value was found
-        """
-        return any(x == y for y in set)
-    
-    @staticmethod
     def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
         """Checks if two float vectors are almost equal
 
@@ -157,11 +143,52 @@ class ITLNoiseless(TargetedBaCE):
         -------
         If the vector x is close to the vector y
         """
-        
         return  np.bool_(np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)).item()
     
+
+    @staticmethod
+    def containsInt(x, set):
+        """Checks if x is in set
+
+        Parameters
+        ----------
+        x : int, value to search in set
+        set : list, set to search in
+
+        Returns
+        -------
+        Returns True if value was found
+        """
+        return any(x == y for y in set)
+    
+    @staticmethod
+    def get_adapted_target_space(state: BaCEState):
+        """Get unobserved points from target space
+
+        Parameters
+        ----------
+        state : BaCEState
+
+        Returns
+        -------
+        Returns unobserved points in target space
+        """
+        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+
     @staticmethod
     def split(state: BaCEState, unobserved_points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Split domain into points only contained in sample space and points contained in sample and target space 
+        indexed by sample indexing and target indexing
+
+        Parameters
+        ----------
+        state : BaCEState
+        unobserved_points : torch.Tensor, unobserved sample points with sample indexing
+
+        Returns
+        -------
+        Returns (points only contained in sample space, points contained in sample and target space indexed by sample indexing, points contained in sample and target space indexed by target indexing)
+        """
         only_sample_indices = []
         target_and_sample_indices_sample_indexing = []
         target_and_sample_indices_target_indexing = []
@@ -177,10 +204,33 @@ class ITLNoiseless(TargetedBaCE):
             
     @staticmethod
     def to_target_index(state: BaCEState, i):
+        """Convert index from sample space to index in target space
+
+        Parameters
+        ----------
+        state : BaCEState
+        i : int, index in sample space
+
+        Returns
+        -------
+        Returns index in target space or -1
+        """
         return next((j for j in torch.arange(start=state.n, end=state.covariance_matrix.dim) if ITLNoiseless.isClose(state.sample_points[i], state.joint_data[j])), -1)
     
     @staticmethod
-    def compute_conditional_variance(state: BaCEState, unobserved_target_indices: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
+    def compute_conditional_variance(state: BaCEState, target_and_sample_indices_target_indexing: torch.Tensor, adapted_target_space: torch.Tensor) -> torch.Tensor:
+        """Compute conditional variance for points that are in target and sample space
+
+        Parameters
+        ----------
+        state : BaCEState
+        target_and_sample_indices_target_indexing : torch.Tensor, indices of points that are contained in target and sample space with target space indexing
+        adapted_target_space : torch.Tensor, unobserved points in target space
+        
+        Returns
+        -------
+        Returns conditional variance of points that are in target and sample space
+        """
 
         #
         #   Vectorize conditional_covariance computation
@@ -197,18 +247,28 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Prepare adapted target spaces
 
-        adapted_target_spaces = torch.empty(unobserved_target_indices.size(dim=0), adapted_target_space.size(dim=0) - 1)
+        adapted_target_spaces = torch.empty(target_and_sample_indices_target_indexing.size(dim=0), adapted_target_space.size(dim=0) - 1)
 
-        for i, idx in enumerate(unobserved_target_indices):
+        for i, idx in enumerate(target_and_sample_indices_target_indexing):
             adapted_target_spaces[i] = adapted_target_space[adapted_target_space != idx]
 
         #   Compute conditional variances
 
         if adapted_target_space.size(dim=0) > 1:
-            return batch_conditional_variance(unobserved_target_indices, adapted_target_spaces)
+            return batch_conditional_variance(target_and_sample_indices_target_indexing, adapted_target_spaces)
         else:
             return torch.diag(state.covariance_matrix[:, :])
     
     @staticmethod
     def get_device():
+        """Define device on which to create tensor ("cuda:0", "cpu")
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        Returns "cuda:0" if available and "cpu" otherwise
+        """
         return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
