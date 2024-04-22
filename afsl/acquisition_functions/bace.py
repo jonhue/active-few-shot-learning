@@ -28,7 +28,7 @@ class BaCEState(NamedTuple):
     r"""Kernel matrix of the data. Tensor of shape $n \times n$."""
     n: int
     """Length of the data set."""
-    observed_points: list
+    observed_points: torch.Tensor
     """Points that were already observed."""
     joint_data: torch.Tensor
     target_points: torch.Tensor
@@ -112,7 +112,7 @@ class BaCE(
         return BaCEState(
             covariance_matrix=covariance_matrix, 
             n=n, 
-            observed_points=[], 
+            observed_points=torch.tensor([]), 
             joint_data=data,
             target_points=torch.tensor([]),
             sample_points=data
@@ -120,7 +120,7 @@ class BaCE(
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        observed_points = state.observed_points + [state.joint_data[i]]
+        observed_points = torch.cat([state.observed_points, torch.tensor([state.joint_data[i]])])
         return BaCEState(
             covariance_matrix=posterior_covariance_matrix, 
             n=state.n, 
@@ -206,7 +206,7 @@ class TargetedBaCE(Targeted, BaCE):
         return BaCEState(
             covariance_matrix=covariance_matrix, 
             n=n, 
-            observed_points=[], 
+            observed_points=torch.tensor([]), 
             joint_data=joint_data,
             target_points=target,
             sample_points=data

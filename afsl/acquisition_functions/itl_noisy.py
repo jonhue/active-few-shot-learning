@@ -3,7 +3,7 @@ import wandb
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
-class ITL(TargetedBaCE):
+class ITLNoisy(TargetedBaCE):
     r"""
     `ITL` [^3] (*information-based transductive learning*) composes the batch by sequentially selecting the samples with the largest information gain about the prediction targets $\spA$: \\[\begin{align}
         \vx_{i+1} &= \argmax_{\vx \in \spS}\ \I{\vf(\spA)}{y(\vx) \mid \spD_i}.
@@ -49,6 +49,7 @@ class ITL(TargetedBaCE):
     """
     
     def compute(self, state: BaCEState) -> torch.Tensor:
+        noise_std = state.covariance_matrix.noise_std
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
 
         conditional_covariance_matrix = state.covariance_matrix.condition_on(
@@ -57,7 +58,7 @@ class ITL(TargetedBaCE):
         )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
-        mi = 0.5 * torch.clamp(torch.log((variances) / (conditional_variances)), min=0)
+        mi = 0.5 * torch.clamp(torch.log((variances + noise_std) / (conditional_variances + noise_std)), min=0)
         wandb.log(
             {
                 "max_mi": torch.max(mi),

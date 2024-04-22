@@ -3,7 +3,9 @@ import wandb
 import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
+from time import time
 
+ABS_TOL = 1e-9
 
 class ITLNoiseless(TargetedBaCE):
     r"""
@@ -51,15 +53,25 @@ class ITLNoiseless(TargetedBaCE):
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:
+        state.covariance_matrix.noise_std = 1e-5
+
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_variances = torch.empty_like(variances)
 
-        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
-        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+        #unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+        #observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
 
+        start = time()
+        observed_points, unobserved_points = ITLNoiseless.observed_points(state)
+        end = time()
+        print("observed_points " + str(end - start) + "s")
+
+        start = time()
         adapted_target_space = ITLNoiseless.get_adapted_target_space(state)
+        end = time()
+        print("observed_points " + str(end - start) + "s")
 
-        only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
+        #only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
         
         #
         #   Compute conditional_variances
@@ -67,24 +79,31 @@ class ITLNoiseless(TargetedBaCE):
 
         #   Unobserved indices contained in sample and target space
 
-        if target_and_sample_indices_sample_indexing.size(dim=0) > 0:
-            conditional_variances[target_and_sample_indices_sample_indexing] = ITLNoiseless.compute_conditional_variance(state, target_and_sample_indices_target_indexing, adapted_target_space)
-
+        #if target_and_sample_indices_sample_indexing.size(dim=0) > 0:
+        #    print("There is overlap ...")
+        #    conditional_variances[target_and_sample_indices_sample_indexing] = ITLNoiseless.compute_conditional_variance(state, target_and_sample_indices_target_indexing, adapted_target_space)
+            
         #   Unobserved indices contained only in sample space
 
-        if only_sample_indices.size(dim=0) > 0:
-            conditional_variances[only_sample_indices] = torch.diag(state.covariance_matrix.condition_on(
+        start = time()
+        if unobserved_points.size(dim=0) > 0:
+            conditional_variances[unobserved_points] = torch.diag(state.covariance_matrix.condition_on(
                 indices=adapted_target_space,
-                target_indices=only_sample_indices,
+                target_indices=unobserved_points,
             )[:, :])
+        end = time()
+        print("observed_points " + str(end - start) + "s")
 
         #
         #   Compute mutual information
         #
 
+        start = time()
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         if observed_points.size(dim = 0) > 0:
             mi.index_fill_(0, observed_points, -float('inf'))
+        end = time()
+        print("observed_points " + str(end - start) + "s")
 
         wandb.log(
             {
@@ -93,7 +112,25 @@ class ITLNoiseless(TargetedBaCE):
             }
         )
 
-        return mi          
+        return mi    
+
+
+    @staticmethod 
+    def observed_points(state: BaCEState) -> tuple[torch.Tensor, torch.Tensor]:
+        sample_indices = torch.arange(state.n)
+
+        print("sample_points " + str(state.sample_points.shape))
+        print("observed_points " + str(state.observed_points.shape))
+
+        cdist = torch.cdist(state.sample_points, state.observed_points, p=2.0)
+
+        print("cdist " + str(cdist.shape))
+
+        observed_points = torch.any(cdist > ABS_TOL, dim=1)
+
+        print("observed_points " + str(observed_points.shape))
+
+        return sample_indices[observed_points], sample_indices[not observed_points]      
     
 
     @staticmethod

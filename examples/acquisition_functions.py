@@ -4,6 +4,7 @@ from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
 from afsl.acquisition_functions.ctl import CTL
 from afsl.acquisition_functions.information_density import InformationDensity
 from afsl.acquisition_functions.itl import ITL
+from afsl.acquisition_functions.itl_noisy import ITLNoisy
 from afsl.acquisition_functions.itl_noiseless import ITLNoiseless
 from afsl.acquisition_functions.itl_noiseless_old import ITLNoiselessOld
 from afsl.acquisition_functions.kmeans_pp import KMeansPP
@@ -22,7 +23,6 @@ def get_acquisition_function(
     alg: str,
     target: torch.Tensor,
     noise_std: float,
-    noise_itl: float,
     mini_batch_size: int,
     num_workers: int,
     subsample_acquisition: bool,
@@ -38,13 +38,23 @@ def get_acquisition_function(
         acquisition_function = ITL(
             target=target,
             noise_std=noise_std,
-            noise_itl=noise_itl,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
             force_nonsequential=(alg == "ITL-nonsequential"),
+        )
+    elif alg == "ITL-noisy":
+        acquisition_function = ITLNoisy(
+            target=target,
+            noise_std=noise_std,
+            subsampled_target_frac=subsampled_target_frac,
+            max_target_size=max_target_size,
+            mini_batch_size=mini_batch_size,
+            num_workers=num_workers,
+            subsample=subsample_acquisition,
+            force_nonsequential=False,
         )
     elif alg == "ITL-noiseless":
         acquisition_function = ITLNoiseless(
