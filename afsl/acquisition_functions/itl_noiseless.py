@@ -69,7 +69,7 @@ class ITLNoiseless(TargetedBaCE):
         start = time()
         adapted_target_space = ITLNoiseless.get_adapted_target_space(state)
         end = time()
-        print("observed_points " + str(end - start) + "s")
+        print("adapted_target_space " + str(end - start) + "s")
 
         #only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
         
@@ -92,7 +92,7 @@ class ITLNoiseless(TargetedBaCE):
                 target_indices=unobserved_points,
             )[:, :])
         end = time()
-        print("observed_points " + str(end - start) + "s")
+        print("conditional_variances " + str(end - start) + "s")
 
         #
         #   Compute mutual information
@@ -103,7 +103,7 @@ class ITLNoiseless(TargetedBaCE):
         if observed_points.size(dim = 0) > 0:
             mi.index_fill_(0, observed_points, -float('inf'))
         end = time()
-        print("observed_points " + str(end - start) + "s")
+        print("mi " + str(end - start) + "s")
 
         wandb.log(
             {
@@ -118,6 +118,9 @@ class ITLNoiseless(TargetedBaCE):
     @staticmethod 
     def observed_points(state: BaCEState) -> tuple[torch.Tensor, torch.Tensor]:
         sample_indices = torch.arange(state.n)
+
+        if(state.observed_points.size(dim=0) == 0):
+            return torch.tensor([]), sample_indices
 
         print("sample_points " + str(state.sample_points.shape))
         print("observed_points " + str(state.observed_points.shape))

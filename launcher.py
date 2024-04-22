@@ -2,6 +2,8 @@ import argparse
 from examples.launch_utils import generate_base_command, generate_run_commands
 import examples.fine_tuning.cifar_100.experiment as experiment
 
+DEBUG = False
+
 applicable_configs = {
     "seed": [42], #[i for i in range(10)],
     "noise-std": [1],
@@ -62,6 +64,7 @@ def main(args):
                                             "subsample-acquisition": subsample_acquisition,
                                             "update-target": update_target,
                                             "alg": alg,
+                                            "debug": DEBUG,
                                         }
                                         cmd = generate_base_command(
                                             experiment, flags=flags
@@ -72,8 +75,8 @@ def main(args):
         command_list,
         num_cpus=args.num_cpus,
         num_gpus=args.num_gpus,
-        mode="euler",
-        #mode="local",
+        #mode="euler",
+        mode="local",
         num_hours=args.num_hours,
         promt=True,
         mem=args.mem,
