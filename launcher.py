@@ -16,7 +16,7 @@ applicable_configs = {
     "algs": [
         # "OracleRandom",
         #"Random",
-        "ITL",
+        #"ITL",
         #"ITL-noisy",
         "ITL-noiseless",
         #"ITL-noiseless-old",

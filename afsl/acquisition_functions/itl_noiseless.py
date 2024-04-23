@@ -5,7 +5,7 @@ from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
 
-ABS_TOL = 1e-6
+REL_TOL = 1e-5
 
 class ITLNoiseless(TargetedBaCE):
     r"""
@@ -53,8 +53,6 @@ class ITLNoiseless(TargetedBaCE):
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:
-        state.covariance_matrix.noise_std = 1e-5
-
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_variances = torch.empty_like(variances)
 
@@ -66,6 +64,10 @@ class ITLNoiseless(TargetedBaCE):
         #
         #   Compute conditional_variances
         #
+
+        #   Compute Jitter depending on how ill conditioned the matrix is
+
+        state.covariance_matrix.noise_std = ITLNoiseless.get_jitter(state, adapted_target_space)
 
         #   Unobserved indices contained in sample and target space
 
@@ -98,7 +100,6 @@ class ITLNoiseless(TargetedBaCE):
 
         return mi    
 
-
     @staticmethod 
     def observed_points(state: BaCEState) -> tuple[torch.Tensor, torch.Tensor]:
         """Splits the sample space into observed and not observed points
@@ -118,9 +119,10 @@ class ITLNoiseless(TargetedBaCE):
         
         sample_points = state.sample_points.view(state.n, -1)
         observed_points = state.observed_points.view(state.observed_points.size(dim=0), -1)
+        abs_tol = REL_TOL * sample_points.shape[1]
 
         cdist = torch.cdist(sample_points, observed_points, p=2.0)
-        observed_map = torch.any(cdist > ABS_TOL, dim=1)
+        observed_map = torch.any(cdist < abs_tol, dim=1)
 
         return sample_indices[observed_map], sample_indices[~observed_map]      
     
@@ -143,11 +145,21 @@ class ITLNoiseless(TargetedBaCE):
         
         target_points = state.target_points.view(state.target_points.size(dim=0), -1)
         observed_points = state.observed_points.view(state.observed_points.size(dim=0), -1)
+        abs_tol = REL_TOL * target_points.shape[1]
 
         cdist = torch.cdist(target_points, observed_points, p=2.0)
-        observed_map = torch.any(cdist > ABS_TOL, dim=1)
+        observed_map = torch.any(cdist < abs_tol, dim=1)
 
-        return target_indices[observed_map]    
+        return target_indices[~observed_map]    
+
+    @staticmethod
+    def get_jitter(state: BaCEState, adapted_target_space: torch.Tensor) -> float:
+        _indices: torch.Tensor = adapted_target_space
+        if _indices.dim() == 0:
+            _indices = _indices.unsqueeze(0)
+
+        condition_number = torch.linalg.cond(state.covariance_matrix[_indices, :][:, _indices])
+        return 1e-10 * condition_number
 
     @staticmethod
     def split(state: BaCEState, unobserved_points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -204,7 +216,7 @@ class ITLNoiseless(TargetedBaCE):
         -------
         If the vector x is close to the vector y
         """
-        return  np.bool_(np.linalg.norm(x - y) <= ABS_TOL).item()
+        return  np.bool_(np.linalg.norm(x - y) <= REL_TOL * x.size(dim=0)).item()
             
     @staticmethod
     def to_target_index(state: BaCEState, i):
