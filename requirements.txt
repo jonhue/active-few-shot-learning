@@ -6,6 +6,6 @@ pdoc~=14.4
 pyright~=1.1
 pytest~=8.1
 torch~=2.2
-torchvision~=0.17
+torchvision~=0.18
 tqdm~=4.66
 wandb
