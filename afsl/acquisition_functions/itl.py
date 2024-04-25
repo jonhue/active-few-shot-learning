@@ -3,6 +3,7 @@ import wandb
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
+
 class ITL(TargetedBaCE):
     r"""
     `ITL` [^3] (*information-based transductive learning*) composes the batch by sequentially selecting the samples with the largest information gain about the prediction targets $\spA$: \\[\begin{align}

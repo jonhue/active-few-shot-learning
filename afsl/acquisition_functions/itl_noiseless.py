@@ -3,9 +3,9 @@ import wandb
 import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 
-from time import time
 
-ABS_TOL = 1e-9
+
+REL_TOL = 1e-5
 
 class ITLNoiseless(TargetedBaCE):
     r"""
@@ -53,26 +53,21 @@ class ITLNoiseless(TargetedBaCE):
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:
-        state.covariance_matrix.noise_std = 1e-5
-
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_variances = torch.empty_like(variances)
 
-        start = time()
         observed_points, unobserved_points = ITLNoiseless.observed_points(state)
-        end = time()
-        print("observed_points " + str(end - start) + "s")
-
-        start = time()
         adapted_target_space = ITLNoiseless.get_adapted_target_space(state)
-        end = time()
-        print("adapted_target_space " + str(end - start) + "s")
 
         #only_sample_indices, target_and_sample_indices_sample_indexing, target_and_sample_indices_target_indexing = ITLNoiseless.split(state, unobserved_points)
         
         #
         #   Compute conditional_variances
         #
+
+        #   Compute Jitter depending on how ill conditioned the matrix is
+
+        state.covariance_matrix.noise_std = ITLNoiseless.get_jitter(state, adapted_target_space)
 
         #   Unobserved indices contained in sample and target space
 
@@ -82,25 +77,19 @@ class ITLNoiseless(TargetedBaCE):
             
         #   Unobserved indices contained only in sample space
 
-        start = time()
         if unobserved_points.size(dim=0) > 0:
             conditional_variances[unobserved_points] = torch.diag(state.covariance_matrix.condition_on(
                 indices=adapted_target_space,
                 target_indices=unobserved_points,
             )[:, :])
-        end = time()
-        print("conditional_variances " + str(end - start) + "s")
 
         #
         #   Compute mutual information
         #
 
-        start = time()
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         if observed_points.size(dim = 0) > 0:
             mi.index_fill_(0, observed_points, -float('inf'))
-        end = time()
-        print("mi " + str(end - start) + "s")
 
         wandb.log(
             {
@@ -111,95 +100,34 @@ class ITLNoiseless(TargetedBaCE):
 
         return mi    
 
-
     @staticmethod 
     def observed_points(state: BaCEState) -> tuple[torch.Tensor, torch.Tensor]:
-        sample_indices = torch.arange(state.n)
-
-        if(state.observed_points.size(dim=0) == 0):
-            return torch.tensor([]), sample_indices
-
-        print("sample_points " + str(state.sample_points.shape))
-        print("observed_points " + str(state.observed_points.shape))
-
-        cdist = torch.cdist(state.sample_points, state.observed_points, p=2.0)
-
-        print("cdist " + str(cdist.shape))
-
-        observed_points = torch.any(cdist > ABS_TOL, dim=1)
-
-        print("observed_points " + str(observed_points.shape))
-
-        return sample_indices[observed_points], sample_indices[not observed_points]      
-    
-
-    @staticmethod
-    def observed(idx, state: BaCEState) -> bool:
-        """Checks if point has been observed yet
+        """Splits the sample space into observed and not observed points
 
         Parameters
         ----------
-        idx : int, index of the point
         state : BaCEState
 
         Returns
         -------
-        True if points has already been observed
+        Tuple (observed_indices, unobserved_indices) where indices are respective to sample space
         """
-        return ITLNoiseless.containsFloat(state.joint_data[idx], state.observed_points)
+        sample_indices = torch.arange(state.n, device=ITLNoiseless.get_device())
+
+        if(state.observed_points.size(dim=0) == 0):
+            return torch.tensor([], device=ITLNoiseless.get_device()), sample_indices
+        
+        sample_points = state.sample_points.view(state.n, -1)
+        observed_points = state.observed_points.view(state.observed_points.size(dim=0), -1)
+        abs_tol = REL_TOL * sample_points.shape[1]
+
+        cdist = torch.cdist(sample_points, observed_points, p=2.0)
+        observed_map = torch.any(cdist < abs_tol, dim=1)
+
+        return sample_indices[observed_map], sample_indices[~observed_map]      
     
     @staticmethod
-    def containsFloat(x, set):
-        """Checks if x is in set
-
-        Parameters
-        ----------
-        x : float, value to search in set
-        set : list, set to search in
-
-        Returns
-        -------
-        Returns True if value was found
-        """
-        return any(ITLNoiseless.isClose(x, y) for y in set)
-    
-    @staticmethod
-    def isClose(x, y, rel_tol=1e-09, abs_tol=0.0) -> bool:
-        """Checks if two float vectors are almost equal
-
-        Parameters
-        ----------
-        x : vector, value 1 to check
-        y : vector, value 2 to check
-        rel_tol : float, optional
-            standard value is 0.000001
-        abs_tol : float, optional
-            standard value is 0.000001
-
-        Returns
-        -------
-        If the vector x is close to the vector y
-        """
-        return  np.bool_(np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)).item()
-    
-
-    @staticmethod
-    def containsInt(x, set):
-        """Checks if x is in set
-
-        Parameters
-        ----------
-        x : int, value to search in set
-        set : list, set to search in
-
-        Returns
-        -------
-        Returns True if value was found
-        """
-        return any(x == y for y in set)
-    
-    @staticmethod
-    def get_adapted_target_space(state: BaCEState):
+    def get_adapted_target_space(state: BaCEState) -> torch.Tensor:
         """Get unobserved points from target space
 
         Parameters
@@ -210,7 +138,28 @@ class ITLNoiseless(TargetedBaCE):
         -------
         Returns unobserved points in target space
         """
-        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
+        target_indices = torch.arange(start=state.n, end=state.covariance_matrix.dim, device=ITLNoiseless.get_device())
+
+        if(state.observed_points.size(dim=0) == 0):
+            return target_indices
+        
+        target_points = state.target_points.view(state.target_points.size(dim=0), -1)
+        observed_points = state.observed_points.view(state.observed_points.size(dim=0), -1)
+        abs_tol = REL_TOL * target_points.shape[1]
+
+        cdist = torch.cdist(target_points, observed_points, p=2.0)
+        observed_map = torch.any(cdist < abs_tol, dim=1)
+
+        return target_indices[~observed_map]    
+
+    @staticmethod
+    def get_jitter(state: BaCEState, adapted_target_space: torch.Tensor) -> float:
+        _indices: torch.Tensor = adapted_target_space
+        if _indices.dim() == 0:
+            _indices = _indices.unsqueeze(0)
+
+        condition_number = torch.linalg.cond(state.covariance_matrix[_indices, :][:, _indices])
+        return 1e-10 * condition_number
 
     @staticmethod
     def split(state: BaCEState, unobserved_points: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -238,6 +187,36 @@ class ITLNoiseless(TargetedBaCE):
                 only_sample_indices.append(i)
 
         return torch.tensor(only_sample_indices), torch.tensor(target_and_sample_indices_sample_indexing), torch.tensor(target_and_sample_indices_target_indexing)
+    
+    @staticmethod
+    def containsFloat(x, set):
+        """Checks if x is in set
+
+        Parameters
+        ----------
+        x : float, value to search in set
+        set : list, set to search in
+
+        Returns
+        -------
+        Returns True if value was found
+        """
+        return any(ITLNoiseless.isClose(x, y) for y in set)
+    
+    @staticmethod
+    def isClose(x, y) -> bool:
+        """Checks if two float vectors are almost equal
+
+        Parameters
+        ----------
+        x : vector, value 1 to check
+        y : vector, value 2 to check
+
+        Returns
+        -------
+        If the vector x is close to the vector y
+        """
+        return  np.bool_(np.linalg.norm(x - y) <= REL_TOL * x.size(dim=0)).item()
             
     @staticmethod
     def to_target_index(state: BaCEState, i):
