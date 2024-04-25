@@ -58,9 +58,6 @@ class ITLNoiseless(TargetedBaCE):
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
         conditional_variances = torch.empty_like(variances)
 
-        #unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
-        #observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiseless.observed(i, state)], device=ITLNoiseless.get_device())
-
         start = time()
         observed_points, unobserved_points = ITLNoiseless.observed_points(state)
         end = time()
