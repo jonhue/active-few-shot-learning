@@ -2,8 +2,11 @@
 
 ## Setup
 
-1. Navigate to the root folder of the project
-2. Run `pip install -e .`
+1. Create venv `python -m venv --system-site-packages llama`
+2. Activate venv `source myenv/bin/activate`
+3. Install afsl
+    1. Navigate to the root folder of the project
+    2. Run `pip install -e .`
 
 ## Maintenance
 
