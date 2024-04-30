@@ -7,6 +7,9 @@ from datasets import load_dataset
 from trl import SFTTrainer
 from peft import LoraConfig
 
+import afsl
+from acquisition_functions import get_acquisition_function
+
 def experiment():
     access_token = "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"
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
@@ -19,6 +22,23 @@ def experiment():
         "json", 
         data_files="./data/train_dataset.json",
         split="train"
+    )
+
+    acquisition_function = get_acquisition_function(
+        alg="ITL",
+        target=torch.Tensor(),
+        noise_std=noise_std,
+        mini_batch_size=MINI_BATCH_SIZE,
+        num_workers=NUM_WORKERS if not debug else 0,
+        subsample_acquisition=subsample_acquisition,
+        subsampled_target_frac=subsampled_target_frac,
+        max_target_size=max_target_size,
+    )
+
+    data_loader = afsl.ActiveDataLoader(
+        dataset=dataset,
+        batch_size=2,
+        acquisition_function=acquisition_function
     )
 
     #
@@ -89,17 +109,15 @@ def experiment():
     #   Training loop
     #
 
-    #batch_size = 1
-    #num_batches = len(dataset) / batch_size
-#
-    #for batch_idx in range(num_batches):
-    #    batch = dataset[batch_idx]
-#
-    #    input = ...
-#
-    #    trainer.training_step(model, input)
+    batch_size = 1
+    num_batches = len(dataset) / batch_size
 
-    trainer.train()
+    for batch_idx in range(num_batches):
+        batch = dataset[batch_idx]
+
+        input = ...
+
+        trainer.training_step(model, input)
 
 def main(args):
     experiment()

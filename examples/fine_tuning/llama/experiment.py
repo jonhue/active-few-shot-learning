@@ -4,14 +4,18 @@ import wandb
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from afsl.data import InputDataset
+from torch.utils.data import TensorDataset
+from afsl.data import DataLoader, InputDataset
+import afsl
 from examples.acquisition_functions import get_acquisition_function
-from examples.fine_tuning.llama.data import collect_test_data, get_datasets
+from examples.fine_tuning.llama.data import get_datasets
 
-from examples.fine_tuning.llama.model import (
-    SimpleCNNWithHallucinatedCrossEntropyEmbedding,
-    SimpleCNNWithLastLayerEmbedding,
-)
+from transformers import TrainingArguments, AutoTokenizer
+from trl import SFTTrainer
+from peft import LoraConfig # type: ignore
+
+from examples.fine_tuning.llama.model import get_model
+
 from examples.fine_tuning.training import train_loop
 from examples.utils import int_or_none
 
@@ -20,9 +24,6 @@ EPOCHS = 100
 USE_BEST_MODEL = True
 TRAIN_BATCH_SIZE = 64
 REWEIGHTING = True
-MODEL = (
-    SimpleCNNWithLastLayerEmbedding  #  SimpleCNNWithHallucinatedCrossEntropyEmbedding
-)
 RESET_PARAMS = True
 LABELS = torch.arange(3)
 IMBALANCED_TEST = (
@@ -51,71 +52,60 @@ def experiment(
     update_target: bool,
     debug: bool,
 ):
-    wandb.init(
-        name="MNIST First Test",
-        dir="/cluster/scratch/sbongni/wandb/mnist",
-        project="Fine-tuning MNIST",
-        config={
-            "learning_rate": LR,
-            "architecture": "CNN",
-            "dataset": "MNIST",
-            "epochs": EPOCHS,
-            "use_best_model": USE_BEST_MODEL,
-            "train_batch_size": TRAIN_BATCH_SIZE,
-            "model": MODEL,
-            "reweighting": REWEIGHTING,
-            "subsample_acquisition": subsample_acquisition,
-            "noise_std": noise_std,
-            "seed": seed,
-            "alg": alg,
-            "validation": "hold-out",
-            "reset_params": RESET_PARAMS,
-            "imbalanced_test": IMBALANCED_TEST,
-            "query_batch_size": query_batch_size,
-            "n_init": n_init,
-            "labels": LABELS.tolist(),
-            "subsampled_target_frac": subsampled_target_frac,
-            "max_target_size": max_target_size,
-            "update_target": update_target,
-        },
-        mode="offline" if debug else "online",
-    )
+    #wandb.init(
+    #    name="MNIST First Test",
+    #    dir="/cluster/scratch/sbongni/wandb/mnist",
+    #    project="Fine-tuning MNIST",
+    #    config={
+    #        "learning_rate": LR,
+    #        "architecture": "CNN",
+    #        "dataset": "MNIST",
+    #        "epochs": EPOCHS,
+    #        "use_best_model": USE_BEST_MODEL,
+    #        "train_batch_size": TRAIN_BATCH_SIZE,
+    #        "model": MODEL,
+    #        "reweighting": REWEIGHTING,
+    #        "subsample_acquisition": subsample_acquisition,
+    #        "noise_std": noise_std,
+    #        "seed": seed,
+    #        "alg": alg,
+    #        "validation": "hold-out",
+    #        "reset_params": RESET_PARAMS,
+    #        "imbalanced_test": IMBALANCED_TEST,
+    #        "query_batch_size": query_batch_size,
+    #        "n_init": n_init,
+    #        "labels": LABELS.tolist(),
+    #        "subsampled_target_frac": subsampled_target_frac,
+    #        "max_target_size": max_target_size,
+    #        "update_target": update_target,
+    #    },
+    #    mode="offline" if debug else "online",
+    #)
 
     print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
     torch.manual_seed(seed)
-    # torch.set_default_tensor_type(torch.DoubleTensor)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Define model
-    model = MODEL(output_dim=LABELS.size(0))
+    #
+    #   Model
+    #
+
+    model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
+
+    model = get_model(model_id)
     model.to(device)
 
-    # Define the loss criterion and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    #
+    #   Train / Test set
+    #
 
-    # Define trainset
-    trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
-    train_labels = torch.tensor(trainset.targets)
-    if alg == "OracleRandom":
-        mask = (train_labels[:, None] == LABELS).any(dim=1)
-        trainset.data = trainset.data[mask]
-        train_labels = train_labels[mask]
-    if debug:
-        trainset.data = trainset.data[:10]
-        train_labels = train_labels[:10]
-    train_inputs = InputDataset(trainset)
+    trainset, target = get_datasets(model_id)
 
-    # Define testset and valset
-    testset, valset = collect_test_data(
-        _testset,
-        n_test=n_init,
-        restrict_to_labels=LABELS,
-        imbalanced_test_config=IMBALANCED_TEST,
-    )
-    target = testset.inputs
+    train_inputs = InputDataset() # TODO
 
-    print("validation labels:", torch.unique(valset.labels))
+    #
+    #   Acquisition Function
+    #
 
     acquisition_function = get_acquisition_function(
         alg=alg,
@@ -128,24 +118,41 @@ def experiment(
         max_target_size=max_target_size,
     )
 
-    train_loop(
-        model=model,
-        labels=LABELS,
-        train_inputs=train_inputs,
-        train_labels=train_labels,
-        valset=valset,
-        criterion=criterion,
-        optimizer=optimizer,
-        acquisition_function=acquisition_function,
-        num_rounds=NUM_ROUNDS,
-        num_epochs=EPOCHS,
-        query_batch_size=query_batch_size,
-        train_batch_size=TRAIN_BATCH_SIZE,
-        update_target=update_target,
-        reweighting=REWEIGHTING,
-        reset_parameters=RESET_PARAMS,
-        use_best_model=USE_BEST_MODEL,
+    data_loader = afsl.ActiveDataLoader(
+        dataset=train_inputs,       # TODO
+        batch_size=query_batch_size,
+        acquisition_function=acquisition_function
     )
+    
+    #
+    #   Trainer
+    #
+
+    trainer = SFTTrainer(
+        model=model,
+        train_dataset=trainset,     # TODO
+        max_seq_length=2,
+        #tokenizer=tokenizer,
+        packing=True,
+        dataset_kwargs={
+            "add_special_tokens": False,  # We template with special tokens
+            "append_concat_token": False, # No need to add additional separator token
+        }
+    )
+
+    #
+    #   Training Loop
+    #
+
+    num_batches = int(len(train_inputs) / query_batch_size)
+
+    #for batch_idx in range(num_batches):
+    batch_indices = data_loader.next(model)
+
+    input = ... # TODO
+
+    trainer.training_step(model, input)
+
     wandb.finish()
 
 
@@ -172,9 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--alg", type=str, default="ITL")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
-    parser.add_argument(
-        "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE
-    )
+    parser.add_argument("--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE)
     parser.add_argument("--subsampled-target-frac", type=float, default=0.5)
     parser.add_argument("--max-target-size", type=int_or_none, default=None)
     parser.add_argument("--subsample-acquisition", type=int, default=1)

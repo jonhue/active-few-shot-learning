@@ -5,10 +5,10 @@ import examples.fine_tuning.llama.experiment as experiment
 DEBUG = False
 
 applicable_configs = {
-    "seed": [i for i in range(10)],
+    "seed": [42], #[i for i in range(10)],
     "noise-std": [1],
     "n-init": [100],  # [4, 10, 20, 50, 100, 200, 500]
-    "query-batch-size": [10],
+    "query-batch-size": [2],
     "subsampled-target-frac": [0.1],  # [0.05, 0.1, 0.2, 0.5, 1.0]
     "max-target-size": ["None"],
     "subsample-acquisition": [1],
@@ -16,9 +16,9 @@ applicable_configs = {
     "algs": [
         # "OracleRandom",
         #"Random",
-        #"ITL",
+        "ITL",
         #"ITL-noisy",
-        "ITL-noiseless",
+        #"ITL-noiseless",
         #"ITL-noiseless-old",
         # "ITL-nonsequential",
         # "VTL",
@@ -35,7 +35,6 @@ applicable_configs = {
         # "KMeansPP",
     ],
 }
-
 
 def main(args):
     command_list = []
@@ -76,7 +75,6 @@ def main(args):
         num_cpus=args.num_cpus,
         num_gpus=args.num_gpus,
         mode="euler",
-        #mode="local",
         num_hours=args.num_hours,
         promt=True,
         mem=args.mem,
