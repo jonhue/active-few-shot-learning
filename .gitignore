@@ -1,9 +1,13 @@
 venv
-*.egg-info
 build
 dist
 __pycache__
 data
-*.out
+wandb
+code-llama-7b-text-to-sql
 
+
+
+*.out
 *.ipynb
+*.egg-info

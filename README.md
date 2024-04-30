@@ -3,11 +3,15 @@
 ## Setup
 
 1. Create venv `python -m venv --system-site-packages llama`
-2. Activate venv `source myenv/bin/activate`
+2. Activate venv `source llama/bin/activate`
 3. Install afsl
     1. Navigate to the root folder of the project
     2. Run `pip install -e .`
-
+4. Install dependencies for LM-Fine-Tuning
+    1. `pip install trl`
+    2. `pip install peft`
+    3. `pip install -U datasets`
+    4. `pip install -U bitsandbytes`
 ## Maintenance
 
 ### CI checks
