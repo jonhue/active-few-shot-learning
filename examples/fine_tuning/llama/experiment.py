@@ -2,21 +2,14 @@ import argparse
 import time
 import wandb
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset as TorchDataset
-from afsl.data import Dataset, DataLoader, InputDataset
 import afsl
 from examples.acquisition_functions import get_acquisition_function
 from examples.fine_tuning.llama.data import get_datasets, tokenize
 
-from transformers import TrainingArguments, AutoTokenizer
 from trl import SFTTrainer
-from peft import LoraConfig # type: ignore
 
 from examples.fine_tuning.llama.model import get_model
 
-from examples.fine_tuning.training import train_loop
 from examples.utils import int_or_none
 
 LR = 0.001
