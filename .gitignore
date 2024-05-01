@@ -4,7 +4,7 @@ dist
 __pycache__
 data
 wandb
-code-llama-7b-text-to-sql
+FLAN
 
 
 

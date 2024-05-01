@@ -4,11 +4,11 @@ import wandb
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset
-from afsl.data import DataLoader, InputDataset
+from torch.utils.data import Dataset as TorchDataset
+from afsl.data import Dataset, DataLoader, InputDataset
 import afsl
 from examples.acquisition_functions import get_acquisition_function
-from examples.fine_tuning.llama.data import get_datasets
+from examples.fine_tuning.llama.data import get_datasets, tokenize
 
 from transformers import TrainingArguments, AutoTokenizer
 from trl import SFTTrainer
@@ -91,21 +91,22 @@ def experiment(
     #
 
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-
-    model = get_model(model_id)
-    model.to(device)
+    dataset_id = "OpenAssistant/oasst1"
 
     #
     #   Train / Test set
     #
 
-    trainset, target = get_datasets(model_id)
+    trainset, testset = get_datasets(dataset_id)
 
-    train_inputs = InputDataset() # TODO
+    sample = tokenize(model_id, trainset)   # type: ignore       
+    target = tokenize(model_id, testset)    # type: ignore
 
     #
     #   Acquisition Function
     #
+
+    model = get_model(model_id)
 
     acquisition_function = get_acquisition_function(
         alg=alg,
@@ -119,7 +120,7 @@ def experiment(
     )
 
     data_loader = afsl.ActiveDataLoader(
-        dataset=train_inputs,       # TODO
+        dataset=trainset,       # TODO
         batch_size=query_batch_size,
         acquisition_function=acquisition_function
     )
