@@ -21,7 +21,7 @@
     2. `pip install frozendict`
     3. `pip install seqio`
     4. `pip install t5`
-4. Add FLAN to PYTHONPATH: Edit `~/llama/bin/activate`
+4. Add FLAN to PYTHONPATH by adding these lines to `~/llama/bin/activate`
     ```bash
     deactivate () {
         ...
