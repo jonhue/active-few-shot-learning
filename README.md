@@ -40,7 +40,7 @@
 
     ...
     ```
-5. Run in FLAN/
+5. Run in FLAN directory via bash
     ```bash
     unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00000-of-00010.zip -d flan/v2/niv2_few_shot_data/
     unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00001-of-00010.zip -d flan/v2/niv2_few_shot_data/
