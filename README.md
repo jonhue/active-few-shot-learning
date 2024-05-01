@@ -12,46 +12,48 @@
     2. `pip install peft`
     3. `pip install -U datasets`
     4. `pip install -U bitsandbytes`
-5. Use Flan v2 dataset
-    1. Go to root directory of project
-    2. Run `git clone git@github.com:google-research/FLAN.git`
-    3. Install dependencies
-        1. `pip install tfds_nightly`
-        2. `pip install frozendict`
-        3. `pip install seqio`
-        4. `pip install t5`
-    4. Add FLAN to PYTHONPATH
-        1. Edit `~/llama/bin/activate`
-        2. Add 
-        ```bash
-        _OLD_PYTHONPATH="$PYTHONPATH"
-        PYTHONPATH="/cluster/home/sbongni/afsl/FLAN:$PYTHONPATH"
+
+### Use Flan v2 dataset
+1. Go to root directory of project
+2. Run `git clone git@github.com:google-research/FLAN.git`
+3. Install dependencies
+    1. `pip install tfds_nightly`
+    2. `pip install frozendict`
+    3. `pip install seqio`
+    4. `pip install t5`
+4. Add FLAN to PYTHONPATH: Edit `~/llama/bin/activate`
+    ```bash
+    deactivate () {
+        ...
+
+        PYTHONPATH="$_OLD_PYTHONPATH"
         export PYTHONPATH
-        ```
-        3. Add
-        ```bash
-        deactivate () {
-            ...
 
-            PYTHONPATH="$_OLD_PYTHONPATH"
-            export PYTHONPATH
+        ...
+    }
 
-            ...
-        }
-        ```
-    5. Run in FLAN/
-        ```bash
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00000-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00001-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00002-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00003-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00004-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00005-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00006-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00007-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00008-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00009-of-00010.zip -d flan/v2/niv2_few_shot_data/
-        ```
+    ...
+
+    _OLD_PYTHONPATH="$PYTHONPATH"
+    PYTHONPATH="/cluster/home/sbongni/afsl/FLAN:$PYTHONPATH"
+    export PYTHONPATH
+
+    ...
+    ```
+5. Run in FLAN/
+    ```bash
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00000-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00001-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00002-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00003-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00004-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00005-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00006-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00007-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00008-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    unzip flan/v2/niv2_few_shot_data/niv2_exemplars.jsonl-00009-of-00010.zip -d flan/v2/niv2_few_shot_data/
+    ```
+
 ## Maintenance
 
 ### CI checks
