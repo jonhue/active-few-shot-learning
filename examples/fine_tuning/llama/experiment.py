@@ -4,7 +4,7 @@ import wandb
 import torch
 import afsl
 from examples.acquisition_functions import get_acquisition_function
-from examples.fine_tuning.llama.data import get_datasets, tokenize
+from examples.fine_tuning.llama.data import get_datasets
 
 from trl import SFTTrainer
 
@@ -84,16 +84,16 @@ def experiment(
     #
 
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-    dataset_id = "OpenAssistant/oasst1"
+    dataset_id = "cot_zsopt"
 
     #
     #   Train / Test set
     #
 
-    trainset, testset = get_datasets(dataset_id)
+    train_set, test_set = get_datasets(dataset_id, model_id, 0.1)
 
-    sample = tokenize(model_id, trainset)   # type: ignore       
-    target = tokenize(model_id, testset)    # type: ignore
+    train_inputs, train_labels = train_set[:]
+    target_inputs, target_labels = test_set[:]
 
     #
     #   Acquisition Function
@@ -103,7 +103,7 @@ def experiment(
 
     acquisition_function = get_acquisition_function(
         alg=alg,
-        target=target,
+        target=target_inputs,
         noise_std=noise_std,
         mini_batch_size=MINI_BATCH_SIZE,
         num_workers=NUM_WORKERS if not debug else 0,
@@ -113,7 +113,7 @@ def experiment(
     )
 
     data_loader = afsl.ActiveDataLoader(
-        dataset=trainset,       # TODO
+        dataset=train_set,       # type: ignore
         batch_size=query_batch_size,
         acquisition_function=acquisition_function
     )
@@ -124,7 +124,7 @@ def experiment(
 
     trainer = SFTTrainer(
         model=model,
-        train_dataset=trainset,     # TODO
+        train_dataset=train_set,     # TODO
         max_seq_length=2,
         #tokenizer=tokenizer,
         packing=True,
@@ -142,6 +142,8 @@ def experiment(
 
     #for batch_idx in range(num_batches):
     batch_indices = data_loader.next(model)
+
+    print("Success!!!")
 
     input = ... # TODO
 
