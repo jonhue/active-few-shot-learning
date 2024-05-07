@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Generic
+from tables import Unknown
 import torch
+from torch.utils.data.dataloader import DataLoader, _BaseDataLoaderIter, _collate_fn_t
 from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
 from afsl.acquisition_functions.bace import BaCE
 from afsl.acquisition_functions.max_dist import MaxDist
@@ -15,7 +17,7 @@ from afsl.utils import (
 )
 
 
-class ActiveDataLoader(Generic[M]):
+class ActiveDataLoader(DataLoader, Generic[M]):
     r"""
     `ActiveDataLoader` can be used as a drop-in replacement for random data selection:
 
@@ -59,6 +61,8 @@ class ActiveDataLoader(Generic[M]):
         dataset: Dataset,
         batch_size: int,
         acquisition_function: AcquisitionFunction[M],
+        model: M,
+        collate_fn: _collate_fn_t[Unknown] | None = None,
     ):
         """
         Explicitly constructs an active data loader with a custom acquisition function.
@@ -68,9 +72,14 @@ class ActiveDataLoader(Generic[M]):
         assert len(dataset) > 0, "Data must be non-empty"
         assert batch_size > 0, "Batch size must be positive"
 
-        self.dataset = dataset
-        self.batch_size = batch_size
+        super().__init__(
+            dataset = dataset,
+            batch_size = batch_size,
+            collate_fn=collate_fn
+        )
+
         self.acquisition_function = acquisition_function
+        self.model = model
 
     @classmethod
     def initialize(
@@ -78,6 +87,7 @@ class ActiveDataLoader(Generic[M]):
         dataset: Dataset,
         target: torch.Tensor | None,
         batch_size: int,
+        model: M,
         subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
         mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
@@ -122,6 +132,7 @@ class ActiveDataLoader(Generic[M]):
             dataset=dataset,
             batch_size=batch_size,
             acquisition_function=acquisition_function,
+            model=model
         )
 
     def next(self, model: M | None = None) -> torch.Tensor:

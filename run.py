@@ -2,10 +2,28 @@ import os
 import sys
 import argparse
 
-import examples.llama as llama
+import examples.bug as experiment
+
+from examples.launch_utils import generate_base_command
+
 
 def main(args):
-    base_cmd = sys.executable + " -u " + os.path.abspath(llama.__file__)
+    flags = {
+        "seed": 42,
+        "noise-std": 1,
+        "n-init": 100,
+        "query-batch-size": 2,
+        "subsampled-target-frac": 0.1,
+        "max-target-size": "None",
+        "subsample-acquisition": 1,
+        "update-target": 0,
+        "alg": "ITL",
+        "debug": False,
+    }
+
+    base_cmd = generate_base_command(experiment, flags=flags)
+
+    base_cmd = sys.executable + " -u " + os.path.abspath(experiment.__file__)
 
     sbatch_cmd = (
         "sbatch -A ls_krausea "
@@ -16,9 +34,8 @@ def main(args):
         + f"--gres=gpumem:{args.gpumem}g "
         + f'--wrap="{base_cmd}"'
     )
-    
-    os.system(sbatch_cmd)
 
+    os.system(sbatch_cmd)
 
 
 if __name__ == "__main__":

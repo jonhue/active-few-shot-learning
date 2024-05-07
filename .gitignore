@@ -5,6 +5,7 @@ __pycache__
 data
 wandb
 FLAN
+tmp_trainer
 
 
 

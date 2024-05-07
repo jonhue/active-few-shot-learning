@@ -1,16 +1,19 @@
 import argparse
 import time
-import wandb
 import torch
+from transformers import AutoTokenizer, TrainingArguments, DataCollatorForTokenClassification
+from peft import LoraConfig     # type: ignore
+
+
+
 import afsl
+from examples.fine_tuning.training import LlamaTrainer
 from examples.acquisition_functions import get_acquisition_function
-from examples.fine_tuning.llama.data import get_datasets
-
-from trl import SFTTrainer
-
-from examples.fine_tuning.llama.model import get_model
-
+from examples.fine_tuning.llama.data import get_oasst1
+from examples.fine_tuning.llama.model import get_model, get_tokenizer
 from examples.utils import int_or_none
+
+
 
 LR = 0.001
 EPOCHS = 100
@@ -33,6 +36,7 @@ DEFAULT_QUERY_BATCH_SIZE = 1
 DEFAULT_N_INIT = 30
 
 
+
 def experiment(
     seed: int,
     alg: str,
@@ -45,65 +49,39 @@ def experiment(
     update_target: bool,
     debug: bool,
 ):
-    #wandb.init(
-    #    name="MNIST First Test",
-    #    dir="/cluster/scratch/sbongni/wandb/mnist",
-    #    project="Fine-tuning MNIST",
-    #    config={
-    #        "learning_rate": LR,
-    #        "architecture": "CNN",
-    #        "dataset": "MNIST",
-    #        "epochs": EPOCHS,
-    #        "use_best_model": USE_BEST_MODEL,
-    #        "train_batch_size": TRAIN_BATCH_SIZE,
-    #        "model": MODEL,
-    #        "reweighting": REWEIGHTING,
-    #        "subsample_acquisition": subsample_acquisition,
-    #        "noise_std": noise_std,
-    #        "seed": seed,
-    #        "alg": alg,
-    #        "validation": "hold-out",
-    #        "reset_params": RESET_PARAMS,
-    #        "imbalanced_test": IMBALANCED_TEST,
-    #        "query_batch_size": query_batch_size,
-    #        "n_init": n_init,
-    #        "labels": LABELS.tolist(),
-    #        "subsampled_target_frac": subsampled_target_frac,
-    #        "max_target_size": max_target_size,
-    #        "update_target": update_target,
-    #    },
-    #    mode="offline" if debug else "online",
-    #)
-
     print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
     torch.manual_seed(seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     #
     #   Model
     #
 
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-    dataset_id = "cot_zsopt"
+
+    model = get_model(model_id)
+    tokenizer = get_tokenizer(model_id)
+    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+    data_collator = DataCollatorForTokenClassification(tokenizer)
+
+    #def collate_tokenize(data):
+    #    print(data)
+    #    text_batch = [element["input_ids"] for element in data]
+    #    tokenized = tokenizer(text_batch, max_length=512, padding='max_length', truncation=True, return_tensors='pt')
+    #    return tokenized
 
     #
     #   Train / Test set
     #
 
-    train_set, test_set = get_datasets(dataset_id, model_id, 0.1)
-
-    train_inputs, train_labels = train_set[:]
-    target_inputs, target_labels = test_set[:]
+    train_set, test_set = get_oasst1()
 
     #
-    #   Acquisition Function
+    #   Active DataLoader
     #
-
-    model = get_model(model_id)
 
     acquisition_function = get_acquisition_function(
         alg=alg,
-        target=target_inputs,
+        target=torch.Tensor(),      #TODO give test_set
         noise_std=noise_std,
         mini_batch_size=MINI_BATCH_SIZE,
         num_workers=NUM_WORKERS if not debug else 0,
@@ -112,44 +90,51 @@ def experiment(
         max_target_size=max_target_size,
     )
 
-    data_loader = afsl.ActiveDataLoader(
-        dataset=train_set,       # type: ignore
-        batch_size=query_batch_size,
-        acquisition_function=acquisition_function
-    )
-    
     #
     #   Trainer
     #
 
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=train_set,     # TODO
-        max_seq_length=2,
-        #tokenizer=tokenizer,
-        packing=True,
-        dataset_kwargs={
-            "add_special_tokens": False,  # We template with special tokens
-            "append_concat_token": False, # No need to add additional separator token
-        }
+    peft_config = LoraConfig(
+        lora_alpha=128,
+        lora_dropout=0.05,
+        r=64,
+        bias="none",
+        target_modules="all-linear",
+        task_type="CAUSAL_LM",
+    )
+    
+    default_args = {
+        "output_dir": "tmp",
+        "evaluation_strategy": "steps",
+        "num_train_epochs": 1,
+        "log_level": "error",
+        "report_to": "none",
+    }
+
+    training_args = TrainingArguments(
+        per_device_train_batch_size=1, 
+        gradient_accumulation_steps=4, 
+        gradient_checkpointing=True, 
+        fp16=True, 
+        max_steps=1000,
+        **default_args
     )
 
-    #
-    #   Training Loop
-    #
+    trainer = LlamaTrainer(
+        model=model,
+        train_dataset=train_set,
+        data_collator=data_collator,
+        acquisition_function=acquisition_function,
+        query_batch_size=query_batch_size,
+        args=training_args,
+        dataset_text_field="text",
+        peft_config=peft_config,
+        max_seq_length=128,
+    )
 
-    num_batches = int(len(train_inputs) / query_batch_size)
+    trainer.train()     # type: ignore
 
-    #for batch_idx in range(num_batches):
-    batch_indices = data_loader.next(model)
-
-    print("Success!!!")
-
-    input = ... # TODO
-
-    trainer.training_step(model, input)
-
-    wandb.finish()
+    # wandb.finish()
 
 
 def main(args):
@@ -175,7 +160,9 @@ if __name__ == "__main__":
     parser.add_argument("--alg", type=str, default="ITL")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
-    parser.add_argument("--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE)
+    parser.add_argument(
+        "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE
+    )
     parser.add_argument("--subsampled-target-frac", type=float, default=0.5)
     parser.add_argument("--max-target-size", type=int_or_none, default=None)
     parser.add_argument("--subsample-acquisition", type=int, default=1)

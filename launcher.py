@@ -5,7 +5,7 @@ import examples.fine_tuning.llama.experiment as experiment
 DEBUG = False
 
 applicable_configs = {
-    "seed": [42], #[i for i in range(10)],
+    "seed": [42],  # [i for i in range(10)],
     "noise-std": [1],
     "n-init": [100],  # [4, 10, 20, 50, 100, 200, 500]
     "query-batch-size": [2],
@@ -15,11 +15,11 @@ applicable_configs = {
     "update-target": [0],
     "algs": [
         # "OracleRandom",
-        #"Random",
+        # "Random",
         "ITL",
-        #"ITL-noisy",
-        #"ITL-noiseless",
-        #"ITL-noiseless-old",
+        # "ITL-noisy",
+        # "ITL-noiseless",
+        # "ITL-noiseless-old",
         # "ITL-nonsequential",
         # "VTL",
         # "CTL",
@@ -35,6 +35,7 @@ applicable_configs = {
         # "KMeansPP",
     ],
 }
+
 
 def main(args):
     command_list = []
@@ -78,6 +79,7 @@ def main(args):
         num_hours=args.num_hours,
         promt=True,
         mem=args.mem,
+        gpumem=args.gpumem,
     )
 
 

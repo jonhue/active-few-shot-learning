@@ -33,7 +33,6 @@ class BaCEState(NamedTuple):
     joint_data: torch.Tensor
     target_points: torch.Tensor
     sample_points: torch.Tensor
-    
 
 
 class BaCE(
@@ -89,7 +88,7 @@ class BaCE(
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor, #  sample space
+        data: torch.Tensor,  #  sample space
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
@@ -110,24 +109,26 @@ class BaCE(
                 ),
             )
         return BaCEState(
-            covariance_matrix=covariance_matrix, 
-            n=n, 
-            observed_points=torch.tensor([]), 
+            covariance_matrix=covariance_matrix,
+            n=n,
+            observed_points=torch.tensor([]),
             joint_data=data,
             target_points=torch.tensor([]),
-            sample_points=data
+            sample_points=data,
         )
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        observed_points = torch.cat([state.observed_points, state.joint_data[i].unsqueeze(0)])
+        observed_points = torch.cat(
+            [state.observed_points, state.joint_data[i].unsqueeze(0)]
+        )
         return BaCEState(
-            covariance_matrix=posterior_covariance_matrix, 
-            n=state.n, 
-            observed_points=observed_points, 
-            joint_data=state.joint_data, 
+            covariance_matrix=posterior_covariance_matrix,
+            n=state.n,
+            observed_points=observed_points,
+            joint_data=state.joint_data,
             target_points=state.target_points,
-            sample_points=state.sample_points
+            sample_points=state.sample_points,
         )
 
 
@@ -178,7 +179,7 @@ class TargetedBaCE(Targeted, BaCE):
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor, # sample space
+        data: torch.Tensor,  # sample space
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
@@ -204,10 +205,10 @@ class TargetedBaCE(Targeted, BaCE):
                 ),
             )
         return BaCEState(
-            covariance_matrix=covariance_matrix, 
-            n=n, 
-            observed_points=torch.tensor([]), 
+            covariance_matrix=covariance_matrix,
+            n=n,
+            observed_points=torch.tensor([]),
             joint_data=joint_data,
             target_points=target,
-            sample_points=data
+            sample_points=data,
         )
