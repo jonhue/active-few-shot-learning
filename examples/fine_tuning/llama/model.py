@@ -8,10 +8,7 @@ def _get_quantization_config():
     compute_dtype = getattr(torch, "float16")
 
     return BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=compute_dtype,
-        bnb_4bit_use_double_quant=False,
+        load_in_8bit=True,
     )
 
 def get_tokenizer(model_id: str):

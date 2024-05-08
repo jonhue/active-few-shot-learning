@@ -1,8 +1,10 @@
 import argparse
 import time
 import torch
+import os
 from transformers import AutoTokenizer, TrainingArguments, DataCollatorForTokenClassification
 from peft import LoraConfig     # type: ignore
+from trl import SFTTrainer
 
 
 
@@ -49,6 +51,8 @@ def experiment(
     update_target: bool,
     debug: bool,
 ):
+    os.environ["PYTORCH_USE_CUDA_DSA"] = "1" # TODO
+
     print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
     torch.manual_seed(seed)
 
@@ -61,7 +65,11 @@ def experiment(
     model = get_model(model_id)
     tokenizer = get_tokenizer(model_id)
     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    data_collator = DataCollatorForTokenClassification(tokenizer)
+    data_collator = DataCollatorForTokenClassification( # TODO find out why this causes an error
+        tokenizer,
+        padding="max_length",
+        max_length=1024
+    )
 
     #def collate_tokenize(data):
     #    print(data)
@@ -102,34 +110,37 @@ def experiment(
         target_modules="all-linear",
         task_type="CAUSAL_LM",
     )
-    
-    default_args = {
-        "output_dir": "tmp",
-        "evaluation_strategy": "steps",
-        "num_train_epochs": 1,
-        "log_level": "error",
-        "report_to": "none",
-    }
 
     training_args = TrainingArguments(
-        per_device_train_batch_size=1, 
-        gradient_accumulation_steps=4, 
+        output_dir="tmp",
+        evaluation_strategy="epoch",
+        gradient_accumulation_steps=1, 
         gradient_checkpointing=True, 
+        auto_find_batch_size=True,
         fp16=True, 
         max_steps=1000,
-        **default_args
     )
 
-    trainer = LlamaTrainer(
+    #trainer = LlamaTrainer(
+    #    model=model,
+    #    train_dataset=train_set,
+    #    eval_dataset=test_set,
+    #    #data_collator=data_collator,
+    #    acquisition_function=acquisition_function,
+    #    query_batch_size=query_batch_size,
+    #    args=training_args,
+    #    dataset_text_field="text",
+    #    peft_config=peft_config,
+    #)
+
+    trainer = SFTTrainer(
         model=model,
         train_dataset=train_set,
-        data_collator=data_collator,
-        acquisition_function=acquisition_function,
-        query_batch_size=query_batch_size,
+        eval_dataset=test_set,
+        #data_collator=data_collator,
         args=training_args,
         dataset_text_field="text",
         peft_config=peft_config,
-        max_seq_length=128,
     )
 
     trainer.train()     # type: ignore
