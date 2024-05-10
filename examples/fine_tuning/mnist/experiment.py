@@ -136,6 +136,7 @@ def experiment(
         labels=LABELS,
         train_inputs=train_inputs,
         train_labels=train_labels,
+        testset=testset,
         valset=valset,
         criterion=criterion,
         optimizer=optimizer,
@@ -172,7 +173,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--alg", type=str, default="ProbCover")
+    parser.add_argument("--alg", type=str, default="Sample A")
     parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
     parser.add_argument(

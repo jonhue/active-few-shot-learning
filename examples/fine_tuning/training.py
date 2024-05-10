@@ -68,7 +68,7 @@ def train_loop(
     labels: torch.Tensor,
     train_inputs: afsl.data.Dataset,
     train_labels: torch.Tensor,
-    # testset: CollectedData | None,
+    testset: CollectedData,
     valset: CollectedData,
     criterion: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
@@ -99,18 +99,25 @@ def train_loop(
     # else:
     #     wandb.log({"round": 0, "round_accuracy": 0.0})
 
-    data_loader = ActiveDataLoader(
-        dataset=train_inputs,
-        batch_size=query_batch_size,
-        acquisition_function=acquisition_function,
-    )
+    if acquisition_function is not None:
+        data_loader = ActiveDataLoader(
+            dataset=train_inputs,
+            batch_size=query_batch_size,
+            acquisition_function=acquisition_function,
+        )
+    else:
+        data_loader = None
 
     last_best_epoch, last_best_acc = -1, 0.0
     selected_indices = []
     for i in range(num_rounds):
-        batch_indices = data_loader.next(
-            model=model, selected_indices=torch.tensor(selected_indices)
-        )
+        if data_loader is not None:
+            batch_indices = data_loader.next(
+                model=model, selected_indices=torch.tensor(selected_indices)
+            )
+        else:
+            batch_indices = torch.arange(i * query_batch_size, (i + 1) * query_batch_size)
+            batch_indices = batch_indices[batch_indices < len(testset)]
         batch_labels = train_labels[batch_indices]
         batch_mask = (batch_labels[:, None] == labels).any(dim=1)
         batch_inputs = [train_inputs[i] for i in batch_indices[batch_mask]]
