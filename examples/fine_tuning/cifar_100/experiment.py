@@ -132,6 +132,7 @@ def experiment(
         labels=LABELS,
         train_inputs=train_inputs,
         train_labels=train_labels,
+        testset=testset,
         valset=valset,
         criterion=criterion,
         optimizer=optimizer,

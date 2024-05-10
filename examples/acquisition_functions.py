@@ -153,9 +153,11 @@ def get_acquisition_function(
             num_workers=num_workers,
             subsample=subsample_acquisition,
         )
-    elif alg == "ProbCover":
+    elif "ProbCover" in alg:
+        delta = float(alg.split("--")[1]) if "--" in alg else 0.6
+        print("DELTA:", delta)
         acquisition_function = ProbCover(
-            delta=0.6,
+            delta=delta,
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
@@ -167,7 +169,9 @@ def get_acquisition_function(
             num_workers=num_workers,
             subsample=subsample_acquisition,
         )
+    elif alg == "Sample-A":
+        acquisition_function = None
     else:
         raise NotImplementedError
 
-    return acquisition_function
+    return acquisition_function  # type: ignore
