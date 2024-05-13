@@ -3,8 +3,8 @@ from examples.launch_utils import generate_base_command, generate_run_commands
 import examples.fine_tuning.llama.experiment as experiment
 
 import os
-os.environ["PYTORCH_USE_CUDA_DSA"] = "1" # TODO
 
+os.environ["PYTORCH_USE_CUDA_DSA"] = "1"  # TODO
 
 
 DEBUG = False

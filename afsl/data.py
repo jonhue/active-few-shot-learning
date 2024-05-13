@@ -5,6 +5,7 @@ Selection of classes for datasets and data loaders.
 from typing import Sized, Tuple
 import torch
 from torch.utils.data import DataLoader as TorchDataLoader, Dataset as TorchDataset
+from datasets import Dataset as DatasetsDataset
 
 
 class Dataset(TorchDataset[torch.Tensor], Sized):
@@ -27,3 +28,11 @@ class InputDataset(Dataset):
     def __getitem__(self, idx):
         x, _ = self.dataset[idx]
         return x
+    
+class LlamaDataset(InputDataset):
+    def __init__(self, dataset: DatasetsDataset):
+        self.dataset = dataset
+
+    def __getitem__(self, idx):
+        x = self.dataset[idx]
+        return torch.tensor(x["input_ids"])

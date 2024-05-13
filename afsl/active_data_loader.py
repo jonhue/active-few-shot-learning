@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Generic
+from typing import Generic, Iterator
 from tables import Unknown
 import torch
-from torch.utils.data.dataloader import DataLoader, _BaseDataLoaderIter, _collate_fn_t
+from torch.utils.data.dataloader import Sampler, _BaseDataLoaderIter, _collate_fn_t
 from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
 from afsl.acquisition_functions.bace import BaCE
 from afsl.acquisition_functions.max_dist import MaxDist
@@ -17,7 +17,7 @@ from afsl.utils import (
 )
 
 
-class ActiveDataLoader(DataLoader, Generic[M]):
+class ActiveDataLoader(Sampler, Generic[M]):
     r"""
     `ActiveDataLoader` can be used as a drop-in replacement for random data selection:
 
@@ -62,7 +62,6 @@ class ActiveDataLoader(DataLoader, Generic[M]):
         batch_size: int,
         acquisition_function: AcquisitionFunction[M],
         model: M,
-        collate_fn: _collate_fn_t[Unknown] | None = None,
     ):
         """
         Explicitly constructs an active data loader with a custom acquisition function.
@@ -72,12 +71,10 @@ class ActiveDataLoader(DataLoader, Generic[M]):
         assert len(dataset) > 0, "Data must be non-empty"
         assert batch_size > 0, "Batch size must be positive"
 
-        super().__init__(
-            dataset = dataset,
-            batch_size = batch_size,
-            collate_fn=collate_fn
-        )
+        super().__init__()
 
+        self.dataset = dataset
+        self.batch_size = batch_size
         self.acquisition_function = acquisition_function
         self.model = model
 
@@ -132,8 +129,15 @@ class ActiveDataLoader(DataLoader, Generic[M]):
             dataset=dataset,
             batch_size=batch_size,
             acquisition_function=acquisition_function,
-            model=model
+            model=model,
         )
+    
+    def __iter__(self) -> Iterator:
+        num_iterations = int(len(self.dataset) / self.batch_size)
+
+        for i in range(num_iterations):
+            batch_indices = self.next(self.model)
+            yield self.dataset[batch_indices]
 
     def next(self, model: M | None = None) -> torch.Tensor:
         r"""

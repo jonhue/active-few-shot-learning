@@ -5,14 +5,25 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Python: Current File with profiler",
       "type": "python",
       "request": "launch",
       "module": "cProfile",
       "args": [
-          "-o", "/tmp/tmp.prof", "${file}", "--debug"
+        "-o",
+        "/tmp/tmp.prof",
+        "${file}",
+        "--debug"
       ]
-    }, {
+    },
+    {
       "name": "Python: Current File",
       "type": "python",
       "request": "launch",

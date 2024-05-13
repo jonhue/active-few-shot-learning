@@ -2,19 +2,19 @@ import argparse
 import time
 import torch
 import os
-from transformers import AutoTokenizer, TrainingArguments, DataCollatorForTokenClassification
-from peft import LoraConfig     # type: ignore
-from trl import SFTTrainer
-
+from transformers import (
+    AutoTokenizer,
+    TrainingArguments,
+    DataCollatorForTokenClassification,
+)
+from peft import LoraConfig  # type: ignore
 
 
 import afsl
-from examples.fine_tuning.training import LlamaTrainer
-from examples.acquisition_functions import get_acquisition_function
+from examples.fine_tuning.training import LlamaTrainer, ITLConfig
 from examples.fine_tuning.llama.data import get_oasst1
-from examples.fine_tuning.llama.model import get_model, get_tokenizer
+from examples.fine_tuning.llama.model import get_model
 from examples.utils import int_or_none
-
 
 
 LR = 0.001
@@ -30,13 +30,12 @@ IMBALANCED_TEST = (
 IMBALANCED_TRAIN_PERC = None  # 0.8
 
 MINI_BATCH_SIZE = 1_000
-NUM_WORKERS = 4
+NUM_WORKERS = 0
 NUM_ROUNDS = 101
 
 DEFAULT_NOISE_STD = 0.01
 DEFAULT_QUERY_BATCH_SIZE = 1
 DEFAULT_N_INIT = 30
-
 
 
 def experiment(
@@ -51,7 +50,7 @@ def experiment(
     update_target: bool,
     debug: bool,
 ):
-    os.environ["PYTORCH_USE_CUDA_DSA"] = "1" # TODO
+    os.environ["PYTORCH_USE_CUDA_DSA"] = "1"  # TODO
 
     print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
     torch.manual_seed(seed)
@@ -61,42 +60,16 @@ def experiment(
     #
 
     model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-
     model = get_model(model_id)
-    tokenizer = get_tokenizer(model_id)
-    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    data_collator = DataCollatorForTokenClassification( # TODO find out why this causes an error
-        tokenizer,
-        padding="max_length",
-        max_length=1024
-    )
-
-    #def collate_tokenize(data):
-    #    print(data)
-    #    text_batch = [element["input_ids"] for element in data]
-    #    tokenized = tokenizer(text_batch, max_length=512, padding='max_length', truncation=True, return_tensors='pt')
-    #    return tokenized
+    tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path, token="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")
+    if getattr(tokenizer, "pad_token", None) is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
     #
     #   Train / Test set
     #
 
     train_set, test_set = get_oasst1()
-
-    #
-    #   Active DataLoader
-    #
-
-    acquisition_function = get_acquisition_function(
-        alg=alg,
-        target=torch.Tensor(),      #TODO give test_set
-        noise_std=noise_std,
-        mini_batch_size=MINI_BATCH_SIZE,
-        num_workers=NUM_WORKERS if not debug else 0,
-        subsample_acquisition=subsample_acquisition,
-        subsampled_target_frac=subsampled_target_frac,
-        max_target_size=max_target_size,
-    )
 
     #
     #   Trainer
@@ -113,37 +86,41 @@ def experiment(
 
     training_args = TrainingArguments(
         output_dir="tmp",
-        evaluation_strategy="epoch",
-        gradient_accumulation_steps=1, 
-        gradient_checkpointing=True, 
-        auto_find_batch_size=True,
-        fp16=True, 
-        max_steps=1000,
+        evaluation_strategy="steps",
+        eval_steps=2,
+        gradient_accumulation_steps=1,
+        gradient_checkpointing=True,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
+        fp16=True,
+        max_steps=10,
     )
 
-    #trainer = LlamaTrainer(
-    #    model=model,
-    #    train_dataset=train_set,
-    #    eval_dataset=test_set,
-    #    #data_collator=data_collator,
-    #    acquisition_function=acquisition_function,
-    #    query_batch_size=query_batch_size,
-    #    args=training_args,
-    #    dataset_text_field="text",
-    #    peft_config=peft_config,
-    #)
+    itl_config = ITLConfig(
+        alg=alg,
+        noise_std=noise_std,
+        mini_batch_size=MINI_BATCH_SIZE,
+        num_workers=NUM_WORKERS if not debug else 0,
+        subsample_acquisition=subsample_acquisition,
+        subsampled_target_frac=subsampled_target_frac,
+        max_target_size=max_target_size,
+    )
 
-    trainer = SFTTrainer(
+    trainer = LlamaTrainer(
         model=model,
         train_dataset=train_set,
         eval_dataset=test_set,
-        #data_collator=data_collator,
+        itl_config=itl_config,
+        query_batch_size=query_batch_size,
+        tokenizer=tokenizer,
         args=training_args,
         dataset_text_field="text",
         peft_config=peft_config,
     )
 
-    trainer.train()     # type: ignore
+    print(trainer.train_dataset.features["input_ids"])
+
+    trainer.train()  # type: ignore
 
     # wandb.finish()
 
