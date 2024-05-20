@@ -7,3 +7,4 @@ data
 *.out
 
 plots/images/
+plots/data/
