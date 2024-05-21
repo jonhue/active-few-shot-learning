@@ -4,6 +4,8 @@ import argparse
 
 
 from plotPerformance import *
+from plotConditionNumber import *
+from utils import *
 
 
 
@@ -33,6 +35,8 @@ if __name__ == "__main__":
     elif args.plot != "":
         if args.plot.strip() == "generalPerformance":
             plotGeneralPerformance()
+        elif args.plot.strip() == "conditionNumber":
+            plotConditionNumber()
         else:
             print(f"Invalid argument for --plot got \"{args.plot}\"")
             exit(-1)
