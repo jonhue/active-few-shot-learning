@@ -55,7 +55,7 @@ class ITLSearcher:
         k_mult: float = 100.0,
         mean_pooling: bool = False,
         threads: int = 1,
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray]:
         r"""
         :param query: Query embedding (of shape $m \times d$), comprised of $m$ individual embeddings.
         :param k: Number of results to return.
@@ -80,7 +80,7 @@ class ITLSearcher:
         k_mult: float = 100.0,
         mean_pooling: bool = False,
         threads: int = 1,
-    ) -> np.ndarray:
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
         r"""
         :param queries: $n$ query embeddings (of combined shape $n \times m \times d$), each comprised of $m$ individual embeddings.
         :param k: Number of results to return.
@@ -101,9 +101,12 @@ class ITLSearcher:
         D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))
 
         if self.skip_itl:
-            return I[:, :k]
+            result = []
+            for i, v in zip(I, V):
+                result.append((np.array(i[:k]), np.array(v[:k])))
+            return result
 
-        def engine(i: int) -> np.ndarray:
+        def engine(i: int) -> tuple[np.ndarray, np.ndarray]:
             dataset = Dataset(torch.tensor(V[i]))
             target = torch.tensor(
                 queries[i] if not mean_pooling else mean_queries[i].reshape(1, -1)
@@ -119,7 +122,7 @@ class ITLSearcher:
                 batch_size=k,
                 acquisition_function=acquisition_function,
             ).next()
-            return np.array(I[i][sub_indexes])
+            return np.array(I[i][sub_indexes]), np.array(V[i][sub_indexes])
 
         result = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
@@ -128,4 +131,5 @@ class ITLSearcher:
                 futures.append(executor.submit(engine, i))
             for future in concurrent.futures.as_completed(futures):
                 result.append(future.result())
-        return np.array(result)
+        return result
+    
