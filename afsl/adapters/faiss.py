@@ -3,7 +3,11 @@ import torch
 import concurrent.futures
 import numpy as np
 from afsl import ActiveDataLoader
+from afsl.acquisition_functions import AcquisitionFunction
+from afsl.acquisition_functions.itl_noiseless import ITLNoiseless
 from afsl.acquisition_functions.itl import ITL
+from afsl.acquisition_functions.random import Random
+from afsl.acquisition_functions.uncertainty_sampling import UncertaintySampling
 from torch.utils.data import Dataset as TorchDataset
 
 
@@ -41,10 +45,12 @@ class ITLSearcher:
     def __init__(
         self,
         index: faiss.Index,
+        acquisition_function: AcquisitionFunction,
         force_nonsequential: bool = False,
         skip_itl: bool = False,
     ):
         self.index = index
+        self.acquisition_function = acquisition_function
         self.force_nonsequential = force_nonsequential
         self.skip_itl = skip_itl
 
@@ -111,12 +117,33 @@ class ITLSearcher:
             target = torch.tensor(
                 queries[i] if not mean_pooling else mean_queries[i].reshape(1, -1)
             )
-            acquisition_function = ITL(
-                target=target,
-                num_workers=threads,
-                subsample=False,
-                force_nonsequential=self.force_nonsequential,
-            )
+
+            if self.acquisition_function == "Random":
+                acquisition_function = Random(
+                    num_workers=threads
+                )
+            elif self.acquisition_function == "ITL":
+                acquisition_function = ITL(
+                    target=target,
+                    num_workers=threads,
+                    subsample=False,
+                    force_nonsequential=self.force_nonsequential,
+                )
+            elif self.acquisition_function == "ITL-noiseless":
+                acquisition_function = ITLNoiseless(
+                    target=target,
+                    num_workers=threads,
+                    subsample=False,
+                    force_nonsequential=self.force_nonsequential
+                )
+            elif self.acquisition_function == "UncertaintySampling":
+                acquisition_function = UncertaintySampling(
+                    num_workers=threads,
+                    subsample=False
+                )
+            else:
+                raise NotImplementedError
+            
             sub_indexes = ActiveDataLoader(
                 dataset=dataset,
                 batch_size=k,
