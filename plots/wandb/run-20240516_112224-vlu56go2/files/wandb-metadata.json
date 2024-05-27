@@ -1,0 +1,83 @@
+{
+    "os": "Linux-6.5.0-35-generic-x86_64-with-glibc2.35",
+    "python": "3.12.2",
+    "heartbeatAt": "2024-05-16T09:22:25.518725",
+    "startedAt": "2024-05-16T09:22:24.857086",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--plot",
+        "generalPerformance"
+    ],
+    "state": "running",
+    "program": "/home/sbongni/sources/eth/bachelor-thesis/afsl/plots/plot.py",
+    "codePathLocal": "plot.py",
+    "codePath": "plots/plot.py",
+    "git": {
+        "remote": "git@github.com:Bongni/afsl.git",
+        "commit": "4c8ccd8c0626048795ef2c64b742be13653c73d0"
+    },
+    "email": "s.bongni@bluewin.ch",
+    "root": "/home/sbongni/sources/eth/bachelor-thesis/afsl",
+    "host": "acer",
+    "username": "sbongni",
+    "executable": "/home/sbongni/anaconda3/envs/bachelor-thesis/bin/python",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 1.2249999999999999,
+        "min": 400.0,
+        "max": 4700.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1.322,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.33,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.384,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.3,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.297,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.332,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.276,
+            "min": 400.0,
+            "max": 4700.0
+        },
+        {
+            "current": 1.263,
+            "min": 400.0,
+            "max": 4700.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 294.22930908203125,
+            "used": 60.671016693115234
+        }
+    },
+    "memory": {
+        "total": 15.406963348388672
+    }
+}

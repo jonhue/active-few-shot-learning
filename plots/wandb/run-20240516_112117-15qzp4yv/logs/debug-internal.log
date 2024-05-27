@@ -1,0 +1,222 @@
+2024-05-16 11:21:17,870 INFO    StreamThr :58331 [internal.py:wandb_internal():86] W&B internal server running at pid: 58331, started at: 2024-05-16 11:21:17.869360
+2024-05-16 11:21:17,872 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status
+2024-05-16 11:21:17,874 INFO    WriterThread:58331 [datastore.py:open_for_write():87] open: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/run-15qzp4yv.wandb
+2024-05-16 11:21:17,877 DEBUG   SenderThread:58331 [sender.py:send():379] send: header
+2024-05-16 11:21:17,882 DEBUG   SenderThread:58331 [sender.py:send():379] send: run
+2024-05-16 11:21:18,721 INFO    SenderThread:58331 [dir_watcher.py:__init__():211] watching files in: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files
+2024-05-16 11:21:18,721 INFO    SenderThread:58331 [sender.py:_start_run_threads():1124] run started: 15qzp4yv with start time 1715851277.871952
+2024-05-16 11:21:18,732 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: check_version
+2024-05-16 11:21:18,732 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: check_version
+2024-05-16 11:21:18,873 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: run_start
+2024-05-16 11:21:18,875 DEBUG   HandlerThread:58331 [system_info.py:__init__():26] System info init
+2024-05-16 11:21:18,875 DEBUG   HandlerThread:58331 [system_info.py:__init__():41] System info init done
+2024-05-16 11:21:18,875 INFO    HandlerThread:58331 [system_monitor.py:start():194] Starting system monitor
+2024-05-16 11:21:18,875 INFO    SystemMonitor:58331 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-05-16 11:21:18,876 INFO    HandlerThread:58331 [system_monitor.py:probe():214] Collecting system info
+2024-05-16 11:21:18,876 INFO    SystemMonitor:58331 [interfaces.py:start():190] Started cpu monitoring
+2024-05-16 11:21:18,877 INFO    SystemMonitor:58331 [interfaces.py:start():190] Started disk monitoring
+2024-05-16 11:21:18,877 INFO    SystemMonitor:58331 [interfaces.py:start():190] Started memory monitoring
+2024-05-16 11:21:18,879 INFO    SystemMonitor:58331 [interfaces.py:start():190] Started network monitoring
+2024-05-16 11:21:18,888 DEBUG   HandlerThread:58331 [system_info.py:probe():150] Probing system
+2024-05-16 11:21:18,889 DEBUG   HandlerThread:58331 [system_info.py:_probe_git():135] Probing git
+2024-05-16 11:21:18,899 DEBUG   HandlerThread:58331 [system_info.py:_probe_git():143] Probing git done
+2024-05-16 11:21:18,899 DEBUG   HandlerThread:58331 [system_info.py:probe():198] Probing system done
+2024-05-16 11:21:18,900 DEBUG   HandlerThread:58331 [system_monitor.py:probe():223] {'os': 'Linux-6.5.0-35-generic-x86_64-with-glibc2.35', 'python': '3.12.2', 'heartbeatAt': '2024-05-16T09:21:18.888909', 'startedAt': '2024-05-16T09:21:17.862497', 'docker': None, 'cuda': None, 'args': ('--plot', 'generalPerformance'), 'state': 'running', 'program': '/home/sbongni/sources/eth/bachelor-thesis/afsl/plots/plot.py', 'codePathLocal': 'plot.py', 'codePath': 'plots/plot.py', 'git': {'remote': 'git@github.com:Bongni/afsl.git', 'commit': '4c8ccd8c0626048795ef2c64b742be13653c73d0'}, 'email': 's.bongni@bluewin.ch', 'root': '/home/sbongni/sources/eth/bachelor-thesis/afsl', 'host': 'acer', 'username': 'sbongni', 'executable': '/home/sbongni/anaconda3/envs/bachelor-thesis/bin/python', 'cpu_count': 4, 'cpu_count_logical': 8, 'cpu_freq': {'current': 1.2756250000000002, 'min': 400.0, 'max': 4700.0}, 'cpu_freq_per_core': [{'current': 1.3, 'min': 400.0, 'max': 4700.0}, {'current': 0.952, 'min': 400.0, 'max': 4700.0}, {'current': 0.489, 'min': 400.0, 'max': 4700.0}, {'current': 1.286, 'min': 400.0, 'max': 4700.0}, {'current': 1.3, 'min': 400.0, 'max': 4700.0}, {'current': 1.011, 'min': 400.0, 'max': 4700.0}, {'current': 0.532, 'min': 400.0, 'max': 4700.0}, {'current': 1.29, 'min': 400.0, 'max': 4700.0}], 'disk': {'/': {'total': 294.22930908203125, 'used': 60.663997650146484}}, 'memory': {'total': 15.406963348388672}}
+2024-05-16 11:21:18,900 INFO    HandlerThread:58331 [system_monitor.py:probe():224] Finished collecting system info
+2024-05-16 11:21:18,900 INFO    HandlerThread:58331 [system_monitor.py:probe():227] Publishing system info
+2024-05-16 11:21:18,900 DEBUG   HandlerThread:58331 [system_info.py:_save_conda():207] Saving list of conda packages installed into the current environment
+2024-05-16 11:21:18,901 ERROR   HandlerThread:58331 [system_info.py:_save_conda():221] Error saving conda packages: [Errno 2] No such file or directory: 'conda'
+Traceback (most recent call last):
+  File "/home/sbongni/anaconda3/envs/bachelor-thesis/lib/python3.12/site-packages/wandb/sdk/internal/system/system_info.py", line 214, in _save_conda
+    subprocess.call(
+  File "/home/sbongni/anaconda3/envs/bachelor-thesis/lib/python3.12/subprocess.py", line 389, in call
+    with Popen(*popenargs, **kwargs) as p:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sbongni/anaconda3/envs/bachelor-thesis/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/home/sbongni/anaconda3/envs/bachelor-thesis/lib/python3.12/subprocess.py", line 1953, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'conda'
+2024-05-16 11:21:18,904 DEBUG   HandlerThread:58331 [system_info.py:_save_conda():222] Saving conda packages done
+2024-05-16 11:21:18,905 INFO    HandlerThread:58331 [system_monitor.py:probe():229] Finished publishing system info
+2024-05-16 11:21:18,908 DEBUG   SenderThread:58331 [sender.py:send():379] send: files
+2024-05-16 11:21:18,909 INFO    SenderThread:58331 [sender.py:_save_file():1390] saving file wandb-metadata.json with policy now
+2024-05-16 11:21:19,089 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: python_packages
+2024-05-16 11:21:19,090 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: python_packages
+2024-05-16 11:21:19,130 DEBUG   SenderThread:58331 [sender.py:send():379] send: telemetry
+2024-05-16 11:21:19,159 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: internal_messages
+2024-05-16 11:21:19,217 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: stop_status
+2024-05-16 11:21:19,218 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: stop_status
+2024-05-16 11:21:19,608 INFO    wandb-upload_0:58331 [upload_job.py:push():131] Uploaded file /tmp/tmpdypzh04vwandb/0g4v9ha3-wandb-metadata.json
+2024-05-16 11:21:19,723 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/requirements.txt
+2024-05-16 11:21:19,723 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/wandb-metadata.json
+2024-05-16 11:21:19,723 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/conda-environment.yaml
+2024-05-16 11:21:23,523 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:28,524 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:33,525 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:33,656 DEBUG   SenderThread:58331 [sender.py:send():379] send: config
+2024-05-16 11:21:34,192 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: internal_messages
+2024-05-16 11:21:34,198 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: stop_status
+2024-05-16 11:21:34,199 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: stop_status
+2024-05-16 11:21:38,571 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: log_artifact
+2024-05-16 11:21:38,572 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: log_artifact
+2024-05-16 11:21:40,760 INFO    wandb-upload_0:58331 [upload_job.py:push():89] Uploaded file /home/sbongni/.local/share/wandb/artifacts/staging/tmpgbu3pcxp
+2024-05-16 11:21:41,444 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: partial_history
+2024-05-16 11:21:41,642 INFO    SenderThread:58331 [sender.py:send_request_log_artifact():1456] logged artifact run-15qzp4yv-my_custom_plot_id_table - {'id': 'QXJ0aWZhY3Q6ODM4NTQ5Mzk5', 'state': 'PENDING', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjE3NTUwMjQ3Mw==', 'latestArtifact': None}}
+2024-05-16 11:21:41,642 DEBUG   SenderThread:58331 [sender.py:send():379] send: files
+2024-05-16 11:21:41,643 INFO    SenderThread:58331 [sender.py:_save_file():1390] saving file media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json with policy now
+2024-05-16 11:21:41,643 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:41,644 DEBUG   SenderThread:58331 [sender.py:send():379] send: history
+2024-05-16 11:21:41,644 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: summary_record
+2024-05-16 11:21:41,647 INFO    SenderThread:58331 [sender.py:_save_file():1390] saving file wandb-summary.json with policy end
+2024-05-16 11:21:41,648 DEBUG   SenderThread:58331 [sender.py:send():379] send: exit
+2024-05-16 11:21:41,648 INFO    SenderThread:58331 [sender.py:send_exit():586] handling exit code: 0
+2024-05-16 11:21:41,649 INFO    SenderThread:58331 [sender.py:send_exit():588] handling runtime: 22
+2024-05-16 11:21:41,649 INFO    SenderThread:58331 [sender.py:_save_file():1390] saving file wandb-summary.json with policy end
+2024-05-16 11:21:41,650 INFO    SenderThread:58331 [sender.py:send_exit():594] send defer
+2024-05-16 11:21:41,650 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,650 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 0
+2024-05-16 11:21:41,650 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,651 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 0
+2024-05-16 11:21:41,651 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 1
+2024-05-16 11:21:41,651 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,651 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 1
+2024-05-16 11:21:41,651 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,651 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 1
+2024-05-16 11:21:41,651 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 2
+2024-05-16 11:21:41,652 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,652 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 2
+2024-05-16 11:21:41,652 INFO    HandlerThread:58331 [system_monitor.py:finish():203] Stopping system monitor
+2024-05-16 11:21:41,652 DEBUG   SystemMonitor:58331 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-05-16 11:21:41,653 INFO    HandlerThread:58331 [interfaces.py:finish():202] Joined cpu monitor
+2024-05-16 11:21:41,653 DEBUG   SystemMonitor:58331 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-05-16 11:21:41,653 INFO    HandlerThread:58331 [interfaces.py:finish():202] Joined disk monitor
+2024-05-16 11:21:41,653 DEBUG   SystemMonitor:58331 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-05-16 11:21:41,653 INFO    HandlerThread:58331 [interfaces.py:finish():202] Joined memory monitor
+2024-05-16 11:21:41,657 INFO    HandlerThread:58331 [interfaces.py:finish():202] Joined network monitor
+2024-05-16 11:21:41,658 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,658 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 2
+2024-05-16 11:21:41,658 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 3
+2024-05-16 11:21:41,658 DEBUG   SenderThread:58331 [sender.py:send():379] send: stats
+2024-05-16 11:21:41,659 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,659 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 3
+2024-05-16 11:21:41,659 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,659 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 3
+2024-05-16 11:21:41,659 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 4
+2024-05-16 11:21:41,659 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,659 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 4
+2024-05-16 11:21:41,660 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,660 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 4
+2024-05-16 11:21:41,660 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 5
+2024-05-16 11:21:41,660 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,660 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 5
+2024-05-16 11:21:41,661 DEBUG   SenderThread:58331 [sender.py:send():379] send: summary
+2024-05-16 11:21:41,661 INFO    SenderThread:58331 [sender.py:_save_file():1390] saving file wandb-summary.json with policy end
+2024-05-16 11:21:41,661 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,661 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 5
+2024-05-16 11:21:41,661 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 6
+2024-05-16 11:21:41,662 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,662 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 6
+2024-05-16 11:21:41,662 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,662 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 6
+2024-05-16 11:21:41,666 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:41,732 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/output.log
+2024-05-16 11:21:41,732 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/wandb-summary.json
+2024-05-16 11:21:41,732 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json
+2024-05-16 11:21:41,733 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/media
+2024-05-16 11:21:41,733 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_created():271] file/dir created: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/media/table
+2024-05-16 11:21:41,858 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 7
+2024-05-16 11:21:41,859 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:41,859 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 7
+2024-05-16 11:21:41,859 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:41,859 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 7
+2024-05-16 11:21:42,447 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: poll_exit
+2024-05-16 11:21:42,732 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/config.yaml
+2024-05-16 11:21:43,182 INFO    wandb-upload_0:58331 [upload_job.py:push():131] Uploaded file /tmp/tmpdypzh04vwandb/8qdfif09-media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json
+2024-05-16 11:21:43,650 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 8
+2024-05-16 11:21:43,650 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: poll_exit
+2024-05-16 11:21:43,650 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:43,651 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 8
+2024-05-16 11:21:43,651 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:43,652 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 8
+2024-05-16 11:21:43,652 INFO    SenderThread:58331 [job_builder.py:build():318] Attempting to build job artifact
+2024-05-16 11:21:43,652 INFO    SenderThread:58331 [job_builder.py:_get_source_type():455] is repo sourced job
+2024-05-16 11:21:43,655 INFO    SenderThread:58331 [job_builder.py:build():431] adding wandb-job metadata file
+2024-05-16 11:21:43,662 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 9
+2024-05-16 11:21:43,663 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:43,663 DEBUG   SenderThread:58331 [sender.py:send():379] send: artifact
+2024-05-16 11:21:43,663 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 9
+2024-05-16 11:21:43,733 INFO    Thread-12 :58331 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/output.log
+2024-05-16 11:21:44,449 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: poll_exit
+2024-05-16 11:21:44,822 INFO    wandb-upload_0:58331 [upload_job.py:push():131] Uploaded file /tmp/tmpdypzh04vwandb/to6wc5st-media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json
+2024-05-16 11:21:44,825 INFO    wandb-upload_2:58331 [upload_job.py:push():89] Uploaded file /tmp/tmp4719y1kd/wandb-job.json
+2024-05-16 11:21:44,826 INFO    wandb-upload_1:58331 [upload_job.py:push():89] Uploaded file /home/sbongni/.local/share/wandb/artifacts/staging/tmpr_6i1q0u
+2024-05-16 11:21:46,247 INFO    SenderThread:58331 [sender.py:send_artifact():1468] sent artifact job-git_github.com_Bongni_afsl.git_plots_plot.py - {'id': 'QXJ0aWZhY3Q6ODM4NTQ5NDk4', 'state': 'PENDING', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjE3NTUwMjUxMQ==', 'latestArtifact': None}}
+2024-05-16 11:21:46,248 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:46,248 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 9
+2024-05-16 11:21:46,248 INFO    SenderThread:58331 [dir_watcher.py:finish():358] shutting down directory watcher
+2024-05-16 11:21:46,735 INFO    SenderThread:58331 [dir_watcher.py:finish():388] scan: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files
+2024-05-16 11:21:46,735 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/output.log output.log
+2024-05-16 11:21:46,736 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/requirements.txt requirements.txt
+2024-05-16 11:21:46,736 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/conda-environment.yaml conda-environment.yaml
+2024-05-16 11:21:46,740 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/wandb-metadata.json wandb-metadata.json
+2024-05-16 11:21:46,743 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/config.yaml config.yaml
+2024-05-16 11:21:46,744 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/wandb-summary.json wandb-summary.json
+2024-05-16 11:21:46,749 INFO    SenderThread:58331 [dir_watcher.py:finish():402] scan save: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json media/table/my_custom_plot_id_table_0_ce44f11b16d04080b9a5.table.json
+2024-05-16 11:21:46,750 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 10
+2024-05-16 11:21:46,750 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: poll_exit
+2024-05-16 11:21:46,750 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:46,751 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 10
+2024-05-16 11:21:46,751 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: status_report
+2024-05-16 11:21:46,751 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:46,751 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 10
+2024-05-16 11:21:46,752 INFO    SenderThread:58331 [file_pusher.py:finish():172] shutting down file pusher
+2024-05-16 11:21:47,119 INFO    wandb-upload_1:58331 [upload_job.py:push():131] Uploaded file /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/requirements.txt
+2024-05-16 11:21:47,158 INFO    wandb-upload_0:58331 [upload_job.py:push():131] Uploaded file /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/output.log
+2024-05-16 11:21:47,158 INFO    wandb-upload_2:58331 [upload_job.py:push():131] Uploaded file /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/config.yaml
+2024-05-16 11:21:47,219 INFO    wandb-upload_3:58331 [upload_job.py:push():131] Uploaded file /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/files/wandb-summary.json
+2024-05-16 11:21:47,420 INFO    Thread-11 (_thread_body):58331 [sender.py:transition_state():614] send defer: 11
+2024-05-16 11:21:47,421 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:47,421 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 11
+2024-05-16 11:21:47,421 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:47,422 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 11
+2024-05-16 11:21:47,422 INFO    SenderThread:58331 [file_pusher.py:join():178] waiting for file pusher
+2024-05-16 11:21:47,422 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 12
+2024-05-16 11:21:47,423 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:47,423 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 12
+2024-05-16 11:21:47,423 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:47,424 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 12
+2024-05-16 11:21:47,424 INFO    SenderThread:58331 [file_stream.py:finish():614] file stream finish called
+2024-05-16 11:21:47,451 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: poll_exit
+2024-05-16 11:21:47,595 INFO    SenderThread:58331 [file_stream.py:finish():618] file stream finish is done
+2024-05-16 11:21:47,595 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 13
+2024-05-16 11:21:47,596 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: poll_exit
+2024-05-16 11:21:47,596 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:47,596 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 13
+2024-05-16 11:21:47,597 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:47,597 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 13
+2024-05-16 11:21:47,597 INFO    SenderThread:58331 [sender.py:transition_state():614] send defer: 14
+2024-05-16 11:21:47,598 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: defer
+2024-05-16 11:21:47,598 DEBUG   SenderThread:58331 [sender.py:send():379] send: final
+2024-05-16 11:21:47,598 INFO    HandlerThread:58331 [handler.py:handle_request_defer():172] handle defer: 14
+2024-05-16 11:21:47,598 DEBUG   SenderThread:58331 [sender.py:send():379] send: footer
+2024-05-16 11:21:47,599 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: defer
+2024-05-16 11:21:47,599 INFO    SenderThread:58331 [sender.py:send_request_defer():610] handle sender defer: 14
+2024-05-16 11:21:47,600 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: poll_exit
+2024-05-16 11:21:47,600 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: poll_exit
+2024-05-16 11:21:47,601 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: poll_exit
+2024-05-16 11:21:47,601 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: poll_exit
+2024-05-16 11:21:47,602 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: server_info
+2024-05-16 11:21:47,602 DEBUG   SenderThread:58331 [sender.py:send_request():406] send_request: server_info
+2024-05-16 11:21:47,606 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: get_summary
+2024-05-16 11:21:47,607 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: sampled_history
+2024-05-16 11:21:47,608 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: internal_messages
+2024-05-16 11:21:47,737 INFO    MainThread:58331 [wandb_run.py:_footer_history_summary_info():3936] rendering history
+2024-05-16 11:21:47,737 INFO    MainThread:58331 [wandb_run.py:_footer_history_summary_info():3968] rendering summary
+2024-05-16 11:21:47,737 INFO    MainThread:58331 [wandb_run.py:_footer_sync_info():3895] logging synced files
+2024-05-16 11:21:47,738 DEBUG   HandlerThread:58331 [handler.py:handle_request():146] handle_request: shutdown
+2024-05-16 11:21:47,738 INFO    HandlerThread:58331 [handler.py:finish():866] shutting down handler
+2024-05-16 11:21:48,603 INFO    WriterThread:58331 [datastore.py:close():296] close: /home/sbongni/sources/eth/bachelor-thesis/afsl/plots/wandb/run-20240516_112117-15qzp4yv/run-15qzp4yv.wandb
+2024-05-16 11:21:48,736 INFO    SenderThread:58331 [sender.py:finish():1546] shutting down sender
+2024-05-16 11:21:48,737 INFO    SenderThread:58331 [file_pusher.py:finish():172] shutting down file pusher
+2024-05-16 11:21:48,737 INFO    SenderThread:58331 [file_pusher.py:join():178] waiting for file pusher
