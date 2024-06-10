@@ -6,6 +6,8 @@ from afsl import ActiveDataLoader
 from afsl.acquisition_functions import AcquisitionFunction
 from afsl.acquisition_functions.itl_noiseless import ITLNoiseless
 from afsl.acquisition_functions.itl import ITL
+from afsl.acquisition_functions.ctl import CTL
+from afsl.acquisition_functions.vtl import VTL
 from afsl.acquisition_functions.random import Random
 from afsl.acquisition_functions.uncertainty_sampling import UncertaintySampling
 from torch.utils.data import Dataset as TorchDataset
@@ -120,6 +122,7 @@ class ITLSearcher:
 
             if self.acquisition_function == "Random":
                 acquisition_function = Random(
+                    mini_batch_size=k,
                     num_workers=threads
                 )
             elif self.acquisition_function == "ITL":
@@ -140,6 +143,20 @@ class ITLSearcher:
                 acquisition_function = UncertaintySampling(
                     num_workers=threads,
                     subsample=False
+                )
+            elif self.acquisition_function == "CTL":
+                acquisition_function = CTL(
+                    target=target,
+                    num_workers=threads,
+                    subsample=False,
+                    force_nonsequential=self.force_nonsequential,
+                )
+            elif self.acquisition_function == "VTL":
+                acquisition_function = VTL(
+                    target=target,
+                    num_workers=threads,
+                    subsample=False,
+                    force_nonsequential=self.force_nonsequential,
                 )
             else:
                 raise NotImplementedError

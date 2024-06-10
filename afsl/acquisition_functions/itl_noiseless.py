@@ -79,8 +79,8 @@ class ITLNoiseless(TargetedBaCE):
 
         if unobserved_points.size(dim=0) > 0:
             conditional_variances[unobserved_points] = torch.diag(state.covariance_matrix.condition_on(
-                indices=adapted_target_space,
-                target_indices=unobserved_points,
+                indices=adapted_target_space.cpu(),
+                target_indices=unobserved_points.cpu(),
             )[:, :])
 
         #
@@ -89,7 +89,7 @@ class ITLNoiseless(TargetedBaCE):
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         if observed_points.size(dim = 0) > 0:
-            mi.index_fill_(0, observed_points, -float('inf'))
+            mi.index_fill_(0, observed_points.cpu(), -float('inf'))
 
         wandb.log(
             {
@@ -124,7 +124,7 @@ class ITLNoiseless(TargetedBaCE):
         cdist = torch.cdist(sample_points, observed_points, p=2.0)
         observed_map = torch.any(cdist < abs_tol, dim=1)
 
-        return sample_indices[observed_map], sample_indices[~observed_map]      
+        return sample_indices[observed_map], sample_indices[~observed_map]
     
     @staticmethod
     def get_adapted_target_space(state: BaCEState) -> torch.Tensor:
@@ -150,13 +150,15 @@ class ITLNoiseless(TargetedBaCE):
         cdist = torch.cdist(target_points, observed_points, p=2.0)
         observed_map = torch.any(cdist < abs_tol, dim=1)
 
-        return target_indices[~observed_map]    
+        return target_indices[~observed_map]
 
     @staticmethod
     def get_jitter(state: BaCEState, adapted_target_space: torch.Tensor) -> float:
         _indices: torch.Tensor = adapted_target_space
         if _indices.dim() == 0:
             _indices = _indices.unsqueeze(0)
+        #DEBUG not sure about this
+        _indices = _indices.cpu()
 
         condition_number = torch.linalg.cond(state.covariance_matrix[_indices, :][:, _indices])
         return 1e-10 * condition_number
