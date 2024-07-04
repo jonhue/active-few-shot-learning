@@ -2,11 +2,9 @@ import sys
 import argparse
 
 
-
 from plotPerformance import *
 from plotConditionNumber import *
 from utils import *
-
 
 
 if __name__ == "__main__":
@@ -19,8 +17,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--plot", type=str, default="")
-    parser.add_argument("--MNIST", action='store_true', default=False)
-    parser.add_argument("--CIFAR", action='store_true', default=False)
+    parser.add_argument("--MNIST", action="store_true", default=False)
+    parser.add_argument("--CIFAR", action="store_true", default=False)
     parser.add_argument("--load", type=str, default="")
     args = parser.parse_args()
 
@@ -38,7 +36,7 @@ if __name__ == "__main__":
         elif args.plot.strip() == "conditionNumber":
             plotConditionNumber()
         else:
-            print(f"Invalid argument for --plot got \"{args.plot}\"")
+            print(f'Invalid argument for --plot got "{args.plot}"')
             exit(-1)
-    
+
     print("Success!")

@@ -47,7 +47,7 @@ class ITLNoisy(TargetedBaCE):
 
     [^4]: see afsl.acquisition_functions.bace.BaCE
     """
-    
+
     def compute(self, state: BaCEState) -> torch.Tensor:
         noise_std = state.covariance_matrix.noise_std
         variances = torch.diag(state.covariance_matrix[: state.n, : state.n])
@@ -58,7 +58,10 @@ class ITLNoisy(TargetedBaCE):
         )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
-        mi = 0.5 * torch.clamp(torch.log((variances + noise_std) / (conditional_variances + noise_std)), min=0)
+        mi = 0.5 * torch.clamp(
+            torch.log((variances + noise_std) / (conditional_variances + noise_std)),
+            min=0,
+        )
         wandb.log(
             {
                 "max_mi": torch.max(mi),

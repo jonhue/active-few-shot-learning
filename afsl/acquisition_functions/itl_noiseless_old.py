@@ -57,8 +57,18 @@ class ITLNoiselessOld(TargetedBaCE):
 
         start = time.time()
         conditional_variances = torch.empty_like(variances)
-        unobserved_points = torch.tensor([i for i in torch.arange(state.n) if not ITLNoiselessOld.observed(i, state)], device=ITLNoiselessOld.get_device())
-        observed_points = torch.tensor([i for i in torch.arange(state.n) if ITLNoiselessOld.observed(i, state)], device=ITLNoiselessOld.get_device())
+        unobserved_points = torch.tensor(
+            [
+                i
+                for i in torch.arange(state.n)
+                if not ITLNoiselessOld.observed(i, state)
+            ],
+            device=ITLNoiselessOld.get_device(),
+        )
+        observed_points = torch.tensor(
+            [i for i in torch.arange(state.n) if ITLNoiselessOld.observed(i, state)],
+            device=ITLNoiselessOld.get_device(),
+        )
         end = time.time()
         print("prefix: " + str(end - start))
 
@@ -72,11 +82,10 @@ class ITLNoiselessOld(TargetedBaCE):
         end = time.time()
         print("loop: " + str(end - start))
 
-        
         start = time.time()
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
-        if observed_points.size(dim = 0) > 0:
-            mi.index_fill_(0, observed_points, -float('inf'))
+        if observed_points.size(dim=0) > 0:
+            mi.index_fill_(0, observed_points, -float("inf"))
         end = time.time()
         print("mi: " + str(end - start))
 
@@ -93,11 +102,21 @@ class ITLNoiselessOld(TargetedBaCE):
 
     @staticmethod
     def adapted_target_space(state: BaCEState, idx) -> torch.Tensor:
-        return torch.tensor([i for i in torch.arange(start=state.n, end=state.covariance_matrix.dim) if not ITLNoiselessOld.observed(i, state) and not i == idx], device=ITLNoiselessOld.get_device())
+        return torch.tensor(
+            [
+                i
+                for i in torch.arange(start=state.n, end=state.covariance_matrix.dim)
+                if not ITLNoiselessOld.observed(i, state) and not i == idx
+            ],
+            device=ITLNoiselessOld.get_device(),
+        )
 
     @staticmethod
     def observed(idx, state: BaCEState):
-        return any(ITLNoiselessOld.isClose(state.joint_data[idx], x) for x in state.observed_points)
+        return any(
+            ITLNoiselessOld.isClose(state.joint_data[idx], x)
+            for x in state.observed_points
+        )
 
     @staticmethod
     def isClose(x, y, rel_tol=1e-09, abs_tol=0.0):
@@ -115,12 +134,14 @@ class ITLNoiselessOld(TargetedBaCE):
         If the vector x is close to the vector y
         """
 
-        return np.linalg.norm(x - y) <= max(rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol)
-    
+        return np.linalg.norm(x - y) <= max(
+            rel_tol * max(np.linalg.norm(x), np.linalg.norm(y)), abs_tol
+        )
+
     @staticmethod
     def get_device():
         return torch.device("cuda:0" if torch.cuda.is_available else "cpu")
-    
-    #12.15 180
-    #3.26  45
-    #0.027 15
+
+    # 12.15 180
+    # 3.26  45
+    # 0.027 15

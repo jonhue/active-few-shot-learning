@@ -121,10 +121,7 @@ class ITLSearcher:
             )
 
             if self.acquisition_function == "Random":
-                acquisition_function = Random(
-                    mini_batch_size=k,
-                    num_workers=threads
-                )
+                acquisition_function = Random(mini_batch_size=k, num_workers=threads)
             elif self.acquisition_function == "ITL":
                 acquisition_function = ITL(
                     target=target,
@@ -137,12 +134,11 @@ class ITLSearcher:
                     target=target,
                     num_workers=threads,
                     subsample=False,
-                    force_nonsequential=self.force_nonsequential
+                    force_nonsequential=self.force_nonsequential,
                 )
             elif self.acquisition_function == "UncertaintySampling":
                 acquisition_function = UncertaintySampling(
-                    num_workers=threads,
-                    subsample=False
+                    num_workers=threads, subsample=False
                 )
             elif self.acquisition_function == "CTL":
                 acquisition_function = CTL(
@@ -160,7 +156,7 @@ class ITLSearcher:
                 )
             else:
                 raise NotImplementedError
-            
+
             sub_indexes = ActiveDataLoader(
                 dataset=dataset,
                 batch_size=k,
@@ -176,4 +172,3 @@ class ITLSearcher:
             for future in concurrent.futures.as_completed(futures):
                 result.append(future.result())
         return result
-    
