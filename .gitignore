@@ -6,7 +6,5 @@ __pycache__
 data
 *.out
 
-launcher.py
-
 plots/images/
 plots/data/

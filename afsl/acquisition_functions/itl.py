@@ -57,7 +57,7 @@ class ITL(TargetedBaCE):
         )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
-        mi = 0.5 * torch.clamp(torch.log((variances) / (conditional_variances)), min=0)
+        mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
         wandb.log(
             {
                 "max_mi": torch.max(mi),
