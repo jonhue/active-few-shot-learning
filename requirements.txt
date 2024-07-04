@@ -1,11 +1,11 @@
-black~=24.2
+black~=24.4
 numpy~=1.26
 pandas~=2.2
 poetry~=1.8
-pdoc~=14.4
+pdoc~=14.5
 pyright~=1.1
-pytest~=8.1
-torch~=2.2
-torchvision~=0.17
+pytest~=8.2
+torch~=2.3
+torchvision~=0.18
 tqdm~=4.66
 wandb
