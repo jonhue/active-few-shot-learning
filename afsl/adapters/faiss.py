@@ -3,8 +3,9 @@ import torch
 import concurrent.futures
 import numpy as np
 from afsl import ActiveDataLoader
-from afsl.acquisition_functions.itl import ITL
 from torch.utils.data import Dataset as TorchDataset
+
+from examples.acquisition_functions import get_acquisition_function
 
 
 class Dataset(TorchDataset[torch.Tensor]):
@@ -41,10 +42,14 @@ class ITLSearcher:
     def __init__(
         self,
         index: faiss.Index,
+        alg: str,
+        noise_std: float,
         force_nonsequential: bool = False,
         skip_itl: bool = False,
     ):
         self.index = index
+        self.alg = alg
+        self.noise_std = noise_std
         self.force_nonsequential = force_nonsequential
         self.skip_itl = skip_itl
 
@@ -97,6 +102,13 @@ class ITLSearcher:
         assert d == self.index.d
         mean_queries = np.mean(queries, axis=1)
 
+        if self.alg == "Random":
+            indices = np.arange(self.index.ntotal)
+            subsets = np.empty((n, k), dtype=int)
+            for i in range(n):
+                subsets[i] = np.random.choice(indices, k, replace=False)
+            return subsets
+
         faiss.omp_set_num_threads(threads)
         D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))
 
@@ -108,11 +120,14 @@ class ITLSearcher:
             target = torch.tensor(
                 queries[i] if not mean_pooling else mean_queries[i].reshape(1, -1)
             )
-            acquisition_function = ITL(
+            acquisition_function = get_acquisition_function(
+                alg=self.alg,
                 target=target,
+                noise_std=self.noise_std,
                 num_workers=threads,
-                subsample=False,
+                subsample_acquisition=False,
                 force_nonsequential=self.force_nonsequential,
+                mini_batch_size=10_000,  # TODO: this parameter is unused
             )
             sub_indexes = ActiveDataLoader(
                 dataset=dataset,

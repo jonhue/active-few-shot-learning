@@ -1,9 +1,11 @@
 import argparse
 import time
 import wandb
+import faiss
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from afsl.adapters.faiss import ITLSearcher
 from afsl.data import InputDataset
 from examples.acquisition_functions import get_acquisition_function
 from examples.fine_tuning.imagenet.data import collect_test_data, get_datasets
@@ -100,7 +102,11 @@ def experiment(
     if debug:
         trainset.data = trainset.data[:10]
         train_labels = train_labels[:10]
-    train_inputs = InputDataset(trainset)
+    # train_inputs = InputDataset(trainset)
+    d = trainset.data[0].size(0)
+    index = faiss.IndexFlatIP(d)
+    index.add(trainset.data)
+    searcher = ITLSearcher(index)
 
     # Define testset and valset
     testset, valset = collect_test_data(
@@ -111,36 +117,39 @@ def experiment(
     )
     target = testset.inputs
 
-    print("validation labels:", torch.unique(valset.labels))
+    for k in torch.arange(start=0, step=10, end=101):
+        indices = searcher.search(query=target.numpy(), k=int(k))
 
-    acquisition_function = get_acquisition_function(
-        alg=alg,
-        target=target,
-        noise_std=noise_std,
-        mini_batch_size=MINI_BATCH_SIZE,
-        num_workers=NUM_WORKERS if not debug else 0,
-        subsample_acquisition=subsample_acquisition,
-        subsampled_target_frac=subsampled_target_frac,
-        max_target_size=max_target_size,
-    )
+        print("validation labels:", torch.unique(valset.labels))
 
-    train_loop(
-        model=model,
-        labels=LABELS,
-        train_inputs=train_inputs,
-        train_labels=train_labels,
-        valset=valset,
-        criterion=criterion,
-        optimizer=optimizer,
-        acquisition_function=acquisition_function,
-        num_rounds=NUM_ROUNDS,
-        num_epochs=EPOCHS,
-        query_batch_size=query_batch_size,
-        train_batch_size=TRAIN_BATCH_SIZE,
-        update_target=update_target,
-        reweighting=REWEIGHTING,
-        reset_parameters=RESET_PARAMS,
-    )
+        # acquisition_function = get_acquisition_function(
+        #     alg=alg,
+        #     target=target,
+        #     noise_std=noise_std,
+        #     mini_batch_size=MINI_BATCH_SIZE,
+        #     num_workers=NUM_WORKERS if not debug else 0,
+        #     subsample_acquisition=subsample_acquisition,
+        #     subsampled_target_frac=subsampled_target_frac,
+        #     max_target_size=max_target_size,
+        # )
+
+        train_loop(
+            model=model,
+            labels=LABELS,
+            train_inputs=train_inputs,
+            train_labels=train_labels,
+            valset=valset,
+            criterion=criterion,
+            optimizer=optimizer,
+            acquisition_function=acquisition_function,
+            num_rounds=NUM_ROUNDS,
+            num_epochs=EPOCHS,
+            query_batch_size=query_batch_size,
+            train_batch_size=TRAIN_BATCH_SIZE,
+            update_target=update_target,
+            reweighting=REWEIGHTING,
+            reset_parameters=RESET_PARAMS,
+        )
     wandb.finish()
 
 

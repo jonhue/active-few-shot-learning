@@ -24,6 +24,23 @@ def accuracy(
     return 100 * correct / total
 
 
+def accuracy_from_dataloader(
+    model: torch.nn.Module, dataloader: DataLoader
+) -> float:
+    model.eval()
+
+    correct = 0
+    total = 0
+
+    device = get_device(model)
+    with torch.no_grad():
+        for inputs, labels in dataloader:
+            predicted = model.predict(inputs.to(device))
+            total += labels.size(0)
+            correct += (predicted == labels.to(device)).sum().item()
+    return 100 * correct / total
+
+
 def int_or_none(value):
     if value.lower() == "none":
         return None

@@ -5,61 +5,65 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from PIL import Image
-from examples.fine_tuning.data import CollectedData, Dataset
+from examples.large_scale_fine_tuning.data import CollectedData, Dataset
 
 
-# class ImbalancedDataset(Dataset):
-#     def __init__(
-#         self,
-#         dataset: torchvision.datasets.CIFAR100,
-#         transform,
-#         drop_labels=range(10),
-#         drop_prob=0.8,
-#     ):
-#         """
-#         :param dataset: The original dataset.
-#         :param transform: The transformation to apply to the images.
-#         :param drop_labels: The labels to drop data from.
-#         :param drop_prob: The percentage of dropped data from the specified labels.
-#         """
+class ImbalancedDataset(Dataset):
+    def __init__(
+        self,
+        dataset: torchvision.datasets.CIFAR100,
+        transform,
+        drop_labels=range(10),
+        drop_prob=0.8,
+    ):
+        """
+        :param dataset: The original dataset.
+        :param transform: The transformation to apply to the images.
+        :param drop_labels: The labels to drop data from.
+        :param drop_prob: The percentage of dropped data from the specified labels.
+        """
 
-#         self.transform = transform
+        self.transform = transform
 
-#         drop_mask = torch.isin(
-#             torch.tensor(dataset.targets), torch.tensor(drop_labels)
-#         ) & (torch.rand(len(dataset)) < drop_prob)
-#         self.data = dataset.data[~drop_mask]
-#         self.targets = torch.tensor(dataset.targets)[~drop_mask]
+        drop_mask = torch.isin(
+            torch.tensor(dataset.targets), torch.tensor(drop_labels)
+        ) & (torch.rand(len(dataset)) < drop_prob)
+        self.data = dataset.data[~drop_mask]
+        self.targets = torch.tensor(dataset.targets)[~drop_mask]
 
-#     def __len__(self):
-#         return len(self.data)
+    def __len__(self):
+        return len(self.data)
 
-#     def __getitem__(self, idx):
-#         img = self.data[idx]
-#         target = self.targets[idx]
-#         return self.transform(img=Image.fromarray(img)), target
+    def __getitem__(self, idx):
+        img = self.data[idx]
+        target = self.targets[idx]
+        return self.transform(img=Image.fromarray(img)), target
 
 
 def get_datasets(imbalanced_train_perc=None):
-    # Transform images to correct inputs for EfficientNet
-    transform = transforms.Compose(
+    # Load the CIFAR100 dataset
+    trainset = torchvision.datasets.CIFAR100(
+        root="./data", train=True, download=True, transform=transforms.Compose(
         [
-            transforms.Resize(224),
+            transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
             transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
+            # transforms.Normalize((0.5,), (0.5,)),
         ]
     )
-
-    # Load the ImageNet dataset
-    trainset = torchvision.datasets.ImageNet(
-        root="./data", train=True, download=True, transform=transform
     )
-    testset = torchvision.datasets.ImageNet(
-        root="./data", train=False, download=True, transform=transform
+    testset = torchvision.datasets.CIFAR100(
+        root="./data", train=False, download=True, transform=transforms.Compose(
+        [
+            transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.ToTensor(),
+            # transforms.Normalize((0.5,), (0.5,)),
+        ]
+    )
     )
 
-    if imbalanced_train_perc is not None:
-        assert False
+    # if imbalanced_train_perc is not None:
     #     trainset = ImbalancedDataset(
     #         dataset=trainset, transform=transform, drop_prob=imbalanced_train_perc
     #     )
@@ -77,10 +81,11 @@ def collect_data(dataloader: DataLoader):
 
 
 def collect_dataset(
-    dataset: torchvision.datasets.ImageNet,
+    dataset: torchvision.datasets.CIFAR100,
     restrict_to_labels: torch.Tensor | None = None,
+    shuffle_and_select_n: int | None = None,
 ):
-    dataloader = DataLoader(dataset, batch_size=64, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=64, shuffle=shuffle_and_select_n is not None)
     inputs = []
     labels = []
     for data in dataloader:
@@ -90,7 +95,10 @@ def collect_dataset(
             mask = torch.ones(data[0].shape[0], dtype=torch.bool)
         inputs.append(data[0][mask])
         labels.append(data[1][mask])
-    return torch.cat(inputs), torch.cat(labels)
+        if shuffle_and_select_n is not None and len(labels) * 64 >= shuffle_and_select_n:
+            break
+    n = shuffle_and_select_n if shuffle_and_select_n is not None else len(labels)
+    return torch.cat(inputs)[:n], torch.cat(labels)[:n]
 
 
 class ImbalancedTestConfig(NamedTuple):
@@ -99,7 +107,7 @@ class ImbalancedTestConfig(NamedTuple):
 
 
 def collect_test_data(
-    _testset: torchvision.datasets.ImageNet,
+    _testset: torchvision.datasets.CIFAR100,
     n_test: int,
     restrict_to_labels: torch.Tensor | None = None,
     imbalanced_test_config: ImbalancedTestConfig | None = None,
