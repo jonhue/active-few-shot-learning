@@ -14,17 +14,19 @@ from afsl.acquisition_functions.uncertainty_sampling import UncertaintySampling
 from afsl.acquisition_functions.undirected_itl import UndirectedITL
 from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
 from afsl.acquisition_functions.vtl import VTL
+from afsl.utils import DEFAULT_MINI_BATCH_SIZE
 
 
 def get_acquisition_function(
     alg: str,
     target: torch.Tensor,
     noise_std: float,
-    mini_batch_size: int,
     num_workers: int,
     subsample_acquisition: bool,
-    subsampled_target_frac: float,
-    max_target_size: int | None,
+    mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
+    subsampled_target_frac: float = 1.0,
+    max_target_size: int | None = None,
+    force_nonsequential: bool = False,
 ) -> AcquisitionFunction:
     if alg == "Random" or alg == "OracleRandom":
         acquisition_function = Random(
@@ -40,7 +42,7 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
-            force_nonsequential=(alg == "ITL-nonsequential"),
+            force_nonsequential=force_nonsequential or (alg == "ITL-nonsequential"),
         )
     elif alg == "VTL":
         acquisition_function = VTL(
@@ -51,6 +53,7 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     elif alg == "CTL":
         acquisition_function = CTL(
@@ -61,6 +64,7 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     elif alg == "CosineSimilarity":
         acquisition_function = CosineSimilarity(
@@ -86,6 +90,7 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     elif alg == "UndirectedVTL":
         acquisition_function = UndirectedVTL(
@@ -93,6 +98,7 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     elif alg == "UncertaintySampling":
         acquisition_function = UncertaintySampling(
@@ -124,12 +130,14 @@ def get_acquisition_function(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     elif alg == "KMeansPP":
         acquisition_function = KMeansPP(
             mini_batch_size=mini_batch_size,
             num_workers=num_workers,
             subsample=subsample_acquisition,
+            force_nonsequential=force_nonsequential,
         )
     else:
         raise NotImplementedError
