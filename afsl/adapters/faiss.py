@@ -3,12 +3,13 @@ import torch
 import concurrent.futures
 import numpy as np
 from afsl import ActiveDataLoader
+from afsl.data import Dataset as AbstractDataset
 from torch.utils.data import Dataset as TorchDataset
 
 from examples.acquisition_functions import get_acquisition_function
 
 
-class Dataset(TorchDataset[torch.Tensor]):
+class Dataset(AbstractDataset):
     def __init__(self, data: torch.Tensor):
         self.data = data
 
@@ -35,13 +36,13 @@ class ITLSearcher:
     ```
     """
 
-    index: faiss.Index
+    index: faiss.Index  # type: ignore
     force_nonsequential: bool = False
     skip_itl: bool = False
 
     def __init__(
         self,
-        index: faiss.Index,
+        index: faiss.Index,  # type: ignore
         alg: str,
         noise_std: float,
         force_nonsequential: bool = False,
@@ -109,7 +110,7 @@ class ITLSearcher:
                 subsets[i] = np.random.choice(indices, k, replace=False)
             return subsets
 
-        faiss.omp_set_num_threads(threads)
+        faiss.omp_set_num_threads(threads)  # type: ignore
         D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))
 
         if self.skip_itl:
@@ -126,7 +127,9 @@ class ITLSearcher:
                 noise_std=self.noise_std,
                 num_workers=threads,
                 subsample_acquisition=False,
-                force_nonsequential=self.force_nonsequential,
+                subsampled_target_frac=1.0,
+                max_target_size=None,
+                # force_nonsequential=self.force_nonsequential,
                 mini_batch_size=10_000,  # TODO: this parameter is unused
             )
             sub_indexes = ActiveDataLoader(
