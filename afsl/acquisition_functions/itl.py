@@ -64,5 +64,4 @@ class ITL(TargetedBaCE):
                 "min_mi": torch.min(mi),
             }
         )
-
         return mi

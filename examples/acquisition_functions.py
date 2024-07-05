@@ -4,9 +4,7 @@ from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
 from afsl.acquisition_functions.ctl import CTL
 from afsl.acquisition_functions.information_density import InformationDensity
 from afsl.acquisition_functions.itl import ITL
-from afsl.acquisition_functions.itl_noisy import ITLNoisy
 from afsl.acquisition_functions.itl_noiseless import ITLNoiseless
-from afsl.acquisition_functions.itl_noiseless_old import ITLNoiselessOld
 from afsl.acquisition_functions.kmeans_pp import KMeansPP
 from afsl.acquisition_functions.least_confidence import LeastConfidence
 from afsl.acquisition_functions.max_dist import MaxDist
@@ -45,32 +43,10 @@ def get_acquisition_function(
             subsample=subsample_acquisition,
             force_nonsequential=(alg == "ITL-nonsequential"),
         )
-    elif alg == "ITL-noisy":
-        acquisition_function = ITLNoisy(
-            target=target,
-            noise_std=noise_std,
-            subsampled_target_frac=subsampled_target_frac,
-            max_target_size=max_target_size,
-            mini_batch_size=mini_batch_size,
-            num_workers=num_workers,
-            subsample=subsample_acquisition,
-            force_nonsequential=False,
-        )
     elif alg == "ITL-noiseless":
         acquisition_function = ITLNoiseless(
             target=target,
-            noise_std=noise_std,
-            subsampled_target_frac=subsampled_target_frac,
-            max_target_size=max_target_size,
-            mini_batch_size=mini_batch_size,
-            num_workers=num_workers,
-            subsample=subsample_acquisition,
-            force_nonsequential=False,
-        )
-    elif alg == "ITL-noiseless-old":
-        acquisition_function = ITLNoiselessOld(
-            target=target,
-            noise_std=noise_std,
+            target_is_nonobersavble=True,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
             mini_batch_size=mini_batch_size,
