@@ -28,6 +28,10 @@ class BaCEState(NamedTuple):
     r"""Kernel matrix of the data. Tensor of shape $n \times n$."""
     n: int
     """Length of the data set."""
+    observed_indices: torch.Tensor
+    """Indices of points that were already observed."""
+    joint_data: torch.Tensor
+    r"""Tensor of shape $(n + m) \times d$ which includes both sample space and target space."""
 
 
 class BaCE(
@@ -103,11 +107,28 @@ class BaCE(
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n)
+        observed_indices = torch.tensor([])
+        return BaCEState(
+            covariance_matrix=covariance_matrix,
+            n=n,
+            observed_indices=observed_indices,
+            joint_data=data,
+        )
 
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
-        return BaCEState(covariance_matrix=posterior_covariance_matrix, n=state.n)
+        observed_indices = torch.cat(
+            [
+                state.observed_indices,
+                torch.tensor([i]).to(state.observed_indices.device),
+            ]
+        )
+        return BaCEState(
+            covariance_matrix=posterior_covariance_matrix,
+            n=state.n,
+            observed_indices=observed_indices,
+            joint_data=state.joint_data,
+        )
 
 
 class TargetedBaCE(Targeted, BaCE):
@@ -161,8 +182,8 @@ class TargetedBaCE(Targeted, BaCE):
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
+        joint_data = torch.cat((data, target))
         if isinstance(model, ModelWithKernel):
-            joint_data = torch.cat((data, target))
             covariance_matrix = GaussianCovarianceMatrix(
                 model.kernel(joint_data, joint_data),
                 noise_std=self.noise_std,
@@ -170,7 +191,7 @@ class TargetedBaCE(Targeted, BaCE):
         else:
             embeddings = self.compute_embedding(
                 model=model,
-                data=torch.cat((data, target)),
+                data=joint_data,
                 batch_size=self.embedding_batch_size,
             )
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
@@ -182,4 +203,10 @@ class TargetedBaCE(Targeted, BaCE):
                     else None
                 ),
             )
-        return BaCEState(covariance_matrix=covariance_matrix, n=n)
+        observed_indices = torch.tensor([])
+        return BaCEState(
+            covariance_matrix=covariance_matrix,
+            n=n,
+            observed_indices=observed_indices,
+            joint_data=joint_data,
+        )

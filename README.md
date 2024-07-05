@@ -1,5 +1,10 @@
 # Active Few-Shot Learning
 
+## Setup
+
+1. Navigate to the root folder of the project
+2. Run `pip install -e .`
+
 ## Maintenance
 
 ### CI checks

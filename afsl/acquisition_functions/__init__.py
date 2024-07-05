@@ -251,10 +251,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         return int(torch.argmax(values).item())
 
     def select_from_minibatch(
-        self,
-        batch_size: int,
-        model: M,
-        data: torch.Tensor,
+        self, batch_size: int, model: M, data: torch.Tensor
     ) -> torch.Tensor:
         r"""
         Selects the next batch from the given mini batch `data`.
@@ -441,6 +438,7 @@ class Targeted(ABC):
         max_target_size = (
             self.max_target_size if self.max_target_size is not None else m
         )
+
         return self._target[
             torch.randperm(m)[
                 : min(math.ceil(self.subsampled_target_frac * m), max_target_size)

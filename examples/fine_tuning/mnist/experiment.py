@@ -52,7 +52,7 @@ def experiment(
     debug: bool,
 ):
     wandb.init(
-        name="First experiment",
+        name="MNIST First Test",
         dir="/cluster/scratch/jhuebotter/wandb/mnist-fine-tuning",
         project="Fine-tuning MNIST",
         config={

@@ -49,7 +49,7 @@ def experiment(
     debug: bool,
 ):
     wandb.init(
-        name="First experiment",
+        name="CIFAR-100 First Test",
         dir="/cluster/scratch/jhuebotter/wandb/cifar-fine-tuning",
         project="Fine-tuning CIFAR",
         config={
