@@ -87,7 +87,7 @@ class BaCE(
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor,  #  sample space
+        data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
@@ -175,7 +175,7 @@ class TargetedBaCE(Targeted, BaCE):
     def initialize(
         self,
         model: ModelWithEmbeddingOrKernel | None,
-        data: torch.Tensor,  # sample space
+        data: torch.Tensor,
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
