@@ -33,16 +33,13 @@ class GaussianCovarianceMatrix:
         indices: torch.Tensor | List[int] | int,
         target_indices: torch.Tensor | None = None,
     ):
-        """Posterior conditional covariance
+        """
+        Computes the conditional covariance matrix.
 
-        Parameters
-        ----------
-        indices : vector, points on which to condition
-        target_indices: matrix, location to get posterior covariance
+        :param indices: Indices on which to condition.
+        :param target_indices: Indices on which to compute conditional covariance. All indices if `None`.
 
-        Returns
-        -------
-        posterior covariance of target_indices upon observing indices
+        :return: Conditional covariance of target_indices upon observing indices
         """
         _indices: torch.Tensor = torch.tensor(indices) if not torch.is_tensor(indices) else indices  # type: ignore
         if _indices.dim() == 0:
