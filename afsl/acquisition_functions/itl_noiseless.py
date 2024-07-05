@@ -82,12 +82,7 @@ class ITLNoiseless(TargetedBaCE):
 
 
 def get_observed_target_mask(state: BaCEState) -> torch.Tensor:
-        """Get unobserved points from target space
-
-        Parameters
-        ----------
-        state : BaCEState
-
+        """
         :return: Indices of unobserved points in target space
         """
         target_indices = torch.arange(start=state.n, end=state.covariance_matrix.dim)
