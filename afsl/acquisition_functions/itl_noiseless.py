@@ -2,7 +2,12 @@ import torch
 import wandb
 import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
-from afsl.utils import DEFAULT_EMBEDDING_BATCH_SIZE, DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
+from afsl.utils import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+)
 
 
 ABS_TOL = 1e-5
@@ -82,24 +87,26 @@ class ITLNoiseless(TargetedBaCE):
 
 
 def get_observed_target_mask(state: BaCEState) -> torch.Tensor:
-        """
-        :return: Indices of unobserved points in target space
-        """
-        target_indices = torch.arange(start=state.n, end=state.covariance_matrix.dim)
-        if state.observed_indices.size(0) == 0:
-            return target_indices
+    """
+    :return: Indices of unobserved points in target space
+    """
+    target_indices = torch.arange(start=state.n, end=state.covariance_matrix.dim)
+    if state.observed_indices.size(0) == 0:
+        return target_indices
 
-        samples = state.joint_data[state.observed_indices]
-        targets = state.joint_data[state.n:]
+    samples = state.joint_data[state.observed_indices]
+    targets = state.joint_data[state.n :]
 
-        cdist = torch.cdist(targets, samples, p=2)
-        observed_targets = torch.any(cdist < ABS_TOL, dim=1)
-        return observed_targets
+    cdist = torch.cdist(targets, samples, p=2)
+    observed_targets = torch.any(cdist < ABS_TOL, dim=1)
+    return observed_targets
 
 
 def get_jitter(state: BaCEState, target_indices: torch.Tensor) -> float:
     if target_indices.dim() == 0:
         return JITTER_ADJUSTMENT
 
-    condition_number = torch.linalg.cond(state.covariance_matrix[target_indices, target_indices])
+    condition_number = torch.linalg.cond(
+        state.covariance_matrix[target_indices, target_indices]
+    )
     return JITTER_ADJUSTMENT * condition_number

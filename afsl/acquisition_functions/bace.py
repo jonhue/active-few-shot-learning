@@ -118,7 +118,10 @@ class BaCE(
     def step(self, state: BaCEState, i: int) -> BaCEState:
         posterior_covariance_matrix = state.covariance_matrix.condition_on(i)
         observed_indices = torch.cat(
-            [state.observed_indices, torch.tensor([i]).to(state.observed_indices.device)]
+            [
+                state.observed_indices,
+                torch.tensor([i]).to(state.observed_indices.device),
+            ]
         )
         return BaCEState(
             covariance_matrix=posterior_covariance_matrix,
