@@ -49,8 +49,8 @@ def experiment(
     debug: bool,
 ):
     wandb.init(
-        name="CIFAR_100 First Test",
-        dir="/cluster/scratch/sbongni/wandb/cifar-fine-tuning",
+        name="CIFAR-100 First Test",
+        dir="/cluster/scratch/jhuebotter/wandb/cifar-fine-tuning",
         project="Fine-tuning CIFAR",
         config={
             "learning_rate": LR,

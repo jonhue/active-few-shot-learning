@@ -10,7 +10,7 @@ from utils import *
 #
 
 
-def plotConditionNumber():
+def plot_condition_number():
     plt.figure(figsize=(18, 6))
 
     #   ITL-noiseless with fine-tuned jitter
