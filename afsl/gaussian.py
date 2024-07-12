@@ -1,24 +1,20 @@
 from typing import List
 import torch
 
+JITTER_ADJUSTMENT = 0.01
+
 
 class GaussianCovarianceMatrix:
     _matrix: torch.Tensor
-    noise_std: float
 
-    def __init__(self, matrix: torch.Tensor, noise_std: float):
+    def __init__(self, matrix: torch.Tensor):
         self._matrix = matrix
-        self.noise_std = noise_std
 
     @staticmethod
-    def from_embeddings(
-        noise_std: float, Embeddings: torch.Tensor, Sigma: torch.Tensor | None = None
-    ):
+    def from_embeddings(Embeddings: torch.Tensor, Sigma: torch.Tensor | None = None):
         if Sigma is None:
             Sigma = torch.eye(Embeddings.size(1)).to(Embeddings.device)
-        return GaussianCovarianceMatrix(
-            Embeddings @ Sigma @ Embeddings.T, noise_std=noise_std
-        )
+        return GaussianCovarianceMatrix(Embeddings @ Sigma @ Embeddings.T)
 
     def __getitem__(self, indices):
         i, j = indices
@@ -32,12 +28,14 @@ class GaussianCovarianceMatrix:
         self,
         indices: torch.Tensor | List[int] | int,
         target_indices: torch.Tensor | None = None,
+        noise_std: float | None = None,
     ):
         """
         Computes the conditional covariance matrix.
 
         :param indices: Indices on which to condition.
         :param target_indices: Indices on which to compute conditional covariance. All indices if `None`.
+        :param noise_std: Standard deviation of observation noise. Determined automatically if `None`.
 
         :return: Conditional covariance of target_indices upon observing indices
         """
@@ -46,7 +44,11 @@ class GaussianCovarianceMatrix:
             _indices = _indices.unsqueeze(0)
         if target_indices is None:
             target_indices = torch.arange(self.dim)
-        noise_var = self.noise_std**2
+
+        if noise_std is None:
+            noise_var = get_jitter(covariance_matrix=self, indices=_indices)
+        else:
+            noise_var = noise_std**2
 
         Sigma_AA = self._matrix[target_indices][:, target_indices]
         Sigma_ii = self._matrix[_indices][:, _indices]
@@ -59,4 +61,14 @@ class GaussianCovarianceMatrix:
             )
             @ Sigma_Ai.T
         )
-        return GaussianCovarianceMatrix(posterior_Sigma_AA, noise_std=self.noise_std)
+        return GaussianCovarianceMatrix(posterior_Sigma_AA)
+
+
+def get_jitter(
+    covariance_matrix: GaussianCovarianceMatrix, indices: torch.Tensor
+) -> float:
+    if indices.dim() < 2:
+        return JITTER_ADJUSTMENT
+
+    eigvals = torch.linalg.eigvalsh(covariance_matrix[indices, indices])
+    return JITTER_ADJUSTMENT * eigvals[-1]

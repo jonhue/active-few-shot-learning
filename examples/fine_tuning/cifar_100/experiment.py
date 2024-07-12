@@ -77,7 +77,7 @@ def experiment(
         mode="offline" if debug else "online",
     )
 
-    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
+    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg, "NOISE_STD:", noise_std)
     torch.manual_seed(seed)
     # torch.set_default_tensor_type(torch.DoubleTensor)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--alg", type=str, default="ITL")
-    parser.add_argument("--noise-std", type=float, default=DEFAULT_NOISE_STD)
+    parser.add_argument("--noise-std", type=float, default=None)
     parser.add_argument("--n-init", type=int, default=DEFAULT_N_INIT)
     parser.add_argument(
         "--query-batch-size", type=int, default=DEFAULT_QUERY_BATCH_SIZE

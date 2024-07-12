@@ -11,7 +11,6 @@ from afsl.utils import (
 
 
 ABS_TOL = 1e-5
-JITTER_ADJUSTMENT = 1e-10
 
 
 class ITLNoiseless(TargetedBaCE):
@@ -41,7 +40,6 @@ class ITLNoiseless(TargetedBaCE):
         TargetedBaCE.__init__(
             self,
             target=target,
-            noise_std=torch.nan,
             subsampled_target_frac=subsampled_target_frac,
             max_target_size=max_target_size,
             mini_batch_size=mini_batch_size,
@@ -61,9 +59,6 @@ class ITLNoiseless(TargetedBaCE):
         if not self.target_is_nonobersavble and state.observed_indices.size(0) > 0:
             observed_target_mask = get_observed_target_mask(state)
             target_indices = target_indices[~observed_target_mask]
-
-        # compute jitter depending on how ill-conditioned the matrix is
-        state.covariance_matrix.noise_std = get_jitter(state, target_indices)
 
         if unobserved_indices.size(0) > 0:
             conditional_variances[unobserved_indices] = torch.diag(
@@ -100,13 +95,3 @@ def get_observed_target_mask(state: BaCEState) -> torch.Tensor:
     cdist = torch.cdist(targets, samples, p=2)
     observed_targets = torch.any(cdist < ABS_TOL, dim=1)
     return observed_targets
-
-
-def get_jitter(state: BaCEState, target_indices: torch.Tensor) -> float:
-    if target_indices.dim() == 0:
-        return JITTER_ADJUSTMENT
-
-    condition_number = torch.linalg.cond(
-        state.covariance_matrix[target_indices, target_indices]
-    )
-    return JITTER_ADJUSTMENT * condition_number

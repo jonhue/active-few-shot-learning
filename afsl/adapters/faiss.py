@@ -40,19 +40,16 @@ class Retriever:
     """
 
     index: faiss.Index  # type: ignore
-    force_nonsequential: bool = False
     only_faiss: bool = False
 
     def __init__(
         self,
         index: faiss.Index,  # type: ignore
         acquisition_function: TargetedAcquisitionFunction,
-        force_nonsequential: bool = False,
         only_faiss: bool = False,
     ):
         self.index = index
         self.acquisition_function = acquisition_function
-        # self.force_nonsequential = force_nonsequential
         self.only_faiss = only_faiss
 
     def search(
