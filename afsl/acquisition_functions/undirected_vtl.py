@@ -24,7 +24,7 @@ class UndirectedVTL(VTL):
 
     def __init__(
         self,
-        noise_std=1.0,
+        noise_std=None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
         num_workers=DEFAULT_NUM_WORKERS,
         subsample=DEFAULT_SUBSAMPLE,
