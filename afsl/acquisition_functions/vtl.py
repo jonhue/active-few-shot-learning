@@ -1,7 +1,7 @@
 import torch
 import wandb
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
-from afsl.acquisition_functions.utils import get_jitter
+from afsl.gaussian import get_jitter
 
 
 class VTL(TargetedBaCE):
