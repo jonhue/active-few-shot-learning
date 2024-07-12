@@ -77,7 +77,7 @@ def experiment(
         mode="offline" if debug else "online",
     )
 
-    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg)
+    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg, "NOISE_STD:", noise_std)
     torch.manual_seed(seed)
     # torch.set_default_tensor_type(torch.DoubleTensor)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

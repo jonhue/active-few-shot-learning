@@ -1,6 +1,7 @@
 import torch
 import wandb
 from afsl.acquisition_functions.bace import BaCEState, TargetedBaCE
+from afsl.acquisition_functions.utils import get_jitter
 from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
 
 
@@ -44,7 +45,10 @@ class UndirectedVTL(TargetedBaCE):
         )
 
     def compute(self, state: BaCEState) -> torch.Tensor:
-        noise_var = self.noise_std**2
+        if self.noise_std is None:
+            noise_var = get_jitter(covariance_matrix=state.covariance_matrix, indices=torch.arange(state.n))
+        else:
+            noise_var = self.noise_std**2
 
         def compute_posterior_variance(i, j):
             return state.covariance_matrix[i, i] - state.covariance_matrix[
