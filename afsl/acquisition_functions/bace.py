@@ -59,7 +59,7 @@ class BaCE(
 
     def __init__(
         self,
-        noise_std: float | None = 1.0,
+        noise_std: float | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
         embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers=DEFAULT_NUM_WORKERS,
@@ -138,7 +138,7 @@ class TargetedBaCE(Targeted, BaCE):
     def __init__(
         self,
         target: torch.Tensor,
-        noise_std: float | None = 1.0,
+        noise_std: float | None = None,
         subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
