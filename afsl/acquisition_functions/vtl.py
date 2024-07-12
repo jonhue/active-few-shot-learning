@@ -41,6 +41,12 @@ class VTL(TargetedBaCE):
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:
+        return self._compute(
+            state=state,
+            _target_indices=torch.arange(state.n, state.covariance_matrix.dim),
+        )
+
+    def _compute(self, state: BaCEState, _target_indices: torch.Tensor) -> torch.Tensor:
         if self.noise_std is None:
             noise_var = get_jitter(
                 covariance_matrix=state.covariance_matrix, indices=torch.arange(state.n)
@@ -56,9 +62,7 @@ class VTL(TargetedBaCE):
         data_indices = torch.arange(state.n).unsqueeze(
             1
         )  # Expand dims for broadcasting
-        target_indices = torch.arange(state.n, state.covariance_matrix.dim).unsqueeze(
-            0
-        )  # Expand dims for broadcasting
+        target_indices = _target_indices.unsqueeze(0)  # Expand dims for broadcasting
 
         posterior_variances = compute_posterior_variance(target_indices, data_indices)
         total_posterior_variances = torch.sum(posterior_variances, dim=1)
