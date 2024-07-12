@@ -46,7 +46,9 @@ class UndirectedVTL(TargetedBaCE):
 
     def compute(self, state: BaCEState) -> torch.Tensor:
         if self.noise_std is None:
-            noise_var = get_jitter(covariance_matrix=state.covariance_matrix, indices=torch.arange(state.n))
+            noise_var = get_jitter(
+                covariance_matrix=state.covariance_matrix, indices=torch.arange(state.n)
+            )
         else:
             noise_var = self.noise_std**2
 
