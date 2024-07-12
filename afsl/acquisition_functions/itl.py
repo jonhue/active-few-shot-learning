@@ -54,6 +54,7 @@ class ITL(TargetedBaCE):
         conditional_covariance_matrix = state.covariance_matrix.condition_on(
             torch.arange(start=state.n, end=state.covariance_matrix.dim),
             target_indices=torch.arange(state.n),
+            noise_std=self.noise_std,
         )[:, :]
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
