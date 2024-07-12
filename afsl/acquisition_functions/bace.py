@@ -16,6 +16,7 @@ from afsl.utils import (
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
+    get_device,
 )
 
 __all__ = ["BaCE", "BaCEState", "TargetedBaCE"]
@@ -88,14 +89,19 @@ class BaCE(
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        device: torch.device | None,
     ) -> BaCEState:
         n = data.size(0)
         if isinstance(model, ModelWithKernel):
-            covariance_matrix = GaussianCovarianceMatrix(model.kernel(data, data))
+            model_device = get_device(model)
+            _data = data.to(model_device)
+            covariance_matrix = GaussianCovarianceMatrix(
+                model.kernel(_data, _data).to(device)
+            )
         else:
             embeddings = self.compute_embedding(
                 model=model, data=data, batch_size=self.embedding_batch_size
-            )
+            ).to(device)
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 Embeddings=embeddings,
                 Sigma=(
@@ -178,20 +184,23 @@ class TargetedBaCE(Targeted, BaCE):
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        device: torch.device | None,
     ) -> BaCEState:
         n = data.size(0)
         target = self.get_target()
         joint_data = torch.cat((data, target))
         if isinstance(model, ModelWithKernel):
+            model_device = get_device(model)
+            _joint_data = joint_data.to(model_device)
             covariance_matrix = GaussianCovarianceMatrix(
-                model.kernel(joint_data, joint_data)
+                model.kernel(_joint_data, _joint_data).to(device)
             )
         else:
             embeddings = self.compute_embedding(
                 model=model,
                 data=joint_data,
                 batch_size=self.embedding_batch_size,
-            )
+            ).to(device)
             covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
                 Embeddings=embeddings,
                 Sigma=(

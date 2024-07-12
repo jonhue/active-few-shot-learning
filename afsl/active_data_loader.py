@@ -2,10 +2,8 @@ from __future__ import annotations
 from typing import Generic
 import torch
 from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
-from afsl.acquisition_functions.bace import BaCE
-from afsl.acquisition_functions.max_dist import MaxDist
-from afsl.acquisition_functions.undirected_itl import UndirectedITL
-from afsl.acquisition_functions.itl import ITL
+from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
+from afsl.acquisition_functions.vtl import VTL
 from afsl.data import Dataset
 from afsl.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
@@ -54,11 +52,15 @@ class ActiveDataLoader(Generic[M]):
     acquisition_function: AcquisitionFunction[M]
     r"""Acquisition function to be used for data selection."""
 
+    device: torch.device | None = None
+    r"""Device used for computation of the acquisition function."""
+
     def __init__(
         self,
         dataset: Dataset,
         batch_size: int,
         acquisition_function: AcquisitionFunction[M],
+        device: torch.device | None = None,
     ):
         """
         Explicitly constructs an active data loader with a custom acquisition function.
@@ -71,6 +73,7 @@ class ActiveDataLoader(Generic[M]):
         self.dataset = dataset
         self.batch_size = batch_size
         self.acquisition_function = acquisition_function
+        self.device = device
 
     @classmethod
     def initialize(
@@ -78,6 +81,7 @@ class ActiveDataLoader(Generic[M]):
         dataset: Dataset,
         target: torch.Tensor | None,
         batch_size: int,
+        device: torch.device | None = None,
         subsampled_target_frac: float = 1,
         max_target_size: int | None = None,
         mini_batch_size: int = DEFAULT_MINI_BATCH_SIZE,
@@ -92,6 +96,7 @@ class ActiveDataLoader(Generic[M]):
         :param dataset: Inputs (shape $n \times d$) to be selected from.
         :param target: Tensor of prediction targets (shape $m \times d$) or `None`.
         :param batch_size: Size of the batch to be selected.
+        :param device: Device used for computation of the acquisition function.
         :param subsampled_target_frac: Fraction of the target to be subsampled in each iteration. Must be in $(0,1]$. Default is $1$. Ignored if `target` is `None`.
         :param max_target_size: Maximum size of the target to be subsampled in each iteration. Default is `None` in which case the target may be arbitrarily large. Ignored if `target` is `None`.
         :param mini_batch_size: Size of mini batches used for computing the acquisition function.
@@ -102,7 +107,7 @@ class ActiveDataLoader(Generic[M]):
         """
 
         if target is not None or force_targeted:
-            acquisition_function = ITL(
+            acquisition_function = VTL(
                 target=target if target is not None else torch.tensor([]),
                 subsampled_target_frac=subsampled_target_frac,
                 max_target_size=max_target_size,
@@ -112,7 +117,7 @@ class ActiveDataLoader(Generic[M]):
                 subsample=subsample_acquisition,
             )
         else:
-            acquisition_function = UndirectedITL(
+            acquisition_function = UndirectedVTL(
                 mini_batch_size=mini_batch_size,
                 embedding_batch_size=embedding_batch_size,
                 num_workers=num_workers,
@@ -122,6 +127,7 @@ class ActiveDataLoader(Generic[M]):
             dataset=dataset,
             batch_size=batch_size,
             acquisition_function=acquisition_function,
+            device=device,
         )
 
     def next(self, model: M | None = None) -> torch.Tensor:
@@ -140,6 +146,7 @@ class ActiveDataLoader(Generic[M]):
             batch_size=self.batch_size,
             model=model,  # type: ignore
             dataset=self.dataset,
+            device=self.device,
         )
 
     def with_target(self, target: torch.Tensor) -> ActiveDataLoader[M]:

@@ -26,7 +26,7 @@ class Dataset(AbstractDataset):
 class Retriever:
     """
     Adapter for the [Faiss](https://github.com/facebookresearch/faiss) library.
-    First preselects a large number of candidates using Faiss, and then uses ITL to select the final results.
+    First preselects a large number of candidates using Faiss, and then uses VTL to select the final results.
 
     `Retriever` can be used as a wrapper around a Faiss index object:
 
@@ -47,10 +47,16 @@ class Retriever:
         index: faiss.Index,  # type: ignore
         acquisition_function: TargetedAcquisitionFunction,
         only_faiss: bool = False,
+        device: torch.device | None = None,
     ):
         self.index = index
         self.acquisition_function = acquisition_function
         self.only_faiss = only_faiss
+        self.device = (
+            device
+            if device is not None
+            else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        )
 
     def search(
         self,
@@ -63,7 +69,7 @@ class Retriever:
         r"""
         :param query: Query embedding (of shape $m \times d$), comprised of $m$ individual embeddings.
         :param k: Number of results to return.
-        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing ITL.
+        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing VTL.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -89,7 +95,7 @@ class Retriever:
         r"""
         :param queries: $n$ query embeddings (of combined shape $n \times m \times d$), each comprised of $m$ individual embeddings.
         :param k: Number of results to return.
-        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing ITL.
+        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing VTL.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -118,6 +124,7 @@ class Retriever:
                 dataset=dataset,
                 batch_size=k,
                 acquisition_function=self.acquisition_function,
+                device=self.device,
             ).next()
             return np.array(I[i][sub_indexes]), np.array(V[i][sub_indexes])
 
