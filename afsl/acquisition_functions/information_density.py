@@ -64,7 +64,8 @@ class InformationDensity(BatchAcquisitionFunction):
         self,
         model: ModelWithEmbedding,
         data: torch.Tensor,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
-        entropy = self.max_entropy.compute(model, data)
-        cosine_similarity = self.cosine_similarity.compute(model, data)
+        entropy = self.max_entropy.compute(model, data, device)
+        cosine_similarity = self.cosine_similarity.compute(model, data, device)
         return entropy * cosine_similarity**self.beta

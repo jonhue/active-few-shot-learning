@@ -1,12 +1,12 @@
 """
 `afsl` supports a wide range of acquisition functions which are summarized here.
-The default implementation uses [ITL](acquisition_functions/itl).
+The default implementation uses [VTL](acquisition_functions/vtl).
 You can use a custom acquisition function as follows:
 
 ```python
-from afsl.acquisition_functions.undirected_itl import UndirectedITL
+from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
 
-acquisition_function = UndirectedITL()
+acquisition_function = UndirectedVTL()
 data_loader = afsl.ActiveDataLoader(data, batch_size=64, acquisition_function=acquisition_function)
 ```
 
@@ -41,7 +41,7 @@ The following table provides an overview of the acquisition functions and their 
 
 from abc import ABC, abstractmethod
 import math
-from typing import Callable, Generic, Tuple, TypeVar
+from typing import Callable, Generic, Optional, Tuple, TypeVar
 import torch
 from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
 from afsl.data import Dataset
@@ -99,6 +99,7 @@ class AcquisitionFunction(ABC, Generic[M]):
         batch_size: int,
         model: M,
         dataset: Dataset,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         r"""
         Selects the next batch.
@@ -106,6 +107,7 @@ class AcquisitionFunction(ABC, Generic[M]):
         :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
         :param model: Model used for data selection.
         :param dataset: Inputs (shape $n \times d$) to be selected from.
+        :param device: Device used for computation of the acquisition function.
         :return: Indices of the newly selected batch.
         """
         pass
@@ -121,12 +123,14 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         self,
         model: M,
         data: torch.Tensor,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         r"""
         Computes the acquisition function for the given data.
 
         :param model: Model used for data selection.
         :param data: Tensor of inputs (shape $n \times d$) to be selected from.
+        :param device: Device used for computation of the acquisition function.
         :return: Acquisition function values for the given data.
         """
         pass
@@ -136,12 +140,14 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         batch_size: int,
         model: M,
         dataset: Dataset,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         return BatchAcquisitionFunction._select(
             compute_fn=self.compute,
             batch_size=batch_size,
             model=model,
             dataset=dataset,
+            device=device,
             mini_batch_size=self.mini_batch_size,
             num_workers=self.num_workers,
             subsample=self.subsample,
@@ -149,10 +155,11 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
 
     @staticmethod
     def _select(
-        compute_fn: Callable[[M, torch.Tensor], torch.Tensor],
+        compute_fn: Callable[[M, torch.Tensor, Optional[torch.device]], torch.Tensor],
         batch_size: int,
         model: M,
         dataset: Dataset,
+        device: torch.device | None,
         mini_batch_size: int,
         num_workers: int,
         subsample: bool,
@@ -168,7 +175,7 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         _values = []
         _original_indices = []
         for data, idx in data_loader:
-            _values.append(compute_fn(model, data))
+            _values.append(compute_fn(model, data, device))
             _original_indices.append(idx)
             if subsample:
                 break
@@ -209,12 +216,14 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         self,
         model: M,
         data: torch.Tensor,
+        device: torch.device | None,
     ) -> State:
         r"""
         Initializes the state for batch selection.
 
         :param model: Model used for data selection.
         :param data: Tensor of inputs (shape $n \times d$) to be selected from.
+        :param device: Device used for computation of the acquisition function.
         :return: Initial state of batch selection.
         """
         pass
@@ -251,7 +260,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         return int(torch.argmax(values).item())
 
     def select_from_minibatch(
-        self, batch_size: int, model: M, data: torch.Tensor
+        self, batch_size: int, model: M, data: torch.Tensor, device: torch.device | None
     ) -> torch.Tensor:
         r"""
         Selects the next batch from the given mini batch `data`.
@@ -259,9 +268,10 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
         :param model: Model used for data selection.
         :param data: Mini batch of inputs (shape $n \times d$) to be selected from.
+        :param device: Device used for computation of the acquisition function.
         :return: Indices of the newly selected batch (with respect to mini batch).
         """
-        state = self.initialize(model, data)
+        state = self.initialize(model, data, device)
 
         indices = []
         for _ in range(batch_size):
@@ -276,6 +286,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         batch_size: int,
         model: M,
         dataset: Dataset,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         r"""
         Selects the next batch. If `force_nonsequential` is `True`, the data is selected analogously to `BatchAcquisitionFunction.select`.
@@ -284,18 +295,22 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         :param batch_size: Size of the batch to be selected. Needs to be smaller than `mini_batch_size`.
         :param model: Model used for data selection.
         :param dataset: Inputs (shape $n \times d$) to be selected from.
+        :param device: Device used for computation of the acquisition function.
         :return: Indices of the newly selected batch.
         """
         if self.force_nonsequential:
 
-            def compute_fn(model: M, data: torch.Tensor) -> torch.Tensor:
-                return self.compute(self.initialize(model, data))
+            def compute_fn(
+                model: M, data: torch.Tensor, device: torch.device | None = None
+            ) -> torch.Tensor:
+                return self.compute(self.initialize(model, data, device))
 
             return BatchAcquisitionFunction._select(
                 compute_fn=compute_fn,
                 batch_size=batch_size,
                 model=model,
                 dataset=dataset,
+                device=device,
                 mini_batch_size=self.mini_batch_size,
                 num_workers=self.num_workers,
                 subsample=self.subsample,
@@ -322,7 +337,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
             selected_indices = []
             for data, idx in data_loader:
                 selected_indices.extend(
-                    idx[self.select_from_minibatch(batch_size, model, data)]
+                    idx[self.select_from_minibatch(batch_size, model, data, device)]
                     .cpu()
                     .tolist()
                 )

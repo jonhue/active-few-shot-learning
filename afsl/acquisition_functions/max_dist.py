@@ -86,14 +86,12 @@ class MaxDist(
         self,
         model: ModelWithEmbeddingOrKernel | None,
         data: torch.Tensor,
+        device: torch.device | None,
     ) -> DistanceState:
         if model is None or isinstance(model, ModelWithEmbedding):
             embeddings = self.compute_embedding(
                 model=model, data=data, batch_size=self.embedding_batch_size
-            )
-            device = embeddings.device
-        else:
-            device = get_device(model)
+            ).to(device)
 
         centroid_indices = torch.tensor([])
         min_sqd_distances = torch.full(
@@ -103,7 +101,9 @@ class MaxDist(
         if model is None or isinstance(model, ModelWithEmbedding):
             kernel_matrix = embeddings @ embeddings.T
         else:
-            kernel_matrix = model.kernel(data, data)
+            model_device = get_device(model)
+            _data = data.to(model_device)
+            kernel_matrix = model.kernel(_data, _data).to(device)
 
         return DistanceState(
             centroid_indices=centroid_indices,

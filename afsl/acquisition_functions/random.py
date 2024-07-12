@@ -36,5 +36,6 @@ class Random(BatchAcquisitionFunction):
         self,
         model: Model,
         data: torch.Tensor,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
-        return torch.randperm(data.size(0))
+        return torch.randperm(data.size(0), device=device)

@@ -70,13 +70,14 @@ class CosineSimilarity(
         self,
         model: ModelWithEmbedding | None,
         data: torch.Tensor,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         data_latent = self.compute_embedding(
             model=model, data=data, batch_size=self.embedding_batch_size
-        )
+        ).to(device)
         target_latent = self.compute_embedding(
             model=model, data=self.get_target(), batch_size=self.embedding_batch_size
-        )
+        ).to(device)
 
         data_latent_normalized = F.normalize(data_latent, p=2, dim=1)
         target_latent_normalized = F.normalize(target_latent, p=2, dim=1)

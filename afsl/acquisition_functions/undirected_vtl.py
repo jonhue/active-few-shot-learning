@@ -3,7 +3,12 @@ import wandb
 from afsl.acquisition_functions.bace import BaCEState, TargetedBaCE
 from afsl.acquisition_functions.vtl import VTL
 from afsl.gaussian import get_jitter
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
+from afsl.utils import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+)
 
 
 class UndirectedVTL(VTL):
@@ -26,6 +31,7 @@ class UndirectedVTL(VTL):
         self,
         noise_std=1.0,
         mini_batch_size=DEFAULT_MINI_BATCH_SIZE,
+        embedding_batch_size=DEFAULT_EMBEDDING_BATCH_SIZE,
         num_workers=DEFAULT_NUM_WORKERS,
         subsample=DEFAULT_SUBSAMPLE,
         force_nonsequential=False,
@@ -33,6 +39,7 @@ class UndirectedVTL(VTL):
         """
         :param noise_std: Standard deviation of the noise.
         :param mini_batch_size: Size of mini-batch used for computing the acquisition function.
+        :param embedding_batch_size: Batch size used for computing the embeddings.
         :param force_nonsequential: Whether to force non-sequential data selection.
         """
         TargetedBaCE.__init__(
@@ -40,6 +47,7 @@ class UndirectedVTL(VTL):
             target=torch.tensor([]),
             noise_std=noise_std,
             mini_batch_size=mini_batch_size,
+            embedding_batch_size=embedding_batch_size,
             num_workers=num_workers,
             subsample=subsample,
             force_nonsequential=force_nonsequential,

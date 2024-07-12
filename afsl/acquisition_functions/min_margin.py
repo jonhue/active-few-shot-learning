@@ -22,6 +22,7 @@ class MinMargin(BatchAcquisitionFunction):
         self,
         model: Model,
         data: torch.Tensor,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         model.eval()
         with torch.no_grad():
@@ -29,7 +30,7 @@ class MinMargin(BatchAcquisitionFunction):
             def engine(batch: torch.Tensor) -> torch.Tensor:
                 output = torch.softmax(
                     model(batch.to(get_device(model), non_blocking=True)), dim=1
-                )
+                ).to(device)
                 top_preds, _ = torch.topk(output, 2, dim=1)
                 margins = top_preds[:, 0] - top_preds[:, 1]
                 return -margins
