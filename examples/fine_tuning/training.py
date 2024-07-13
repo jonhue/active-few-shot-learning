@@ -2,11 +2,13 @@ import copy
 import wandb
 import numpy as np
 from tqdm import tqdm
+import faiss
 import torch
 from torch.utils.data import DataLoader
 import afsl
-from afsl.acquisition_functions import AcquisitionFunction
+from afsl.acquisition_functions import AcquisitionFunction, EmbeddingBased, Targeted
 from afsl.active_data_loader import ActiveDataLoader
+from afsl.adapters.faiss import Retriever
 from afsl.utils import get_device
 from examples.fine_tuning.data import CollectedData, Dataset
 from examples.utils import accuracy
@@ -80,19 +82,43 @@ def train_loop(
     reweighting=True,
     reset_parameters=False,
     use_best_model=False,
+    faiss_index_path=None,
+    target_embeddings=None,
 ):
     data = Dataset(root="./data")
     wandb.log({"round": 0, "round_accuracy": 0.0})
 
-    data_loader = ActiveDataLoader(
-        dataset=train_inputs,
-        batch_size=query_batch_size,
-        acquisition_function=acquisition_function,
-    )
+    if faiss_index_path is not None:
+        # assert isinstance(acquisition_function, Targeted)
+        acquisition_function.subsample = False
+        # acquisition_function.subsampled_target_frac = 1
+
+        res = faiss.StandardGpuResources()
+        index = faiss.read_index(faiss_index_path)
+        index = faiss.index_cpu_to_gpu(res, 0, index)
+        retriever = Retriever(index, acquisition_function)  # type: ignore
+    else:
+        data_loader = ActiveDataLoader(
+            dataset=train_inputs,
+            batch_size=query_batch_size,
+            acquisition_function=acquisition_function,
+        )
 
     last_best_epoch, last_best_acc = -1, 0.0
     for i in range(num_rounds):
-        batch_indices = data_loader.next(model)
+        if faiss_index_path is not None:
+            assert isinstance(acquisition_function, Targeted)
+            assert target_embeddings is not None
+
+            acquisition_function.set_target(target_embeddings)  # ensure target set is reset to correct length
+            print(acquisition_function._target.size(0), acquisition_function.subsampled_target_frac, target_embeddings.shape)
+            query = acquisition_function.get_target().cpu().numpy()
+            print("NUMMMMMM:", query.shape)
+            _batch_indices, _ = retriever.search(query=query, k=query_batch_size, k_mult=100)
+            batch_indices = torch.tensor(_batch_indices)
+            print(batch_indices)
+        else:
+            batch_indices = data_loader.next(model)
         batch_labels = train_labels[batch_indices]
         batch_mask = (batch_labels[:, None] == labels).any(dim=1)
         batch_inputs = [train_inputs[i] for i in batch_indices[batch_mask]]

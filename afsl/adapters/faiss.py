@@ -34,8 +34,8 @@ class Retriever:
     d = 768  # Dimensionality of the embeddings
     index = faiss.IndexFlatIP(d)
     index.add(embeddings)
-    itl = Retriever(index)
-    indices = itl.search(query_embeddings, k=10)
+    retriever = Retriever(index, acquisition_function)
+    indices = retriever.search(query_embeddings, k=10)
     ```
     """
 
@@ -109,7 +109,7 @@ class Retriever:
         mean_queries = np.mean(queries, axis=1)
 
         faiss.omp_set_num_threads(threads)  # type: ignore
-        D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))
+        D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))  # type: ignore
 
         if self.only_faiss:
             return I[:, :k], V[:, :k]

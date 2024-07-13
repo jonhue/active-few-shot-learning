@@ -46,6 +46,7 @@ def experiment(
     max_target_size: int | None,
     subsample_acquisition: bool,
     update_target: bool,
+    faiss_index: str | None,
     debug: bool,
 ):
     wandb.init(
@@ -73,11 +74,12 @@ def experiment(
             "subsampled_target_frac": subsampled_target_frac,
             "max_target_size": max_target_size,
             "update_target": update_target,
+            "faiss_index": faiss_index,
         },
         mode="offline" if debug else "online",
     )
 
-    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg, "NOISE_STD:", noise_std)
+    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg, "NOISE_STD:", noise_std, "FAISS_INDEX:", faiss_index)
     torch.manual_seed(seed)
     # torch.set_default_tensor_type(torch.DoubleTensor)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -111,6 +113,12 @@ def experiment(
     )
     target = testset.inputs
 
+    model.eval()
+    with torch.no_grad():
+        target_embeddings = model.embed(
+            target.to(device, non_blocking=True)
+        )
+
     print("validation labels:", torch.unique(valset.labels))
 
     acquisition_function = get_acquisition_function(
@@ -123,6 +131,8 @@ def experiment(
         subsampled_target_frac=subsampled_target_frac,
         max_target_size=max_target_size,
     )
+
+    faiss_index_path = f"examples/fine_tuning/cifar_100/index/{faiss_index}.faiss" if faiss_index is not None else None
 
     train_loop(
         model=model,
@@ -140,6 +150,8 @@ def experiment(
         update_target=update_target,
         reweighting=REWEIGHTING,
         reset_parameters=RESET_PARAMS,
+        faiss_index_path=faiss_index_path,
+        target_embeddings=target_embeddings,
     )
     wandb.finish()
 
@@ -156,6 +168,7 @@ def main(args):
         max_target_size=args.max_target_size,
         subsample_acquisition=bool(args.subsample_acquisition),
         update_target=bool(args.update_target),
+        faiss_index=args.faiss_index,
         debug=args.debug,
     )
     print("Total time taken:", time.process_time() - t_start, "seconds")
@@ -174,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-target-size", type=int_or_none, default=None)
     parser.add_argument("--subsample-acquisition", type=int, default=1)
     parser.add_argument("--update-target", type=int, default=0)
+    parser.add_argument("--faiss-index", type=str, default=None)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     main(args)
