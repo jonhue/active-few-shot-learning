@@ -2,7 +2,7 @@ import copy
 import wandb
 import numpy as np
 from tqdm import tqdm
-import faiss
+import faiss  # type: ignore
 import torch
 from torch.utils.data import DataLoader
 import afsl

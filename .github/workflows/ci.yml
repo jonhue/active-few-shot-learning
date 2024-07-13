@@ -29,8 +29,6 @@ jobs:
       run: pip3 install -r requirements.txt
     - name: Install torch
       run: pip3 install --upgrade torch~=${{ matrix.torch }}
-    - name: Install faiss
-      run: pip3 install faiss-cpu
     - name: Run Black
       run: black . --check
     - name: Run pyright

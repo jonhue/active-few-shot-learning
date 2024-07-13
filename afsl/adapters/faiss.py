@@ -1,6 +1,6 @@
 from typing import Tuple
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
-import faiss
+import faiss  # type: ignore
 import torch
 import concurrent.futures
 import numpy as np
