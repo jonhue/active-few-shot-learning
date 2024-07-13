@@ -1,7 +1,7 @@
 import argparse
 import time
 import wandb
-import faiss
+import faiss  # type: ignore
 import torch
 import torch.nn as nn
 import torch.optim as optim
