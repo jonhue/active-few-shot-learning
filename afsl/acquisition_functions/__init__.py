@@ -445,20 +445,17 @@ class Targeted(ABC):
         """
         self._target = new_target
 
-    def get_target_mask(self) -> torch.Tensor:
+    def get_target(self) -> torch.Tensor:
         r"""
-        Returns a mask of (subsampled) prediction targets (shape $m$).
+        Returns the tensor of (subsampled) prediction target (shape $m \times d$).
         """
         m = self._target.size(0)
         max_target_size = (
             self.max_target_size if self.max_target_size is not None else m
         )
-        return torch.randperm(m)[
-            : min(math.ceil(self.subsampled_target_frac * m), max_target_size)
-        ]
 
-    def get_target(self) -> torch.Tensor:
-        r"""
-        Returns the tensor of (subsampled) prediction target (shape $m \times d$).
-        """
-        return self._target[self.get_target_mask()]
+        return self._target[
+            torch.randperm(m)[
+                : min(math.ceil(self.subsampled_target_frac * m), max_target_size)
+            ]
+        ]
