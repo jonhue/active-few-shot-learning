@@ -110,11 +110,19 @@ def train_loop(
             assert isinstance(acquisition_function, Targeted)
             assert target_embeddings is not None
 
-            acquisition_function.set_target(target_embeddings)  # ensure target set is reset to correct length
-            print(acquisition_function._target.size(0), acquisition_function.subsampled_target_frac, target_embeddings.shape)
+            acquisition_function.set_target(
+                target_embeddings
+            )  # ensure target set is reset to correct length
+            print(
+                acquisition_function._target.size(0),
+                acquisition_function.subsampled_target_frac,
+                target_embeddings.shape,
+            )
             query = acquisition_function.get_target().cpu().numpy()
             print("NUMMMMMM:", query.shape)
-            _batch_indices, _ = retriever.search(query=query, k=query_batch_size, k_mult=100)
+            _batch_indices, _ = retriever.search(
+                query=query, k=query_batch_size, k_mult=100
+            )
             batch_indices = torch.tensor(_batch_indices)
             print(batch_indices)
         else:

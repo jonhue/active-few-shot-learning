@@ -79,7 +79,18 @@ def experiment(
         mode="offline" if debug else "online",
     )
 
-    print("SEED:", seed, "LABELS:", LABELS, "ALG:", alg, "NOISE_STD:", noise_std, "FAISS_INDEX:", faiss_index)
+    print(
+        "SEED:",
+        seed,
+        "LABELS:",
+        LABELS,
+        "ALG:",
+        alg,
+        "NOISE_STD:",
+        noise_std,
+        "FAISS_INDEX:",
+        faiss_index,
+    )
     torch.manual_seed(seed)
     # torch.set_default_tensor_type(torch.DoubleTensor)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -115,9 +126,7 @@ def experiment(
 
     model.eval()
     with torch.no_grad():
-        target_embeddings = model.embed(
-            target.to(device, non_blocking=True)
-        )
+        target_embeddings = model.embed(target.to(device, non_blocking=True))
 
     print("validation labels:", torch.unique(valset.labels))
 
@@ -132,7 +141,11 @@ def experiment(
         max_target_size=max_target_size,
     )
 
-    faiss_index_path = f"examples/fine_tuning/cifar_100/index/{faiss_index}.faiss" if faiss_index is not None else None
+    faiss_index_path = (
+        f"examples/fine_tuning/cifar_100/index/{faiss_index}.faiss"
+        if faiss_index is not None
+        else None
+    )
 
     train_loop(
         model=model,

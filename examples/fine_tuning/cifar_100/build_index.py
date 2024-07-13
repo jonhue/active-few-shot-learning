@@ -64,9 +64,7 @@ def experiment(
     with torch.no_grad():
         embeddings = []
         for data, _ in data_loader:
-            embeddings.append(model.embed(
-                data.to(device, non_blocking=True)
-            ))
+            embeddings.append(model.embed(data.to(device, non_blocking=True)))
         embeddings = torch.cat(embeddings, dim=0).cpu().numpy()
 
     d = embeddings.shape[1]
