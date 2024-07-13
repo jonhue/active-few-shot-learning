@@ -89,9 +89,7 @@ def train_loop(
     wandb.log({"round": 0, "round_accuracy": 0.0})
 
     if faiss_index_path is not None:
-        # assert isinstance(acquisition_function, Targeted)
         acquisition_function.subsample = False
-        # acquisition_function.subsampled_target_frac = 1
 
         res = faiss.StandardGpuResources()
         index = faiss.read_index(faiss_index_path)
@@ -113,18 +111,11 @@ def train_loop(
             acquisition_function.set_target(
                 target_embeddings
             )  # ensure target set is reset to correct length
-            print(
-                acquisition_function._target.size(0),
-                acquisition_function.subsampled_target_frac,
-                target_embeddings.shape,
-            )
             query = acquisition_function.get_target().cpu().numpy()
-            print("NUMMMMMM:", query.shape)
             _batch_indices, _ = retriever.search(
                 query=query, k=query_batch_size, k_mult=100
             )
             batch_indices = torch.tensor(_batch_indices)
-            print(batch_indices)
         else:
             batch_indices = data_loader.next(model)
         batch_labels = train_labels[batch_indices]
