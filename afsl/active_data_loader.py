@@ -15,7 +15,7 @@ from afsl.utils import (
 
 class ActiveDataLoader(Generic[M]):
     r"""
-    `ActiveDataLoader` can be used as a drop-in replacement for random data selection:
+    `ActiveDataLoader` can be used as a drop-in replacement for random data selection or nearest neighbor retrieval:
 
     ```python
     data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=64)
