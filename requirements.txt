@@ -5,7 +5,7 @@ poetry~=1.8
 pdoc~=14.5
 pyright~=1.1
 pytest~=8.3
-torch~=2.3
+torch~=2.4
 torchvision~=0.18
 tqdm~=4.66
 wandb
