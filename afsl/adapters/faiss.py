@@ -8,7 +8,6 @@ from afsl import ActiveDataLoader
 from afsl.data import Dataset as AbstractDataset
 
 
-
 class Dataset(AbstractDataset):
     def __init__(self, data: torch.Tensor):
         self.data = data
