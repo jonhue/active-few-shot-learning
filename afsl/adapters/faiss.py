@@ -8,10 +8,6 @@ from afsl import ActiveDataLoader
 from afsl.data import Dataset as AbstractDataset
 
 
-class TargetedAcquisitionFunction(AcquisitionFunction, Targeted):
-    pass
-
-
 class Dataset(AbstractDataset):
     def __init__(self, data: torch.Tensor):
         self.data = data
@@ -45,7 +41,7 @@ class Retriever:
     def __init__(
         self,
         index: faiss.Index,  # type: ignore
-        acquisition_function: TargetedAcquisitionFunction,
+        acquisition_function: AcquisitionFunction,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
@@ -119,7 +115,10 @@ class Retriever:
             target = torch.tensor(
                 queries[i] if not mean_pooling else mean_queries[i].reshape(1, -1)
             )
-            self.acquisition_function.set_target(target)
+
+            if isinstance(self.acquisition_function, Targeted):
+                self.acquisition_function.set_target(target)
+
             sub_indexes = ActiveDataLoader(
                 dataset=dataset,
                 batch_size=k,
