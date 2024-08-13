@@ -1,5 +1,5 @@
 black~=24.4
-numpy~=1.26
+numpy~=2.0
 pandas~=2.2
 poetry~=1.8
 pdoc~=14.6
