@@ -1,6 +1,5 @@
 import torch
 import wandb
-import numpy as np
 from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
 from afsl.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
