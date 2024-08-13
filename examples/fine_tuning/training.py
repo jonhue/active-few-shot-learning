@@ -19,7 +19,7 @@ def train(
     trainloader: DataLoader,
     valset: CollectedData,
     criterion: torch.nn.Module,
-    optimizer: torch.optim.Optimizer,
+    optimizer: torch.optim.Optimizer,  # type: ignore
     num_epochs=5,
     use_best_model=False,
 ):
@@ -72,7 +72,7 @@ def train_loop(
     train_labels: torch.Tensor,
     valset: CollectedData,
     criterion: torch.nn.Module,
-    optimizer: torch.optim.Optimizer,
+    optimizer: torch.optim.Optimizer,  # type: ignore
     acquisition_function: AcquisitionFunction,
     num_rounds=1_000,
     num_epochs=5,

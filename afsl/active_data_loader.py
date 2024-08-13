@@ -126,7 +126,7 @@ class ActiveDataLoader(Generic[M]):
         return cls(
             dataset=dataset,
             batch_size=batch_size,
-            acquisition_function=acquisition_function,
+            acquisition_function=acquisition_function,  # type: ignore
             device=device,
         )
 
