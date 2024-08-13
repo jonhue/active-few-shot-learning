@@ -101,7 +101,7 @@ def experiment(
 
     # Define the loss criterion and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    optimizer = optim.Adam(model.parameters(), lr=LR)  # type: ignore
 
     # Define trainset
     trainset, _testset = get_datasets(imbalanced_train_perc=IMBALANCED_TRAIN_PERC)
