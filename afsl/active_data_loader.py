@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic
+from typing import Generic, Tuple
 import torch
 from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
 from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
@@ -130,7 +130,7 @@ class ActiveDataLoader(Generic[M]):
             device=device,
         )
 
-    def next(self, model: M | None = None) -> torch.Tensor:
+    def next(self, model: M | None = None) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""
         Selects the next batch of data provided a `model` which is a PyTorch `nn.Module`.
 
@@ -139,7 +139,7 @@ class ActiveDataLoader(Generic[M]):
             The computational complexity of `next` scales cubically with the size of the target. If the target is large, it is recommended to set `max_target_size` to value other than `None`.
 
         :param model: Model to be used for data selection. For embedding-based acquisition functions, `model` can be `None` in which case the data is treated as if it was already embedded.
-        :return: Indices of the selected data.
+        :return: Indices of the selected data and corresponding value of the acquisition function in the format `(indices, values)`.
         """
 
         return self.acquisition_function.select(

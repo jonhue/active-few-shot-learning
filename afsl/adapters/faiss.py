@@ -119,13 +119,13 @@ class Retriever:
             if isinstance(self.acquisition_function, Targeted):
                 self.acquisition_function.set_target(target)
 
-            sub_indexes = ActiveDataLoader(
+            sub_indexes, values = ActiveDataLoader(
                 dataset=dataset,
                 batch_size=k,
                 acquisition_function=self.acquisition_function,
                 device=self.device,
             ).next()
-            return np.array(I[i][sub_indexes]), np.array(V[i][sub_indexes])
+            return np.array(I[i][sub_indexes]), np.array(values)
 
         resulting_indices = []
         resulting_values = []

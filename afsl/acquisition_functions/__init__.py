@@ -100,7 +100,7 @@ class AcquisitionFunction(ABC, Generic[M]):
         model: M,
         dataset: Dataset,
         device: torch.device | None = None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""
         Selects the next batch.
 
@@ -108,7 +108,7 @@ class AcquisitionFunction(ABC, Generic[M]):
         :param model: Model used for data selection.
         :param dataset: Inputs (shape $n \times d$) to be selected from.
         :param device: Device used for computation of the acquisition function.
-        :return: Indices of the newly selected batch.
+        :return: Indices of the newly selected batch and corresponding values of the acquisition function.
         """
         pass
 
@@ -141,7 +141,7 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         model: M,
         dataset: Dataset,
         device: torch.device | None = None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         return BatchAcquisitionFunction._select(
             compute_fn=self.compute,
             batch_size=batch_size,
@@ -163,7 +163,7 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         mini_batch_size: int,
         num_workers: int,
         subsample: bool,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         indexed_dataset = _IndexedDataset(dataset)
         data_loader = DataLoader(
             indexed_dataset,
@@ -182,8 +182,8 @@ class BatchAcquisitionFunction(AcquisitionFunction[M]):
         values = torch.cat(_values)
         original_indices = torch.cat(_original_indices)
 
-        _, indices = torch.topk(values, batch_size)
-        return original_indices[indices.cpu()]
+        values, indices = torch.topk(values, batch_size)
+        return original_indices[indices.cpu()], values.cpu()
 
 
 State = TypeVar("State")
@@ -261,7 +261,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
 
     def select_from_minibatch(
         self, batch_size: int, model: M, data: torch.Tensor, device: torch.device | None
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""
         Selects the next batch from the given mini batch `data`.
 
@@ -269,17 +269,19 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         :param model: Model used for data selection.
         :param data: Mini batch of inputs (shape $n \times d$) to be selected from.
         :param device: Device used for computation of the acquisition function.
-        :return: Indices of the newly selected batch (with respect to mini batch).
+        :return: Indices of the newly selected batch (with respect to mini batch) and corresponding values of the acquisition function.
         """
         state = self.initialize(model, data, device)
 
-        indices = []
+        selected_indices = []
+        selected_values = []
         for _ in range(batch_size):
             values = self.compute(state)
             i = self.selector(values)
-            indices.append(i)
+            selected_indices.append(i)
+            selected_values.append(values[i])
             state = self.step(state, i)
-        return torch.tensor(indices)
+        return torch.tensor(selected_indices), torch.tensor(selected_values)
 
     def select(
         self,
@@ -287,7 +289,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         model: M,
         dataset: Dataset,
         device: torch.device | None = None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""
         Selects the next batch. If `force_nonsequential` is `True`, the data is selected analogously to `BatchAcquisitionFunction.select`.
         Otherwise, the data is selected by hierarchical composition of data selected from mini batches.
@@ -296,7 +298,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
         :param model: Model used for data selection.
         :param dataset: Inputs (shape $n \times d$) to be selected from.
         :param device: Device used for computation of the acquisition function.
-        :return: Indices of the newly selected batch.
+        :return: Indices of the newly selected batch and corresponding values of the acquisition function.
         """
         if self.force_nonsequential:
 
@@ -326,7 +328,9 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
 
         indexed_dataset = _IndexedDataset(dataset)
         selected_indices = range(len(dataset))
-        while len(selected_indices) > batch_size:
+        while (
+            len(selected_indices) > batch_size
+        ):  # gradually shrinks size of selected batch, until the correct size is reached
             data_loader = DataLoader(
                 indexed_dataset,
                 batch_size=self.mini_batch_size,
@@ -335,16 +339,17 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
             )
 
             selected_indices = []
+            selected_values = []
             for data, idx in data_loader:
-                selected_indices.extend(
-                    idx[self.select_from_minibatch(batch_size, model, data, device)]
-                    .cpu()
-                    .tolist()
+                sub_idx, sub_val = self.select_from_minibatch(
+                    batch_size, model, data, device
                 )
+                selected_indices.extend(idx[sub_idx].cpu().tolist())
+                selected_values.extend(sub_val.cpu().tolist())
                 if self.subsample:
                     break
             indexed_dataset = Subset(indexed_dataset, selected_indices)
-        return torch.tensor(selected_indices)
+        return torch.tensor(selected_indices), torch.tensor(selected_values)
 
 
 class EmbeddingBased(ABC):
