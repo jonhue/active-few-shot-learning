@@ -112,8 +112,8 @@ def train_loop(
                 target_embeddings
             )  # ensure target set is reset to correct length
             query = acquisition_function.get_target().cpu().numpy()
-            _batch_indices, _ = retriever.search(
-                query=query, k=query_batch_size, k_mult=100
+            _, _batch_indices, _ = retriever.search(
+                query=query, N=query_batch_size, k=100 * query_batch_size
             )
             batch_indices = torch.tensor(_batch_indices)
         else:
