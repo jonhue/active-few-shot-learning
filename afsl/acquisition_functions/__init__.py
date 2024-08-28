@@ -328,7 +328,9 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
 
         indexed_dataset = _IndexedDataset(dataset)
         selected_indices = range(len(dataset))
-        while len(selected_indices) > batch_size:  # gradually shrinks size of selected batch, until the correct size is reached
+        while (
+            len(selected_indices) > batch_size
+        ):  # gradually shrinks size of selected batch, until the correct size is reached
             data_loader = DataLoader(
                 indexed_dataset,
                 batch_size=self.mini_batch_size,
@@ -339,7 +341,9 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
             selected_indices = []
             selected_values = []
             for data, idx in data_loader:
-                sub_idx, sub_val = self.select_from_minibatch(batch_size, model, data, device)
+                sub_idx, sub_val = self.select_from_minibatch(
+                    batch_size, model, data, device
+                )
                 selected_indices.extend(idx[sub_idx].cpu().tolist())
                 selected_values.extend(sub_val.cpu().tolist())
                 if self.subsample:
