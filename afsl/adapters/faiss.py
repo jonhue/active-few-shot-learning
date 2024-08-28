@@ -31,7 +31,7 @@ class Retriever:
     index = faiss.IndexFlatIP(d)
     index.add(embeddings)
     retriever = Retriever(index, acquisition_function)
-    indices = retriever.search(query_embeddings, k=10)
+    indices = retriever.search(query_embeddings, N=10)
     ```
     """
 
@@ -57,47 +57,47 @@ class Retriever:
     def search(
         self,
         query: np.ndarray,
-        k: int,
-        k_mult: float = 100.0,
+        N: int,
+        k: int | None,
         mean_pooling: bool = False,
         threads: int = 1,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         :param query: Query embedding (of shape $m \times d$), comprised of $m$ individual embeddings.
-        :param k: Number of results to return.
-        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing VTL.
+        :param N: Number of results to return.
+        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
-        :return: Array of selected indices (of length $k$) and array of corresponding embeddings (of shape $k \times d$).
+        :return: Array of acquisition values (of length $N$), array of selected indices (of length $N$), and array of corresponding embeddings (of shape $N \times d$).
         """
-        I, V = self.batch_search(
+        D, I, V = self.batch_search(
             queries=np.array([query]),
+            N=N,
             k=k,
-            k_mult=k_mult,
             mean_pooling=mean_pooling,
             threads=threads,
         )
-        return I[0], V[0]
+        return D[0], I[0], V[0]
 
     def batch_search(
         self,
         queries: np.ndarray,
-        k: int,
-        k_mult: float = 100.0,
+        N: int,
+        k: int | None = None,
         mean_pooling: bool = False,
         threads: int = 1,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         :param queries: $n$ query embeddings (of combined shape $n \times m \times d$), each comprised of $m$ individual embeddings.
-        :param k: Number of results to return.
-        :param k_mult: `k * k_mult` is the number of results to pre-sample before executing VTL.
+        :param N: Number of results to return.
+        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
-        :return: Array of selected indices (of shape $n \times k$) and array of corresponding embeddings (of shape $n \times k \times d$).
+        :return: Array of acquisition values (of shape $n \times N$), array of selected indices (of shape $n \times N$), and array of corresponding embeddings (of shape $n \times N \times d$).
         """
-        assert k_mult > 1
+        assert k is None or k >= N
 
         queries = queries.astype("float32")
         n, m, d = queries.shape
@@ -105,12 +105,12 @@ class Retriever:
         mean_queries = np.mean(queries, axis=1)
 
         faiss.omp_set_num_threads(threads)  # type: ignore
-        D, I, V = self.index.search_and_reconstruct(mean_queries, int(k * k_mult))  # type: ignore
+        D, I, V = self.index.search_and_reconstruct(mean_queries, k or self.index.ntotal)  # type: ignore
 
         if self.only_faiss:
-            return I[:, :k], V[:, :k]
+            return D[:, :N], I[:, :N], V[:, :N]
 
-        def engine(i: int) -> Tuple[np.ndarray, np.ndarray]:
+        def engine(i: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
             dataset = Dataset(torch.tensor(V[i]))
             target = torch.tensor(
                 queries[i] if not mean_pooling else mean_queries[i].reshape(1, -1)
@@ -121,20 +121,22 @@ class Retriever:
 
             sub_indexes, values = ActiveDataLoader(
                 dataset=dataset,
-                batch_size=k,
+                batch_size=N,
                 acquisition_function=self.acquisition_function,
                 device=self.device,
             ).next()
-            return np.array(I[i][sub_indexes]), np.array(values)
+            return np.array(values), np.array(I[i][sub_indexes]), np.array(V[i][sub_indexes])
 
-        resulting_indices = []
         resulting_values = []
+        resulting_indices = []
+        resulting_embeddings = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             futures = []
             for i in range(n):
                 futures.append(executor.submit(engine, i))
             for future in concurrent.futures.as_completed(futures):
-                indices, values = future.result()
-                resulting_indices.append(indices)
+                values, indices, embeddings = future.result()
                 resulting_values.append(values)
-        return np.array(resulting_indices), np.array(resulting_values)
+                resulting_indices.append(indices)
+                resulting_embeddings.append(embeddings)
+        return np.array(resulting_values), np.array(resulting_indices), np.array(resulting_embeddings)
