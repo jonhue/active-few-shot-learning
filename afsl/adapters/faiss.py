@@ -125,7 +125,11 @@ class Retriever:
                 acquisition_function=self.acquisition_function,
                 device=self.device,
             ).next()
-            return np.array(values), np.array(I[i][sub_indexes]), np.array(V[i][sub_indexes])
+            return (
+                np.array(values),
+                np.array(I[i][sub_indexes]),
+                np.array(V[i][sub_indexes]),
+            )
 
         resulting_values = []
         resulting_indices = []
@@ -139,4 +143,8 @@ class Retriever:
                 resulting_values.append(values)
                 resulting_indices.append(indices)
                 resulting_embeddings.append(embeddings)
-        return np.array(resulting_values), np.array(resulting_indices), np.array(resulting_embeddings)
+        return (
+            np.array(resulting_values),
+            np.array(resulting_indices),
+            np.array(resulting_embeddings),
+        )
