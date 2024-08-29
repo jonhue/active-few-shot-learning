@@ -155,5 +155,5 @@ class Retriever:
             {
                 "faiss": t_faiss,
                 "afsl": t_afsl,
-            }
+            },
         )
