@@ -146,18 +146,18 @@ class LazyVTL(
         selected_values = []
         for _ in range(batch_size):
             while True:
-                stopping_value = -np.inf
+                stopping_value = np.inf
                 i, value = self.priority_queue.pop()
                 if (
-                    value <= stopping_value
-                ):  # done if the value is smaller than a previously updated value
+                    value >= stopping_value
+                ):  # done if the value is larger than a previously updated value
                     break  # (i, value) contains the next selected index and its value
 
                 new_value, cache = self.recompute(state, i)
 
-                stopping_value = np.maximum(
+                stopping_value = np.minimum(
                     stopping_value, new_value
-                )  # stores the largest updated value
+                )  # stores the smallest updated value
                 self.priority_queue.push(i, new_value)
             selected_values.append(value)
             state = self.step(state, i, cache)
@@ -280,7 +280,7 @@ def compute(
     target_indices = torch.arange(m).unsqueeze(0)  # Expand dims for broadcasting
     posterior_variances = compute_posterior_variance(target_indices, idx)
     total_posterior_variance = torch.sum(posterior_variances, dim=1).cpu().item()
-    return -total_posterior_variance
+    return total_posterior_variance
 
 
 def expand_covariance_matrix(
