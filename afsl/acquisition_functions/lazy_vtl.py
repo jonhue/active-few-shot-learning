@@ -106,7 +106,7 @@ class LazyVTL(
         :param indices: Array of length $k$ containing indices of the data points.
         :param embeddings: Array of shape $k \times d$ containing the data point embeddings.
         :param target_embedding: Array of shape $d$ containing the (mean) target embedding.
-        :param inner_products: Array of length $k$ containing (precomputed) inner products of the data point embeddings with the query embedding.
+        :param inner_products: Array of length $k$ containing precomputed (absolute) inner products of the data point embeddings with the query embedding.
         """
         self_inner_products = np.sum(embeddings * embeddings, axis=1)
         target_inner_product = target_embedding @ target_embedding
