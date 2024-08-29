@@ -72,14 +72,14 @@ class Retriever:
 
         :return: Array of acquisition values (of length $N$), array of selected indices (of length $N$), and array of corresponding embeddings (of shape $N \times d$).
         """
-        D, I, V = self.batch_search(
+        D, I, V, times = self.batch_search(
             queries=np.array([query]),
             N=N,
             k=k,
             mean_pooling=mean_pooling,
             threads=threads,
         )
-        return D[0], I[0], V[0]
+        return D[0], I[0], V[0], times
 
     def batch_search(
         self,
@@ -111,7 +111,7 @@ class Retriever:
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
-            return D[:, :N], I[:, :N], V[:, :N]
+            return D[:, :N], I[:, :N], V[:, :N], {"faiss": t_faiss, "afsl": 0}
 
         def engine(i: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
             dataset = Dataset(torch.tensor(V[i]))
