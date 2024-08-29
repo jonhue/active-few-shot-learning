@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List
 import torch
 
@@ -23,6 +24,24 @@ class GaussianCovarianceMatrix:
     @property
     def dim(self) -> int:
         return self._matrix.size(0)
+
+    @property
+    def device(self) -> torch.device | None:
+        return self._matrix.device
+
+    def expand(self, u: torch.Tensor) -> GaussianCovarianceMatrix:
+        """
+        Adds covariance vector $u$ to the covariance matrix (as new row and new column).
+        """
+        n = self.dim
+        new_matrix = torch.zeros((n + 1, n + 1))
+        new_matrix[:n, :n] = self._matrix
+
+        new_matrix[n, :n] = u[:-1]
+        new_matrix[:n, n] = u[:-1]
+        new_matrix[n, n] = u[-1]
+
+        return GaussianCovarianceMatrix(new_matrix)
 
     def condition_on(
         self,

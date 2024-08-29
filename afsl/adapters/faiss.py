@@ -133,9 +133,13 @@ class Retriever:
 
             if isinstance(self.acquisition_function, LazyVTL):
                 if not (isinstance(self.index, faiss.IndexFlatIP) or isinstance(self.index, faiss.IndexFlatAbsIP)):  # type: ignore
-                    warn("Lazy search requires that an inner product index is used with Faiss.")
-                self.acquisition_function.set_initial_priority_queue(PriorityQueue(indices=I[i], values=D[i]))
-                # TODO: ...
+                    warn(
+                        "Lazy search requires that an inner product index is used with Faiss."
+                    )
+                self.acquisition_function.set_initial_priority_queue(
+                    PriorityQueue(indices=I[i], values=D[i])
+                )
+                # TODO: set with correct initial value
 
             sub_indexes, values = ActiveDataLoader(
                 dataset=dataset,

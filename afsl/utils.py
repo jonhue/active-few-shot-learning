@@ -34,31 +34,31 @@ def mini_batch_wrapper(fn, data, batch_size):
 
 
 class PriorityQueue(object):
-    """Priority Queue (ascending in values)"""
+    """Priority Queue (smallest value first)"""
 
     def __init__(self, indices: List[int], values: List[float]):
         """
-        Initializes the priority queue. Assumes that `values` (and corresponding `indices`) are in descending order.
+        Initializes the priority queue. Assumes that `values` (and corresponding `indices`) are in ascending order.
         """
-        self.q = [(-value, idx) for idx, value in zip(indices, values)][::-1]
+        self.q = [(value, idx) for idx, value in zip(indices, values)][::-1]
 
     def top(self) -> Element:
-        """Returns the top element with the maximum value"""
-        neg_value, idx = self.q[0]
-        return idx, -neg_value
+        """Returns the top element with the minimum value"""
+        value, idx = self.q[0]
+        return idx, value
 
     def top_value(self) -> float:
-        """Returns the maximum value"""
+        """Returns the minimum value"""
         return self.top()[1]
 
     def pop(self) -> Element:
-        """Pops and returns the top element with the maximum value"""
-        neg_value, idx = heapq.heappop(self.q)
-        return idx, -neg_value
+        """Pops and returns the top element with the minimum value"""
+        value, idx = heapq.heappop(self.q)
+        return idx, value
 
     def push(self, idx: int, value: float):
         """Pushes to the priority queue"""
-        heapq.heappush(self.q, (-value, idx))
+        heapq.heappush(self.q, (value, idx))
 
     def size(self) -> int:
         """Returns the size of the priority queue"""

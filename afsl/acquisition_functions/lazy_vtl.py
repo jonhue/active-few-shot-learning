@@ -1,10 +1,27 @@
 from typing import List, NamedTuple, Tuple
 import numpy as np
 import torch
-from afsl.acquisition_functions import EmbeddingBased, SequentialAcquisitionFunction, Targeted
+from afsl.acquisition_functions import (
+    EmbeddingBased,
+    SequentialAcquisitionFunction,
+    Targeted,
+)
 from afsl.gaussian import GaussianCovarianceMatrix, get_jitter
-from afsl.model import ModelWithEmbeddingOrKernel, ModelWithKernel, ModelWithLatentCovariance
-from afsl.utils import DEFAULT_EMBEDDING_BATCH_SIZE, DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE, PriorityQueue, get_device
+from afsl.model import (
+    ModelWithEmbeddingOrKernel,
+    ModelWithKernel,
+    ModelWithLatentCovariance,
+)
+from afsl.utils import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+    PriorityQueue,
+    get_device,
+)
+
+Cache = Tuple[GaussianCovarianceMatrix, torch.Tensor]
 
 __all__ = ["LazyVTL", "LazyVTLState"]
 
@@ -18,8 +35,14 @@ class LazyVTLState(NamedTuple):
     """Size of the target space."""
     selected_indices: List[int]
     """Indices of points that were already observed."""
-    joint_data: torch.Tensor
-    r"""Tensor of shape $(n + m) \times d$ which includes both sample space and target space."""
+    covariance_matrix_indices: List[int]
+    """Indices of points that were added to the covariance matrix (excluding the initially added target space)."""
+    target: torch.Tensor
+    r"""Tensor of shape $m \times d$ which includes target space."""
+    data: torch.Tensor
+    r"""Tensor of shape $n \times d$ which includes sample space."""
+    current_inv: torch.Tensor
+    """Current inverse of the covariance matrix of selected data."""
 
 
 class LazyVTL(
@@ -77,7 +100,11 @@ class LazyVTL(
         self.priority_queue = initial_priority_queue
 
     def select_from_minibatch(
-        self, batch_size: int, model: ModelWithEmbeddingOrKernel | None, data: torch.Tensor, device: torch.device | None
+        self,
+        batch_size: int,
+        model: ModelWithEmbeddingOrKernel | None,
+        data: torch.Tensor,
+        device: torch.device | None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         r"""
         Selects the next batch from the given mini batch `data`.
@@ -90,39 +117,31 @@ class LazyVTL(
         """
         state = self.initialize(model, data, device)
 
-        assert self.priority_queue is not None, "Initial priority queue must be set."  # TODO: make optional, compute from scratch if not provided
-        assert self.priority_queue.size() == data.size(0), "Size of the priority queue must match the size of the data set."
+        assert (
+            self.priority_queue is not None
+        ), "Initial priority queue must be set."  # TODO: make optional, compute from scratch if not provided
+        assert self.priority_queue.size() == data.size(
+            0
+        ), "Size of the priority queue must match the size of the data set."
 
         selected_values = []
         for _ in range(batch_size):
-            cached_matrix = None
             while True:
                 stopping_value = -np.inf
                 i, value = self.priority_queue.pop()
-                if value <= stopping_value:  # done if the value is smaller than a previously updated value
+                if (
+                    value <= stopping_value
+                ):  # done if the value is smaller than a previously updated value
                     break  # (i, value) contains the next selected index and its value
 
-                # new_value = self.recompute(state, i)
-                if i in state.selected_indices:
-                    new_value = self.recompute_previous(state, i)
-                else:
-                    new_value, cached_matrix = self.recompute_new(state, i, cached_matrix)
-                    # Sigma_AA = self._matrix[target_indices][:, target_indices]
-                    # Sigma_ii = self._matrix[_indices][:, _indices]
-                    # Sigma_Ai = self._matrix[target_indices][:, _indices]
-                    # posterior_Sigma_AA = (
-                    #     Sigma_AA
-                    #     - Sigma_Ai
-                    #     @ torch.inverse(
-                    #         Sigma_ii + noise_var * torch.eye(Sigma_ii.size(0)).to(Sigma_AA.device)
-                    #     )
-                    #     @ Sigma_Ai.T
-                    # )
+                new_value, cache = self.recompute(state, i)
 
-                stopping_value = np.maximum(stopping_value, new_value)  # stores the largest updated value
+                stopping_value = np.maximum(
+                    stopping_value, new_value
+                )  # stores the largest updated value
                 self.priority_queue.push(i, new_value)
             selected_values.append(value)
-            state = self.step(state, i, cached_matrix)
+            state = self.step(state, i, cache)
         return torch.tensor(state.selected_indices), torch.tensor(selected_values)
 
     def initialize(
@@ -133,60 +152,171 @@ class LazyVTL(
     ) -> LazyVTLState:
         target = self.get_target()
         m = target.size(0)
-        joint_data = torch.cat((target, data))
 
         # Compute covariance matrix of targets
         assert model is None, "embedding computation via model not supported"
-        covariance_matrix = GaussianCovarianceMatrix.from_embeddings(Embeddings=target.to(device))
+        covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
+            Embeddings=target.to(device)
+        )
 
         return LazyVTLState(
             covariance_matrix=covariance_matrix,
             m=m,
             selected_indices=[],
-            joint_data=joint_data,
+            covariance_matrix_indices=[],
+            target=target,
+            data=data,
+            current_inv=torch.empty(0, 0),
         )
 
-    def recompute_previous(self, state: LazyVTLState, data_idx: int) -> float:
+    def recompute(
+        self, state: LazyVTLState, data_idx: int
+    ) -> Tuple[float, Cache | None]:
         """
-        Update value using stored covariance matrix.
+        Update value of data point `data_idx`.
         """
-        noise_var = self.noise_std**2
+        try:  # index of data point within covariance matrix
+            idx = state.m + state.covariance_matrix_indices.index(data_idx)
+            new_covariance_matrix = state.covariance_matrix
+            cache = None
+        except (
+            ValueError
+        ):  # expand the stored covariance matrix if selected data has not been selected before, O(n^2)
+            cache = expand_covariance_matrix(
+                covariance_matrix=state.covariance_matrix,
+                current_inv=state.current_inv,
+                data=state.data,
+                target=state.target,
+                data_idx=data_idx,
+                covariance_matrix_indices=state.covariance_matrix_indices,
+            )
+            new_covariance_matrix, _ = cache
+            idx = new_covariance_matrix.dim - 1
+        value = compute(
+            covariance_matrix=new_covariance_matrix,
+            idx=idx,
+            noise_var=self.noise_var,
+            m=state.m,
+        )
 
-        def compute_posterior_variance(i, j):
-            return state.covariance_matrix[i, i] - state.covariance_matrix[
-                i, j
-            ] ** 2 / (state.covariance_matrix[j, j] + noise_var)
+        return value, cache
 
-        target_indices = torch.arange(state.m).unsqueeze(0)  # Expand dims for broadcasting
-        idx = state.m + state.selected_indices.index(data_idx)  # Index of data point within covariance matrix
-
-        posterior_variances = compute_posterior_variance(target_indices, idx)
-        total_posterior_variance = torch.sum(posterior_variances, dim=1).cpu().item()
-        return -total_posterior_variance
-
-    def recompute_new(self, state: LazyVTLState, data_idx: int, cached_matrix: torch.Tensor | None) -> Tuple[float, torch.Tensor]:
+    def step(
+        self, state: LazyVTLState, data_idx: int, cache: Cache | None
+    ) -> LazyVTLState:
         """
-        TODO
+        Advances the state.
+        Updates the stored covariance matrix and the inverse of the covariance matrix (restricted to selected data).
         """
-        # compute inverse of current covar matrix
-        # update value using the inverse
-        # store the intermediate computation to expand the stored covar. matrix
-        ...
+        if data_idx not in state.covariance_matrix_indices:
+            assert cache is not None
+            new_covariance_matrix, covariance_vector = cache
 
-    def step(self, state: LazyVTLState, data_idx: int, cached_matrix: torch.Tensor | None) -> LazyVTLState:
-        """
-        TODO
-        """
-        # TODO: update and expand covariance matrix
+            # update cached inverse covariance matrix of selected data, O(n^2)
+            new_inv = update_inverse(
+                A_inv=state.current_inv,
+                u=covariance_vector[:-1],
+                alpha=covariance_vector[-1].item() + self.noise_var,
+            )
+        else:
+            new_covariance_matrix = state.covariance_matrix
+            new_inv = state.current_inv
 
-        state.selected_indices.append(data_idx)  # Note: not treating as immutable!
-        idx = state.m + state.selected_indices.index(data_idx)
-        posterior_covariance_matrix = state.covariance_matrix.condition_on(
+        # update the stored covariance matrix by conditioning on the new data point, O(n^2)
+        idx = state.m + state.covariance_matrix_indices.index(data_idx)
+        posterior_covariance_matrix = new_covariance_matrix.condition_on(
             idx, noise_std=self.noise_std
         )
+
+        state.selected_indices.append(data_idx)  # Note: not treating as immutable!
         return LazyVTLState(
             covariance_matrix=posterior_covariance_matrix,
             m=state.m,
             selected_indices=state.selected_indices,
-            joint_data=state.joint_data,
+            covariance_matrix_indices=state.covariance_matrix_indices,
+            target=state.target,
+            data=state.data,
+            current_inv=new_inv,
         )
+
+    @property
+    def noise_var(self):
+        return self.noise_std**2
+
+
+def compute(
+    covariance_matrix: GaussianCovarianceMatrix, idx: int, noise_var: float, m: int
+) -> float:
+    """
+    Computes the acquisition value of the data point at index `idx` within the covariance matrix.
+
+    Time complexity: O(1)
+    """
+
+    def compute_posterior_variance(i, j):
+        return covariance_matrix[i, i] - covariance_matrix[i, j] ** 2 / (
+            covariance_matrix[j, j] + noise_var
+        )
+
+    target_indices = torch.arange(m).unsqueeze(0)  # Expand dims for broadcasting
+    posterior_variances = compute_posterior_variance(target_indices, idx)
+    total_posterior_variance = torch.sum(posterior_variances, dim=1).cpu().item()
+    return -total_posterior_variance
+
+
+def expand_covariance_matrix(
+    covariance_matrix: GaussianCovarianceMatrix,
+    current_inv: torch.Tensor,
+    data: torch.Tensor,
+    target: torch.Tensor,
+    data_idx: int,
+    covariance_matrix_indices: List[int],
+) -> Tuple[GaussianCovarianceMatrix, torch.Tensor]:
+    """
+    Expands the given covariance matrix with `data_idx`.
+
+    :return: Expanded covariance matrix and covariance vector (i.e., the final row/column of the expanded covariance matrix).
+
+    Time complexity: O(n^2)
+    """
+    selected_data = data[
+        torch.tensor(covariance_matrix_indices).to(data.device)
+    ]  # (n, d)
+    new_data = data[data_idx]  # (d,)
+    joint_data = torch.cat(
+        (target, selected_data, new_data.unsqueeze(0)), dim=0
+    )  # (m+n+1, d)
+    I_n = torch.eye(selected_data.size(0)).to(selected_data.device)
+    covariance_vector = (
+        joint_data @ (I_n - selected_data.T @ current_inv @ selected_data) @ new_data
+    )  # (m+n+1,)
+    assert covariance_vector.size(0) == covariance_matrix.dim + 1
+    return covariance_matrix.expand(covariance_vector), covariance_vector
+
+
+def update_inverse(A_inv: torch.Tensor, u: torch.Tensor, alpha: float) -> torch.Tensor:
+    r"""
+    Updates the inverse of $n \times n$ a matrix $A$ after adding a new column $u$ with a given diagonal element $\alpha$.
+    Uses the Sherman-Morrison-Woodbury formula.
+
+    Time complexity: O(n^2)
+    """
+    if A_inv.numel() == 0:  # Check if the previous matrix is empty
+        return torch.tensor([[1.0 / alpha]])
+
+    u = u.view(-1, 1)  # Ensure u is a column vector
+    S = alpha - torch.matmul(torch.matmul(u.t(), A_inv), u)
+    S_inv = 1.0 / S
+
+    A_inv_u = torch.matmul(A_inv, u)
+    upper_left = A_inv + torch.matmul(A_inv_u, A_inv_u.t()) * S_inv
+    upper_right = -A_inv_u * S_inv
+    lower_left = -A_inv_u.t() * S_inv
+    lower_right = S_inv
+
+    # Combine blocks into the full inverse matrix
+    upper = torch.cat((upper_left, upper_right), dim=1)
+    lower = torch.cat((lower_left, lower_right), dim=1)
+    A_inv_extended = torch.cat((upper, lower), dim=0)
+
+    return A_inv_extended
