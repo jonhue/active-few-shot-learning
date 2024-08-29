@@ -2,6 +2,7 @@ from typing import Tuple
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
 import faiss  # type: ignore
 import torch
+import time
 import concurrent.futures
 import numpy as np
 from afsl import ActiveDataLoader
@@ -104,8 +105,10 @@ class Retriever:
         assert d == self.index.d
         mean_queries = np.mean(queries, axis=1)
 
+        t_start = time.time()
         faiss.omp_set_num_threads(threads)  # type: ignore
         D, I, V = self.index.search_and_reconstruct(mean_queries, k or self.index.ntotal)  # type: ignore
+        t_faiss = time.time() - t_start
 
         if self.only_faiss:
             return D[:, :N], I[:, :N], V[:, :N]
@@ -131,6 +134,7 @@ class Retriever:
                 np.array(V[i][sub_indexes]),
             )
 
+        t_start = time.time()
         resulting_values = []
         resulting_indices = []
         resulting_embeddings = []
@@ -143,8 +147,13 @@ class Retriever:
                 resulting_values.append(values)
                 resulting_indices.append(indices)
                 resulting_embeddings.append(embeddings)
+        t_afsl = time.time() - t_start
         return (
             np.array(resulting_values),
             np.array(resulting_indices),
             np.array(resulting_embeddings),
+            {
+                "faiss": t_faiss,
+                "afsl": t_afsl,
+            }
         )
