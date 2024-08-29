@@ -38,9 +38,10 @@ class PriorityQueue(object):
 
     def __init__(self, indices: List[int], values: List[float]):
         """
-        Initializes the priority queue. Assumes that `values` (and corresponding `indices`) are in ascending order.
+        Initializes the priority queue.
         """
-        self.q = [(value, idx) for idx, value in zip(indices, values)][::-1]
+        self.q = [(value, idx) for idx, value in zip(indices, values)]
+        heapq.heapify(self.q)
 
     def top(self) -> Element:
         """Returns the top element with the minimum value"""
