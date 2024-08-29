@@ -112,7 +112,9 @@ class LazyVTL(
         target_inner_product = target_embedding @ target_embedding
         if inner_products is None:
             inner_products = embeddings @ target_embedding
-        values = target_inner_product - inner_products**2 / (self_inner_products + self.noise_var)
+        values = target_inner_product - inner_products**2 / (
+            self_inner_products + self.noise_var
+        )
 
         self.priority_queue = PriorityQueue(
             indices=indices.tolist(), values=values.tolist()
