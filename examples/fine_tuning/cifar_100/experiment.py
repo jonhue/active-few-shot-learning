@@ -166,7 +166,6 @@ def experiment(
         faiss_index_path=faiss_index_path,
         target_embeddings=target_embeddings,
     )
-    wandb.finish()
 
 
 def main(args):
