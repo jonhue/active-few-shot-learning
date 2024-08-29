@@ -37,6 +37,9 @@ class PriorityQueue(object):
     """Priority Queue (ascending in values)"""
 
     def __init__(self, indices: List[int], values: List[float]):
+        """
+        Initializes the priority queue. Assumes that `values` (and corresponding `indices`) are in descending order.
+        """
         self.q = [(-value, idx) for idx, value in zip(indices, values)][::-1]
 
     def top(self) -> Element:
