@@ -137,9 +137,11 @@ class Retriever:
                         "Lazy search requires that an inner product index is used with Faiss."
                     )
                 self.acquisition_function.set_initial_priority_queue(
-                    PriorityQueue(indices=I[i], values=D[i])
+                    indices=I[i],
+                    embeddings=V[i],
+                    target_embedding=mean_queries[i],
+                    inner_products=D[i],
                 )
-                # TODO: set with correct initial value
 
             sub_indexes, values = ActiveDataLoader(
                 dataset=dataset,

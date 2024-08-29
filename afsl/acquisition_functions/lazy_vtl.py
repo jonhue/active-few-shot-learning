@@ -93,11 +93,30 @@ class LazyVTL(
         EmbeddingBased.__init__(self, embedding_batch_size=embedding_batch_size)
         self.noise_std = noise_std
 
-    def set_initial_priority_queue(self, initial_priority_queue: PriorityQueue):
+    def set_initial_priority_queue(
+        self,
+        indices: np.ndarray,
+        embeddings: np.ndarray,
+        target_embedding: np.ndarray,
+        inner_products: np.ndarray | None = None,
+    ):
+        r"""
+        Constructs the initial priority queue (of length $k$) over the data set.
+
+        :param indices: Array of length $k$ containing indices of the data points.
+        :param embeddings: Array of shape $k \times d$ containing the data point embeddings.
+        :param target_embedding: Array of shape $d$ containing the (mean) target embedding.
+        :param inner_products: Array of length $k$ containing (precomputed) inner products of the data point embeddings with the query embedding.
         """
-        :param initial_priority_queue: Initial priority queue over the data set.
-        """
-        self.priority_queue = initial_priority_queue
+        self_inner_products = np.sum(embeddings * embeddings, axis=1)
+        target_inner_product = target_embedding @ target_embedding
+        if inner_products is None:
+            inner_products = embeddings @ target_embedding
+        values = target_inner_product - inner_products**2 / self_inner_products
+
+        self.priority_queue = PriorityQueue(
+            indices=indices.tolist(), values=values.tolist()
+        )
 
     def select_from_minibatch(
         self,
