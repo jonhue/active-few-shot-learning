@@ -8,4 +8,4 @@ pytest~=8.3
 torch~=2.4
 torchvision~=0.19
 tqdm~=4.66
-wandb
+wandb~=0.16
