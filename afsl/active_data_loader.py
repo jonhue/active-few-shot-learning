@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic, List, Tuple
+from typing import Generic, Tuple
 import torch
 from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
 from afsl.acquisition_functions.undirected_vtl import UndirectedVTL

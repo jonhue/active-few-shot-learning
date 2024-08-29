@@ -2,7 +2,6 @@ from typing import Tuple
 from warnings import warn
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
 from afsl.acquisition_functions.lazy_vtl import LazyVTL
-from afsl.utils import PriorityQueue
 import faiss  # type: ignore
 import torch
 import concurrent.futures
