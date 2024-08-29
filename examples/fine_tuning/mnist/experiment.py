@@ -146,7 +146,6 @@ def experiment(
         reset_parameters=RESET_PARAMS,
         use_best_model=USE_BEST_MODEL,
     )
-    wandb.finish()
 
 
 def main(args):
