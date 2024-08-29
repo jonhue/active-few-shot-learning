@@ -66,5 +66,5 @@ class PriorityQueue(object):
         return len(self.q)
 
     def empty(self):
-        """Checks is the priority queue is empty"""
+        """Checks if the priority queue is empty"""
         return self.size() == 0
