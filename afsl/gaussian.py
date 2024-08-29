@@ -31,7 +31,7 @@ class GaussianCovarianceMatrix:
 
     def expand(self, u: torch.Tensor) -> GaussianCovarianceMatrix:
         """
-        Adds covariance vector $u$ to the covariance matrix (as new row and new column).
+        Adds covariance vector $u$ to the covariance matrix (as final row and final column).
         """
         n = self.dim
         new_matrix = torch.zeros((n + 1, n + 1))
