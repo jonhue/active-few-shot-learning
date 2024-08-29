@@ -45,20 +45,17 @@ class Retriever:
         self,
         index: faiss.Index,  # type: ignore
         acquisition_function: AcquisitionFunction,
-        lazy: bool = False,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
         """
         :param index: Faiss index object.
         :param acquisition_function: Acquisition function object.
-        :param lazy: Whether to use lazy search.
         :param only_faiss: Whether to only use Faiss for search.
         :param device: Device to use for computation.
         """
         self.index = index
         self.acquisition_function = acquisition_function
-        self.lazy = lazy
         self.only_faiss = only_faiss
         self.device = (
             device
