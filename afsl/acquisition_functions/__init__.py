@@ -328,10 +328,10 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
             )
 
         indexed_dataset = _IndexedDataset(dataset)
-        selected_indices = range(len(dataset))
-        selected_values = np.full(len(dataset), fill_value=np.nan)
+        selected_indices = None
+        selected_values = None
         while (
-            len(selected_indices) > batch_size
+            selected_indices is None or len(selected_indices) > batch_size
         ):  # gradually shrinks size of selected batch, until the correct size is reached
             data_loader = DataLoader(
                 indexed_dataset,

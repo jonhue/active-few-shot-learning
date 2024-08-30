@@ -105,8 +105,6 @@ class Retriever:
 
         :return: Array of acquisition values (of shape $n \times N$), array of selected indices (of shape $n \times N$), array of corresponding embeddings (of shape $n \times N \times d$), retrieval time.
         """
-        assert k is None or k >= N
-
         queries = queries.astype("float32")
         n, m, d = queries.shape
         assert d == self.index.d
