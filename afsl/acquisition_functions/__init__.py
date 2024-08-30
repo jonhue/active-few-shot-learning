@@ -42,6 +42,7 @@ The following table provides an overview of the acquisition functions and their 
 from abc import ABC, abstractmethod
 import math
 from typing import Callable, Generic, Optional, Tuple, TypeVar
+import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
 from afsl.data import Dataset
@@ -328,6 +329,7 @@ class SequentialAcquisitionFunction(AcquisitionFunction[M], Generic[M, State]):
 
         indexed_dataset = _IndexedDataset(dataset)
         selected_indices = range(len(dataset))
+        selected_values = np.full(len(dataset), fill_value=np.nan)
         while (
             len(selected_indices) > batch_size
         ):  # gradually shrinks size of selected batch, until the correct size is reached
