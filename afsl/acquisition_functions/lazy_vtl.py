@@ -210,6 +210,7 @@ class LazyVTL(
                 target=state.target,
                 data_idx=data_idx,
                 covariance_matrix_indices=state.covariance_matrix_indices,
+                selected_indices=state.selected_indices,
             )
             new_covariance_matrix, _ = cache
             idx = new_covariance_matrix.dim - 1
@@ -229,19 +230,26 @@ class LazyVTL(
         Advances the state.
         Updates the stored covariance matrix and the inverse of the covariance matrix (restricted to selected data).
         """
+        # update cached inverse covariance matrix of selected data, O(n^2)
         if data_idx not in state.covariance_matrix_indices:
             assert cache is not None
             new_covariance_matrix, covariance_vector = cache
-
-            # update cached inverse covariance matrix of selected data, O(n^2)
-            new_inv = update_inverse(
-                A_inv=state.current_inv,
-                u=covariance_vector[:-1],
-                alpha=covariance_vector[-1].item() + self.noise_var,
-            )
+            state.covariance_matrix_indices.append(
+                data_idx
+            )  # Note: not treating as immutable!
+            u = covariance_vector[:-1]
+            alpha = covariance_vector[-1].item()
         else:
             new_covariance_matrix = state.covariance_matrix
-            new_inv = state.current_inv
+            idx = state.m + state.covariance_matrix_indices.index(data_idx)
+            covariance_vector = state.covariance_matrix._matrix[idx]
+            u = torch.cat((covariance_vector[:idx], covariance_vector[idx + 1 :]))
+            alpha = covariance_vector[idx].item()
+        new_inv = update_inverse(
+            A_inv=state.current_inv,
+            u=u,
+            alpha=alpha + self.noise_var,
+        )
 
         # update the stored covariance matrix by conditioning on the new data point, O(n^2)
         idx = state.m + state.covariance_matrix_indices.index(data_idx)
@@ -292,6 +300,7 @@ def expand_covariance_matrix(
     target: torch.Tensor,
     data_idx: int,
     covariance_matrix_indices: List[int],
+    selected_indices: List[int],
 ) -> Tuple[GaussianCovarianceMatrix, torch.Tensor]:
     """
     Expands the given covariance matrix with `data_idx`.
@@ -300,17 +309,18 @@ def expand_covariance_matrix(
 
     Time complexity: O(n^2)
     """
-    selected_data = data[
+    unique_selected_data = data[
         torch.tensor(covariance_matrix_indices).to(data.device)
-    ]  # (n, d)
+    ]  # (n', d)
+    selected_data = data[torch.tensor(selected_indices).to(data.device)]  # (n, d)
     new_data = data[data_idx]  # (d,)
     joint_data = torch.cat(
-        (target, selected_data, new_data.unsqueeze(0)), dim=0
-    )  # (m+n+1, d)
-    I_n = torch.eye(selected_data.size(0)).to(selected_data.device)
+        (target, unique_selected_data, new_data.unsqueeze(0)), dim=0
+    )  # (m+n'+1, d)
+    I_d = torch.eye(selected_data.size(1)).to(selected_data.device)
     covariance_vector = (
-        joint_data @ (I_n - selected_data.T @ current_inv @ selected_data) @ new_data
-    )  # (m+n+1,)
+        joint_data @ (I_d - selected_data.T @ current_inv @ selected_data) @ new_data
+    )  # (m+n'+1,)
     assert covariance_vector.size(0) == covariance_matrix.dim + 1
     return covariance_matrix.expand(covariance_vector), covariance_vector
 
