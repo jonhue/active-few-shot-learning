@@ -21,8 +21,6 @@ from afsl.utils import (
     get_device,
 )
 
-Cache = Tuple[GaussianCovarianceMatrix, torch.Tensor]
-
 __all__ = ["LazyVTL", "LazyVTLState"]
 
 
@@ -155,14 +153,14 @@ class LazyVTL(
                 ):  # done if the value is larger than a previously updated value
                     break  # (i, value) contains the next selected index and its value
 
-                new_value, cache = self.recompute(state, i)
+                new_value, new_covariance_matrix = self.recompute(state, i)
 
                 stopping_value = np.minimum(
                     stopping_value, new_value
                 )  # stores the smallest updated value
                 self.priority_queue.push(i, new_value)
             selected_values.append(value)
-            state = self.step(state, i, cache)
+            state = self.step(state, i, new_covariance_matrix)
         return torch.tensor(state.selected_indices), torch.tensor(selected_values)
 
     def initialize(
@@ -192,18 +190,17 @@ class LazyVTL(
 
     def recompute(
         self, state: LazyVTLState, data_idx: int
-    ) -> Tuple[float, Cache | None]:
+    ) -> Tuple[float, GaussianCovarianceMatrix]:
         """
         Update value of data point `data_idx`.
         """
         try:  # index of data point within covariance matrix
             idx = state.m + state.covariance_matrix_indices.index(data_idx)
             new_covariance_matrix = state.covariance_matrix
-            cache = None
         except (
             ValueError
         ):  # expand the stored covariance matrix if selected data has not been selected before, O(n^2)
-            cache = expand_covariance_matrix(
+            new_covariance_matrix = expand_covariance_matrix(
                 covariance_matrix=state.covariance_matrix,
                 current_inv=state.current_inv,
                 data=state.data,
@@ -212,7 +209,6 @@ class LazyVTL(
                 covariance_matrix_indices=state.covariance_matrix_indices,
                 selected_indices=state.selected_indices,
             )
-            new_covariance_matrix, _ = cache
             idx = new_covariance_matrix.dim - 1
         value = compute(
             covariance_matrix=new_covariance_matrix,
@@ -221,35 +217,31 @@ class LazyVTL(
             m=state.m,
         )
 
-        return value, cache
+        return value, new_covariance_matrix
 
     def step(
-        self, state: LazyVTLState, data_idx: int, cache: Cache | None
+        self,
+        state: LazyVTLState,
+        data_idx: int,
+        new_covariance_matrix: GaussianCovarianceMatrix,
     ) -> LazyVTLState:
         """
         Advances the state.
         Updates the stored covariance matrix and the inverse of the covariance matrix (restricted to selected data).
         """
-        # update cached inverse covariance matrix of selected data, O(n^2)
         if data_idx not in state.covariance_matrix_indices:
-            assert cache is not None
-            new_covariance_matrix, covariance_vector = cache
             state.covariance_matrix_indices.append(
                 data_idx
             )  # Note: not treating as immutable!
-            u = covariance_vector[:-1]
-            alpha = covariance_vector[-1].item()
-        else:
-            new_covariance_matrix = state.covariance_matrix
-            idx = state.m + state.covariance_matrix_indices.index(data_idx)
-            covariance_vector = state.covariance_matrix._matrix[idx]
-            u = torch.cat((covariance_vector[:idx], covariance_vector[idx + 1 :]))
-            alpha = covariance_vector[idx].item()
-        new_inv = update_inverse(
-            A_inv=state.current_inv,
-            u=u,
-            alpha=alpha + self.noise_var,
-        )
+
+        # update cached inverse covariance matrix of selected data, O(n^2)
+        selected_data = state.data[
+            torch.tensor(state.selected_indices).to(state.data.device)
+        ]  # (n, d)
+        new_data = state.data[data_idx]  # (d,)
+        u = selected_data.T @ new_data  # (n,)
+        alpha = (new_data @ new_data).item() + self.noise_var
+        new_inv = update_inverse(A_inv=state.current_inv, u=u, alpha=alpha)
 
         # update the stored covariance matrix by conditioning on the new data point, O(n^2)
         idx = state.m + state.covariance_matrix_indices.index(data_idx)
@@ -301,11 +293,11 @@ def expand_covariance_matrix(
     data_idx: int,
     covariance_matrix_indices: List[int],
     selected_indices: List[int],
-) -> Tuple[GaussianCovarianceMatrix, torch.Tensor]:
+) -> GaussianCovarianceMatrix:
     """
     Expands the given covariance matrix with `data_idx`.
 
-    :return: Expanded covariance matrix and covariance vector (i.e., the final row/column of the expanded covariance matrix).
+    :return: Expanded covariance matrix.
 
     Time complexity: O(n^2)
     """
@@ -322,7 +314,7 @@ def expand_covariance_matrix(
         joint_data @ (I_d - selected_data.T @ current_inv @ selected_data) @ new_data
     )  # (m+n'+1,)
     assert covariance_vector.size(0) == covariance_matrix.dim + 1
-    return covariance_matrix.expand(covariance_vector), covariance_vector
+    return covariance_matrix.expand(covariance_vector)
 
 
 def update_inverse(A_inv: torch.Tensor, u: torch.Tensor, alpha: float) -> torch.Tensor:
