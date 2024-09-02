@@ -153,7 +153,7 @@ class LazyVTL(
                 ):  # done if the value is larger than a previously updated value
                     break  # (i, value) contains the next selected index and its value
 
-                new_value, new_covariance_matrix = self.recompute(state, i)
+                new_value, new_covariance_matrix, state = self.recompute(state, i)
 
                 stopping_value = np.minimum(
                     stopping_value, new_value
@@ -190,19 +190,42 @@ class LazyVTL(
 
     def recompute(
         self, state: LazyVTLState, data_idx: int
-    ) -> Tuple[float, GaussianCovarianceMatrix]:
+    ) -> Tuple[float, GaussianCovarianceMatrix, LazyVTLState]:
         """
         Update value of data point `data_idx`.
         """
         try:  # index of data point within covariance matrix
             idx = state.m + state.covariance_matrix_indices.index(data_idx)
             new_covariance_matrix = state.covariance_matrix
-        except (
-            ValueError
-        ):  # expand the stored covariance matrix if selected data has not been selected before, O(n^2)
+            new_state = state
+        except ValueError:
+            # update cached inverse covariance matrix of previously selected data, O(n^2)
+            i = state.current_inv.size(0)
+            if len(state.selected_indices) > i:
+                prev_data = state.data[
+                    torch.tensor(state.selected_indices[:i]).to(state.data.device)
+                ]  # (i, d)
+                new_data = state.data[
+                    torch.tensor(state.selected_indices[i:]).to(state.data.device)
+                ]  # (n-1-i, d)
+                B = prev_data @ new_data.T  # (n-1,)
+                I = torch.eye(new_data.size(0)).to(new_data.device)
+                C = new_data @ new_data.T + self.noise_var * I  # (n-1-i, n-1-i)
+                new_inv = update_inverse(A_inv=state.current_inv, B=B, C=C)
+                new_state = LazyVTLState(
+                    covariance_matrix=state.covariance_matrix,
+                    m=state.m,
+                    selected_indices=state.selected_indices,
+                    covariance_matrix_indices=state.covariance_matrix_indices,
+                    target=state.target,
+                    data=state.data,
+                    current_inv=new_inv,
+                )
+
+            # expand the stored covariance matrix if selected data has not been selected before, O(n^2)
             new_covariance_matrix = expand_covariance_matrix(
                 covariance_matrix=state.covariance_matrix,
-                current_inv=state.current_inv,
+                current_inv=new_inv,
                 data=state.data,
                 target=state.target,
                 data_idx=data_idx,
@@ -210,14 +233,14 @@ class LazyVTL(
                 selected_indices=state.selected_indices,
             )
             idx = new_covariance_matrix.dim - 1
+
         value = compute(
             covariance_matrix=new_covariance_matrix,
             idx=idx,
             noise_var=self.noise_var,
             m=state.m,
         )
-
-        return value, new_covariance_matrix
+        return value, new_covariance_matrix, new_state
 
     def step(
         self,
@@ -234,15 +257,6 @@ class LazyVTL(
                 data_idx
             )  # Note: not treating as immutable!
 
-        # update cached inverse covariance matrix of selected data, O(n^2)
-        selected_data = state.data[
-            torch.tensor(state.selected_indices).to(state.data.device)
-        ]  # (n, d)
-        new_data = state.data[data_idx]  # (d,)
-        u = selected_data.T @ new_data  # (n,)
-        alpha = (new_data @ new_data).item() + self.noise_var
-        new_inv = update_inverse(A_inv=state.current_inv, u=u, alpha=alpha)
-
         # update the stored covariance matrix by conditioning on the new data point, O(n^2)
         idx = state.m + state.covariance_matrix_indices.index(data_idx)
         posterior_covariance_matrix = new_covariance_matrix.condition_on(
@@ -257,7 +271,7 @@ class LazyVTL(
             covariance_matrix_indices=state.covariance_matrix_indices,
             target=state.target,
             data=state.data,
-            current_inv=new_inv,
+            current_inv=state.current_inv,
         )
 
     @property
@@ -317,25 +331,25 @@ def expand_covariance_matrix(
     return covariance_matrix.expand(covariance_vector)
 
 
-def update_inverse(A_inv: torch.Tensor, u: torch.Tensor, alpha: float) -> torch.Tensor:
+def update_inverse(
+    A_inv: torch.Tensor, B: torch.Tensor, C: torch.Tensor
+) -> torch.Tensor:
     r"""
-    Updates the inverse of $n \times n$ a matrix $A$ after adding a new column $u$ with a given diagonal element $\alpha$.
+    Updates the inverse of $n \times n$ a matrix $A$ after adding a new off-diagonal $n \times m$ block $B$ with diagonal $m \times m$ block $C$.
     Uses the Sherman-Morrison-Woodbury formula.
 
-    Time complexity: O(n^2)
+    Time complexity: O(n^2 + m^3)
     """
     if A_inv.numel() == 0:  # Check if the previous matrix is empty
-        return torch.tensor([[1.0 / alpha]])
+        return torch.inverse(C)
 
-    u = u.view(-1, 1)  # Ensure u is a column vector
-    S = alpha - torch.matmul(torch.matmul(u.t(), A_inv), u)
-    S_inv = 1.0 / S
+    D = torch.inverse(C - B.T @ A_inv @ B)
+    A_inv_B = A_inv @ B
 
-    A_inv_u = torch.matmul(A_inv, u)
-    upper_left = A_inv + torch.matmul(A_inv_u, A_inv_u.t()) * S_inv
-    upper_right = -A_inv_u * S_inv
-    lower_left = -A_inv_u.t() * S_inv
-    lower_right = S_inv
+    upper_left = A_inv + A_inv_B @ D @ A_inv_B.T
+    upper_right = -A_inv_B @ D
+    lower_left = -D @ A_inv_B.T
+    lower_right = D
 
     # Combine blocks into the full inverse matrix
     upper = torch.cat((upper_left, upper_right), dim=1)
