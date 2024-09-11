@@ -137,7 +137,7 @@ class Retriever:
                 self.acquisition_function.set_target(target)
 
             if isinstance(self.acquisition_function, LazyVTL):
-                if not (isinstance(self.index, faiss.IndexFlatIP) or isinstance(self.index, faiss.IndexFlatAbsIP)):  # type: ignore
+                if not isinstance(self.index, faiss.IndexFlatIP):  # type: ignore
                     warn(
                         "Lazy search is faster if an inner product index is used with Faiss."
                     )
