@@ -1,3 +1,4 @@
+from typing import Any
 import torch
 import torch.nn as nn
 from afsl.embeddings.classification import HallucinatedCrossEntropyEmbedding
@@ -7,11 +8,11 @@ class EfficientNet(nn.Module):
     def __init__(self, output_dim: int):
         super(EfficientNet, self).__init__()
 
-        self.model = torch.hub.load(
+        self.model: nn.Module = torch.hub.load(
             "NVIDIA/DeepLearningExamples:torchhub",
             "nvidia_efficientnet_b0",
             pretrained=True,
-        )
+        )  # type: ignore
 
         # Freeze all layers except the penultimate layer
         for param in self.model.parameters():
