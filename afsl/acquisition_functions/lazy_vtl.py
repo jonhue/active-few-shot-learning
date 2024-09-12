@@ -142,7 +142,9 @@ class LazyVTL(
 
                 prev_top_value = self.priority_queue.top_value
                 self.priority_queue.push(i, new_value)
-                if new_value >= prev_top_value:  # done if the value is larger than the largest upper bound of other points
+                if (
+                    new_value >= prev_top_value
+                ):  # done if the value is larger than the largest upper bound of other points
                     break  # (i, new_value) contains the next selected index and its value
             selected_values.append(new_value)
             state = self.step(state, i, new_covariance_matrix)
@@ -194,9 +196,13 @@ class LazyVTL(
             i = state.current_inv.size(0)
             if len(state.selected_indices) > i:
                 d = state.data.size(1)
-                prev_data = state.data[
-                    torch.tensor(state.selected_indices[:i]).to(state.data.device)
-                ] if i > 0 else torch.empty(0, d)  # (i, d)
+                prev_data = (
+                    state.data[
+                        torch.tensor(state.selected_indices[:i]).to(state.data.device)
+                    ]
+                    if i > 0
+                    else torch.empty(0, d)
+                )  # (i, d)
                 new_data = state.data[
                     torch.tensor(state.selected_indices[i:]).to(state.data.device)
                 ]  # (n-1-i, d)
@@ -313,10 +319,16 @@ def expand_covariance_matrix(
     Time complexity: O(n^2)
     """
     d = data.size(1)
-    unique_selected_data = data[
-        torch.tensor(covariance_matrix_indices).to(data.device)
-    ] if len(covariance_matrix_indices) > 0 else torch.empty(0, d)  # (n', d)
-    selected_data = data[torch.tensor(selected_indices).to(data.device)] if len(selected_indices) > 0 else torch.empty(0, d)  # (n, d)
+    unique_selected_data = (
+        data[torch.tensor(covariance_matrix_indices).to(data.device)]
+        if len(covariance_matrix_indices) > 0
+        else torch.empty(0, d)
+    )  # (n', d)
+    selected_data = (
+        data[torch.tensor(selected_indices).to(data.device)]
+        if len(selected_indices) > 0
+        else torch.empty(0, d)
+    )  # (n, d)
     new_data = data[data_idx]  # (d,)
     joint_data = torch.cat(
         (target, unique_selected_data, new_data.unsqueeze(0)), dim=0
