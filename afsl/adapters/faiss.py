@@ -136,20 +136,6 @@ class Retriever:
             if isinstance(self.acquisition_function, Targeted):
                 self.acquisition_function.set_target(target)
 
-            # if isinstance(self.acquisition_function, LazyVTL):
-            #     # if not isinstance(self.index, faiss.IndexFlatIP):  # type: ignore
-            #     #     warn(
-            #     #         "Lazy search is faster if an inner product index is used with Faiss."
-            #     #     )
-            #     inner_products = None
-            #     # else:
-            #     #     inner_products = D[i]
-            #     self.acquisition_function.set_initial_priority_queue(
-            #         embeddings=V[i],
-            #         target_embedding=mean_queries[i],
-            #         inner_products=inner_products,
-            #     )
-
             sub_indexes, values = ActiveDataLoader(
                 dataset=dataset,
                 batch_size=N,

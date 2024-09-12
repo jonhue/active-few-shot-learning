@@ -100,7 +100,6 @@ class LazyVTL(
         :param inner_products: Array of length $k$ containing precomputed (absolute) inner products of the data point embeddings with the query embedding.
         """
         self_inner_products = torch.sum(embeddings * embeddings, dim=1)
-        # target_inner_product = target_embedding @ target_embedding
         if inner_products is None:
             inner_products = embeddings @ target_embedding
         values = inner_products**2 / (  # target_inner_product -
@@ -291,15 +290,13 @@ def compute(
     Time complexity: O(1)
     """
 
-    def compute_posterior_variance(i, j):
-        return covariance_matrix[i, j] ** 2 / (  # covariance_matrix[i, i] -
-            covariance_matrix[j, j] + noise_var
-        )
+    def engine(i, j):
+        return covariance_matrix[i, j] ** 2 / (covariance_matrix[j, j] + noise_var)
 
     target_indices = torch.arange(m)
-    posterior_variances = compute_posterior_variance(target_indices, idx)
-    total_posterior_variance = torch.sum(posterior_variances, dim=0).cpu().item()
-    return total_posterior_variance
+    values = engine(target_indices, idx)
+    value = torch.sum(values, dim=0).cpu().item()
+    return value
 
 
 def expand_covariance_matrix(
