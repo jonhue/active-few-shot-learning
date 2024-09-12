@@ -1,5 +1,7 @@
 from typing import NamedTuple, Tuple
+from warnings import warn
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
+from afsl.acquisition_functions.lazy_vtl import LazyVTL
 import faiss  # type: ignore
 import torch
 import time
@@ -53,6 +55,12 @@ class Retriever:
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
+        """
+        :param index: Faiss index object.
+        :param acquisition_function: Acquisition function object.
+        :param only_faiss: Whether to only use Faiss for search.
+        :param device: Device to use for computation.
+        """
         self.index = index
         self.acquisition_function = acquisition_function
         self.only_faiss = only_faiss
