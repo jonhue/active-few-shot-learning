@@ -6,19 +6,14 @@ from afsl.acquisition_functions import (
     SequentialAcquisitionFunction,
     Targeted,
 )
-from afsl.gaussian import GaussianCovarianceMatrix, get_jitter
-from afsl.model import (
-    ModelWithEmbeddingOrKernel,
-    ModelWithKernel,
-    ModelWithLatentCovariance,
-)
+from afsl.gaussian import GaussianCovarianceMatrix
+from afsl.model import ModelWithEmbeddingOrKernel
 from afsl.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
     PriorityQueue,
-    get_device,
 )
 
 __all__ = ["LazyVTL", "LazyVTLState"]
@@ -51,7 +46,7 @@ class LazyVTL(
     noise_std: float
     """Standard deviation of the noise. Determined automatically if set to `None`."""
 
-    priority_queue: PriorityQueue | None
+    priority_queue: PriorityQueue | None = None
     """Priority queue over the data set."""
 
     def __init__(
@@ -93,30 +88,26 @@ class LazyVTL(
 
     def set_initial_priority_queue(
         self,
-        indices: np.ndarray,
-        embeddings: np.ndarray,
-        target_embedding: np.ndarray,
-        inner_products: np.ndarray | None = None,
+        embeddings: torch.Tensor,
+        target_embedding: torch.Tensor,
+        inner_products: torch.Tensor | None = None,
     ):
         r"""
         Constructs the initial priority queue (of length $k$) over the data set.
 
-        :param indices: Array of length $k$ containing indices of the data points.
         :param embeddings: Array of shape $k \times d$ containing the data point embeddings.
         :param target_embedding: Array of shape $d$ containing the (mean) target embedding.
         :param inner_products: Array of length $k$ containing precomputed (absolute) inner products of the data point embeddings with the query embedding.
         """
-        self_inner_products = np.sum(embeddings * embeddings, axis=1)
-        target_inner_product = target_embedding @ target_embedding
+        self_inner_products = torch.sum(embeddings * embeddings, dim=1)
+        # target_inner_product = target_embedding @ target_embedding
         if inner_products is None:
             inner_products = embeddings @ target_embedding
-        values = target_inner_product - inner_products**2 / (
+        values = inner_products**2 / (  # target_inner_product -
             self_inner_products + self.noise_var
         )
 
-        self.priority_queue = PriorityQueue(
-            indices=indices.tolist(), values=values.tolist()
-        )
+        self.priority_queue = PriorityQueue(values=values.cpu().tolist())
 
     def select_from_minibatch(
         self,
@@ -146,20 +137,14 @@ class LazyVTL(
         selected_values = []
         for _ in range(batch_size):
             while True:
-                stopping_value = np.inf
-                i, value = self.priority_queue.pop()
-                if (
-                    value >= stopping_value
-                ):  # done if the value is larger than a previously updated value
-                    break  # (i, value) contains the next selected index and its value
-
+                i, _ = self.priority_queue.pop()
                 new_value, new_covariance_matrix, state = self.recompute(state, i)
 
-                stopping_value = np.minimum(
-                    stopping_value, new_value
-                )  # stores the smallest updated value
+                prev_top_value = self.priority_queue.top_value
                 self.priority_queue.push(i, new_value)
-            selected_values.append(value)
+                if new_value >= prev_top_value:  # done if the value is larger than the largest upper bound of other points
+                    break  # (i, new_value) contains the next selected index and its value
+            selected_values.append(new_value)
             state = self.step(state, i, new_covariance_matrix)
         return torch.tensor(state.selected_indices), torch.tensor(selected_values)
 
@@ -177,6 +162,12 @@ class LazyVTL(
         covariance_matrix = GaussianCovarianceMatrix.from_embeddings(
             Embeddings=target.to(device)
         )
+
+        if self.priority_queue is None:
+            self.set_initial_priority_queue(
+                embeddings=data,
+                target_embedding=torch.mean(target, dim=0),
+            )
 
         return LazyVTLState(
             covariance_matrix=covariance_matrix,
@@ -202,9 +193,10 @@ class LazyVTL(
             # update cached inverse covariance matrix of previously selected data, O(n^2)
             i = state.current_inv.size(0)
             if len(state.selected_indices) > i:
+                d = state.data.size(1)
                 prev_data = state.data[
                     torch.tensor(state.selected_indices[:i]).to(state.data.device)
-                ]  # (i, d)
+                ] if i > 0 else torch.empty(0, d)  # (i, d)
                 new_data = state.data[
                     torch.tensor(state.selected_indices[i:]).to(state.data.device)
                 ]  # (n-1-i, d)
@@ -221,11 +213,13 @@ class LazyVTL(
                     data=state.data,
                     current_inv=new_inv,
                 )
+            else:
+                new_state = state
 
             # expand the stored covariance matrix if selected data has not been selected before, O(n^2)
             new_covariance_matrix = expand_covariance_matrix(
                 covariance_matrix=state.covariance_matrix,
-                current_inv=new_inv,
+                current_inv=new_state.current_inv,
                 data=state.data,
                 target=state.target,
                 data_idx=data_idx,
@@ -278,6 +272,9 @@ class LazyVTL(
     def noise_var(self):
         return self.noise_std**2
 
+    def compute(self, state: LazyVTLState) -> torch.Tensor:
+        raise NotImplementedError
+
 
 def compute(
     covariance_matrix: GaussianCovarianceMatrix, idx: int, noise_var: float, m: int
@@ -289,13 +286,13 @@ def compute(
     """
 
     def compute_posterior_variance(i, j):
-        return covariance_matrix[i, i] - covariance_matrix[i, j] ** 2 / (
+        return covariance_matrix[i, j] ** 2 / (  # covariance_matrix[i, i] -
             covariance_matrix[j, j] + noise_var
         )
 
-    target_indices = torch.arange(m).unsqueeze(0)  # Expand dims for broadcasting
+    target_indices = torch.arange(m)
     posterior_variances = compute_posterior_variance(target_indices, idx)
-    total_posterior_variance = torch.sum(posterior_variances, dim=1).cpu().item()
+    total_posterior_variance = torch.sum(posterior_variances, dim=0).cpu().item()
     return total_posterior_variance
 
 
@@ -315,15 +312,16 @@ def expand_covariance_matrix(
 
     Time complexity: O(n^2)
     """
+    d = data.size(1)
     unique_selected_data = data[
         torch.tensor(covariance_matrix_indices).to(data.device)
-    ]  # (n', d)
-    selected_data = data[torch.tensor(selected_indices).to(data.device)]  # (n, d)
+    ] if len(covariance_matrix_indices) > 0 else torch.empty(0, d)  # (n', d)
+    selected_data = data[torch.tensor(selected_indices).to(data.device)] if len(selected_indices) > 0 else torch.empty(0, d)  # (n, d)
     new_data = data[data_idx]  # (d,)
     joint_data = torch.cat(
         (target, unique_selected_data, new_data.unsqueeze(0)), dim=0
     )  # (m+n'+1, d)
-    I_d = torch.eye(selected_data.size(1)).to(selected_data.device)
+    I_d = torch.eye(d).to(selected_data.device)
     covariance_vector = (
         joint_data @ (I_d - selected_data.T @ current_inv @ selected_data) @ new_data
     )  # (m+n'+1,)

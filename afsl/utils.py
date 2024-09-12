@@ -34,32 +34,34 @@ def mini_batch_wrapper(fn, data, batch_size):
 
 
 class PriorityQueue(object):
-    """Priority Queue (smallest value first)"""
+    """Priority Queue (largest value first)"""
 
-    def __init__(self, indices: List[int], values: List[float]):
+    def __init__(self, values: List[float]):
         """
         Initializes the priority queue.
         """
-        self.q = [(value, idx) for idx, value in zip(indices, values)]
+        self.q = [(-value, idx) for idx, value in enumerate(values)]
         heapq.heapify(self.q)
 
+    @property
     def top(self) -> Element:
-        """Returns the top element with the minimum value"""
+        """Returns the top element with the maximum value"""
         value, idx = self.q[0]
-        return idx, value
+        return idx, -value
 
+    @property
     def top_value(self) -> float:
-        """Returns the minimum value"""
-        return self.top()[1]
+        """Returns the maximum value"""
+        return self.top[1]
 
     def pop(self) -> Element:
-        """Pops and returns the top element with the minimum value"""
+        """Pops and returns the top element with the maximum value"""
         value, idx = heapq.heappop(self.q)
-        return idx, value
+        return idx, -value
 
     def push(self, idx: int, value: float):
         """Pushes to the priority queue"""
-        heapq.heappush(self.q, (value, idx))
+        heapq.heappush(self.q, (-value, idx))
 
     def size(self) -> int:
         """Returns the size of the priority queue"""
