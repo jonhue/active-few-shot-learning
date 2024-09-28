@@ -53,7 +53,7 @@ To start a local server hosting the documentation run ```pdoc ./activeft --math`
 ## Citation
 
 ```bibtex
-@article{hubotter2024transductive,
+@article{hubotter2024efficiently,
 	title        = {Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs},
 	author       = {H{\"u}botter, Jonas and Bongni, Sascha and Hakimi, Ido and Krause, Andreas},
 	year         = 2024,
