@@ -36,6 +36,7 @@ def mini_batch_wrapper(fn, data, batch_size):
 def wandb_log(data):
     try:
         import wandb
+
         if wandb.run is not None:
             wandb.log(data)
     except ImportError:
