@@ -2,7 +2,8 @@ from typing import NamedTuple, Tuple
 from warnings import warn
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
 from afsl.acquisition_functions.lazy_vtl import LazyVTL
-import faiss  # type: ignore
+from afsl.acquisition_functions.vtl import VTL
+import afsl.sift as sift  # type: ignore
 import torch
 import time
 import concurrent.futures
@@ -45,30 +46,58 @@ class Retriever:
     ```
     """
 
-    index: faiss.Index  # type: ignore
+    index: sift.Index  # type: ignore
     only_faiss: bool = False
 
     def __init__(
         self,
-        index: faiss.Index,  # type: ignore
-        acquisition_function: AcquisitionFunction,
+        index: sift.Index,  # type: ignore
+        acquisition_function: AcquisitionFunction | None = None,
+        llambda: float = 0.01,
+        fast: bool = False,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
         """
         :param index: Faiss index object.
         :param acquisition_function: Acquisition function object.
+        :param llambda: Value of the lambda parameter of SIFT. Ignored if `acquisition_function` is set.
+        :param fast: Whether to use the SIFT-Fast. Ignored if `acquisition_function` is set.
         :param only_faiss: Whether to only use Faiss for search.
         :param device: Device to use for computation.
         """
         self.index = index
-        self.acquisition_function = acquisition_function
         self.only_faiss = only_faiss
         self.device = (
             device
             if device is not None
             else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         )
+
+        if acquisition_function is not None:
+            self.acquisition_function = acquisition_function
+            if fast:
+                warn(
+                    "Ignoring `fast` parameter, as `acquisition_function` is set.",
+                    UserWarning,
+                )
+        elif fast:
+            assert llambda is not None
+            self.acquisition_function = LazyVTL(
+                target=torch.Tensor(),
+                num_workers=1,
+                subsample=False,
+                noise_std=np.sqrt(llambda),
+            )
+        else:
+            assert llambda is not None
+            self.acquisition_function = VTL(
+                target=torch.Tensor(),
+                num_workers=1,
+                subsample=False,
+                force_nonsequential=False,
+                noise_std=np.sqrt(llambda),
+            )
 
     def search(
         self,
@@ -119,7 +148,7 @@ class Retriever:
         mean_queries = np.mean(queries, axis=1)
 
         t_start = time.time()
-        faiss.omp_set_num_threads(threads)  # type: ignore
+        sift.omp_set_num_threads(threads)  # type: ignore
         D, I, V = self.index.search_and_reconstruct(mean_queries, k or self.index.ntotal)  # type: ignore
         t_faiss = time.time() - t_start
 

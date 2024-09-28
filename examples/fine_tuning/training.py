@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 import afsl
 from afsl.acquisition_functions import AcquisitionFunction, EmbeddingBased, Targeted
 from afsl.active_data_loader import ActiveDataLoader
-from afsl.adapters.faiss import Retriever
+from afsl.sift import Retriever
 from afsl.utils import get_device
 from examples.fine_tuning.data import CollectedData, Dataset
 from examples.utils import accuracy
