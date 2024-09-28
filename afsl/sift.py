@@ -2,7 +2,8 @@ from typing import NamedTuple, Tuple
 from warnings import warn
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
 from afsl.acquisition_functions.lazy_vtl import LazyVTL
-import faiss  # type: ignore
+from afsl.acquisition_functions.vtl import VTL
+import faiss
 import torch
 import time
 import concurrent.futures
@@ -25,8 +26,8 @@ class Dataset(AbstractDataset):
 class RetrievalTime(NamedTuple):
     faiss: float
     """Time spent with Faiss retrieval."""
-    afsl: float
-    """Additional time spent with AFSL."""
+    sift: float
+    """Additional time spent with SIFT."""
 
 
 class Retriever:
@@ -45,24 +46,27 @@ class Retriever:
     ```
     """
 
-    index: faiss.Index  # type: ignore
+    index: faiss.Index
     only_faiss: bool = False
 
     def __init__(
         self,
-        index: faiss.Index,  # type: ignore
-        acquisition_function: AcquisitionFunction,
+        index: faiss.Index,
+        acquisition_function: AcquisitionFunction | None = None,
+        llambda: float = 0.01,
+        fast: bool = False,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
         """
         :param index: Faiss index object.
         :param acquisition_function: Acquisition function object.
+        :param llambda: Value of the lambda parameter of SIFT. Ignored if `acquisition_function` is set.
+        :param fast: Whether to use the SIFT-Fast. Ignored if `acquisition_function` is set.
         :param only_faiss: Whether to only use Faiss for search.
         :param device: Device to use for computation.
         """
         self.index = index
-        self.acquisition_function = acquisition_function
         self.only_faiss = only_faiss
         self.device = (
             device
@@ -70,18 +74,43 @@ class Retriever:
             else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         )
 
+        if acquisition_function is not None:
+            self.acquisition_function = acquisition_function
+            if fast:
+                warn(
+                    "Ignoring `fast` parameter, as `acquisition_function` is set.",
+                    UserWarning,
+                )
+        elif fast:
+            assert llambda is not None
+            self.acquisition_function = LazyVTL(
+                target=torch.Tensor(),
+                num_workers=1,
+                subsample=False,
+                noise_std=np.sqrt(llambda),
+            )
+        else:
+            assert llambda is not None
+            self.acquisition_function = VTL(
+                target=torch.Tensor(),
+                num_workers=1,
+                subsample=False,
+                force_nonsequential=False,
+                noise_std=np.sqrt(llambda),
+            )
+
     def search(
         self,
         query: np.ndarray,
         N: int,
-        k: int | None,
+        K: int | None,
         mean_pooling: bool = False,
         threads: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, RetrievalTime]:
         r"""
         :param query: Query embedding (of shape $m \times d$), comprised of $m$ individual embeddings.
         :param N: Number of results to return.
-        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
+        :param K: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -90,7 +119,7 @@ class Retriever:
         D, I, V, retrieval_time = self.batch_search(
             queries=np.array([query]),
             N=N,
-            k=k,
+            K=K,
             mean_pooling=mean_pooling,
             threads=threads,
         )
@@ -100,14 +129,14 @@ class Retriever:
         self,
         queries: np.ndarray,
         N: int,
-        k: int | None = None,
+        K: int | None = None,
         mean_pooling: bool = False,
         threads: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, RetrievalTime]:
         r"""
         :param queries: $n$ query embeddings (of combined shape $n \times m \times d$), each comprised of $m$ individual embeddings.
         :param N: Number of results to return.
-        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
+        :param K: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -119,12 +148,12 @@ class Retriever:
         mean_queries = np.mean(queries, axis=1)
 
         t_start = time.time()
-        faiss.omp_set_num_threads(threads)  # type: ignore
-        D, I, V = self.index.search_and_reconstruct(mean_queries, k or self.index.ntotal)  # type: ignore
+        faiss.omp_set_num_threads(threads)
+        D, I, V = self.index.search_and_reconstruct(mean_queries, K or self.index.ntotal)  # type: ignore
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
-            retrieval_time = RetrievalTime(faiss=t_faiss, afsl=0)
+            retrieval_time = RetrievalTime(faiss=t_faiss, sift=0)
             return D[:, :N], I[:, :N], V[:, :N], retrieval_time
 
         def engine(i: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -161,8 +190,8 @@ class Retriever:
                 resulting_values.append(values)
                 resulting_indices.append(indices)
                 resulting_embeddings.append(embeddings)
-        t_afsl = time.time() - t_start
-        retrieval_time = RetrievalTime(faiss=t_faiss, afsl=t_afsl)
+        t_sift = time.time() - t_start
+        retrieval_time = RetrievalTime(faiss=t_faiss, sift=t_sift)
         return (
             np.array(resulting_values),
             np.array(resulting_indices),

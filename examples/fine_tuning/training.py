@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 import afsl
 from afsl.acquisition_functions import AcquisitionFunction, EmbeddingBased, Targeted
 from afsl.active_data_loader import ActiveDataLoader
-from afsl.adapters.faiss import Retriever
+from afsl.sift import Retriever
 from afsl.utils import get_device
 from examples.fine_tuning.data import CollectedData, Dataset
 from examples.utils import accuracy
@@ -91,10 +91,8 @@ def train_loop(
     if faiss_index_path is not None:
         acquisition_function.subsample = False
 
-        res = faiss.StandardGpuResources()
         index = faiss.read_index(faiss_index_path)
-        index = faiss.index_cpu_to_gpu(res, 0, index)
-        retriever = Retriever(index, acquisition_function)  # type: ignore
+        retriever = Retriever(index, acquisition_function)
     else:
         data_loader = ActiveDataLoader(
             dataset=train_inputs,
@@ -113,7 +111,7 @@ def train_loop(
             )  # ensure target set is reset to correct length
             query = acquisition_function.get_target().cpu().numpy()
             _, _batch_indices, _, _ = retriever.search(
-                query=query, N=query_batch_size, k=100 * query_batch_size
+                query=query, N=query_batch_size, K=100 * query_batch_size
             )
             batch_indices = torch.tensor(_batch_indices)
         else:

@@ -128,7 +128,7 @@ If you use the code in a publication, please cite our papers:
 """
 
 from afsl.active_data_loader import ActiveDataLoader
-from afsl import acquisition_functions, data, embeddings, model
+from afsl import acquisition_functions, data, embeddings, model, sift
 
 __all__ = [
     "ActiveDataLoader",
@@ -136,6 +136,7 @@ __all__ = [
     "data",
     "embeddings",
     "model",
+    "sift",
 ]
 __version__ = "0.1.0"
 __author__ = "Jonas Hübotter"
