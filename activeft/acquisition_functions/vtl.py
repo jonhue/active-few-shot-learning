@@ -18,9 +18,9 @@ class VTL(TargetedBaCE):
 
     `VTL` selects batches via *conditional embeddings*,[^4] leading to diverse batches.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ✅          | ✅                | ✅          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ✅         | ✅          | embedding / kernel  |
 
     #### Comparison to ITL
 
@@ -35,7 +35,7 @@ class VTL(TargetedBaCE):
 
     [^2]: Seo, S., Wallat, M., Graepel, T., and Obermayer, K. Gaussian process regression: Active data selection and test point rejection. In Mustererkennung 2000. Springer, 2000.
 
-    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
+    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Transductive Active Learning: Theory and Applications. NeurIPS, 2024.
 
     [^4]: see activeft.acquisition_functions.bace.BaCE
     """

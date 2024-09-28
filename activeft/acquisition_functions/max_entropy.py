@@ -11,9 +11,9 @@ class MaxEntropy(BatchAcquisitionFunction):
     Intuitively, the entropy of $p_{\vx}$ measures the "uncertainty" of $p_{\vx}$, and therefore,
     `MaxEntropy` can be seen as a heuristic for determining informative data points.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | (✅)              | ❌          | softmax            |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | ❌          | softmax            |
 
     [^1]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
     """

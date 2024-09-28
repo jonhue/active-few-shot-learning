@@ -14,26 +14,28 @@ data_loader = activeft.ActiveDataLoader(data, batch_size=64, acquisition_functio
 
 The following table provides an overview of the acquisition functions and their properties:
 
-|                                                                    | Relevance? | Informativeness? | Diversity? | Model Requirement   |
-|--------------------------------------------------------------------|------------|------------------|------------|---------------------|
-| [ITL](acquisition_functions/itl)                                   | ✅          | ✅                | ✅          | embedding / kernel  |
-| [VTL](acquisition_functions/vtl)                                   | ✅          | ✅                | ✅          | embedding / kernel  |
-| [CTL](acquisition_functions/ctl)                                   | ✅          | (✅)                | ✅          | embedding / kernel  |
-| [Cosine Similarity](acquisition_functions/cosine_similarity)       | ✅          | ❌                | ❌          | embedding           |
-| [Undirected ITL](acquisition_functions/undirected_itl)             | ❌          | ✅                | ✅          | embedding / kernel  |
-| [Undirected VTL](acquisition_functions/undirected_vtl)             | ❌          | ✅                | ✅          | embedding / kernel  |
-| [MaxDist](acquisition_functions/max_dist)                          | ❌          | (✅)                | ✅          | embedding / kernel  |
-| [k-means++](acquisition_functions/kmeans_pp)                       | ❌          | (✅)                | ✅          | embedding / kernel  |
-| [Uncertainty Sampling](acquisition_functions/uncertainty_sampling) | ❌          | ✅                | ❌          | embedding / kernel  |
-| [MinMargin](acquisition_functions/min_margin)                      | ❌          | (✅)              | ❌          | softmax             |
-| [MaxEntropy](acquisition_functions/max_entropy)                    | ❌          | (✅)              | ❌          | softmax             |
-| [LeastConfidence](acquisition_functions/least_confidence)                    | ❌          | (✅)              | ❌          | softmax             |
-| [Information Density](acquisition_functions/information_density)   | (✅)        | (✅)              | ❌          | embedding & softmax |
-| [Random](acquisition_functions/random)                             | ❌          | ❌                | (✅)        | -                   |
+|                                                                    | Relevance? | Diversity? | Model Requirement   |
+|--------------------------------------------------------------------|------------|------------|---------------------|
+| [ITL](acquisition_functions/itl)                                   | ✅          | ✅          | embedding / kernel  |
+| [VTL](acquisition_functions/vtl)                                   | ✅          | ✅          | embedding / kernel  |
+| [MMITL](acquisition_functions/mmitl)                               | ✅          | ✅          | embedding / kernel  |
+| [CTL](acquisition_functions/ctl)                                   | (✅)        | ✅          | embedding / kernel  |
+| [Cosine Similarity](acquisition_functions/cosine_similarity)       | (✅)        | ❌          | embedding           |
+| [Undirected ITL](acquisition_functions/undirected_itl)             | ❌          | ✅          | embedding / kernel  |
+| [Undirected VTL](acquisition_functions/undirected_vtl)             | ❌          | ✅          | embedding / kernel  |
+| [MaxDist](acquisition_functions/max_dist)                          | ❌          | ✅          | embedding / kernel  |
+| [k-means++](acquisition_functions/kmeans_pp)                       | ❌          | ✅          | embedding / kernel  |
+| [Uncertainty Sampling](acquisition_functions/uncertainty_sampling) | ❌          | ❌          | embedding / kernel  |
+| [MinMargin](acquisition_functions/min_margin)                      | ❌          | ❌          | softmax             |
+| [MaxEntropy](acquisition_functions/max_entropy)                    | ❌          | ❌          | softmax             |
+| [LeastConfidence](acquisition_functions/least_confidence)          | ❌          | ❌          | softmax             |
+| [EIG](acquisition_functions/eig)                                   | ✅          | ❌          | embedding / kernel  |
+| [Information Density](acquisition_functions/information_density)   | (✅)        | (✅)        | embedding & softmax |
+| [Random](acquisition_functions/random)                             | ❌          | (✅)        | -                   |
 
 
-- **Relevance** and **Informativeness** capture whether obtained data is "useful" as outlined [here](/activeft/docs/activeft#why-active-data-selection).
-- **Diversity** captures whether the selected batches are diverse, i.e., whether they cover different "useful" parts of the data space. In a non-diverse batch, most data is not useful conditional on the rest of the batch, meaning that most of the batch is "wasted".
+- **Relevance** captures whether obtained data is "related" to the prediction targets. Methods with checkmarks in parentheses capture some but not all related data.
+- **Diversity** captures whether the selected batches are diverse, i.e., whether selected data is non-redundant.
 - **Model Requirement** describes the type of model required for the acquisition function. For example, some acquisition functions require an *embedding* or a *kernel* (see activeft.model), while others require the model to output a *softmax* distribution (typically in a classification context).
 
 ---

@@ -43,6 +43,12 @@ class LazyVTL(
     EmbeddingBased,
     SequentialAcquisitionFunction[ModelWithEmbeddingOrKernel | None, LazyVTLState],
 ):
+    """
+    Lazy Implementation of [VTL](vtl).[^1]
+
+    [^1]: Hübotter, J., Bongni, S., Hakimi, I., and Krause, A. Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs. Preprint, 2024.
+    """
+
     noise_std: float
     """Standard deviation of the noise. Determined automatically if set to `None`."""
 

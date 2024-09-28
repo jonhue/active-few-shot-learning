@@ -15,9 +15,9 @@ class KMeansPP(MaxDist):
     `KMeansPP` explicitly enforces *diversity* in the selected batch.
     If the selected centroids from previous batches are used to initialize the centroids for the current batch,[^3] then `KMeansPP` heuristically also leads to *informative* samples since samples are chosen to be different from previously seen data.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | (✅)                | ✅          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | ✅          | embedding / kernel |
 
     Using the activeft.embeddings.classification.HallucinatedCrossEntropyEmbedding embeddings, this acquisition function is known as BADGE (*Batch Active learning by Diverse Gradient Embeddings*).[^4]
 

@@ -16,9 +16,9 @@ class UndirectedITL(BaCE):
         This acquisition function is analogous to [Uncertainty Sampling](uncertainty_sampling) but selects the batch sequentially by conditioning on previously selected points.
         In other words, (undirected) ITL is a generalization to batch sizes larger than one.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | ✅                | ✅          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | ✅          | embedding / kernel  |
 
     #### Interpretation: Greedy Determinant Maximization
 
@@ -54,7 +54,7 @@ class UndirectedITL(BaCE):
 
     [^2]: Holzmüller, D., Zaverkin, V., Kästner, J., and Steinwart, I. A framework and benchmark for deep batch active learning for regression. JMLR, 24(164), 2023.
 
-    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
+    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Transductive Active Learning: Theory and Applications. NeurIPS, 2024.
 
     [^4]: see activeft.acquisition_functions.bace.BaCE
     """

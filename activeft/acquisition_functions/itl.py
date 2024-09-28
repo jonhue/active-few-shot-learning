@@ -21,9 +21,9 @@ class ITL(TargetedBaCE):
 
     `ITL` selects batches via *conditional embeddings*,[^4] leading to diverse batches.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ✅          | ✅                | ✅          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ✅         | ✅          | embedding / kernel  |
 
     #### Comparison to VTL
 
@@ -43,7 +43,7 @@ class ITL(TargetedBaCE):
 
     [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See activeft.model.ModelWithKernel.
 
-    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
+    [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Transductive Active Learning: Theory and Applications. NeurIPS, 2024.
 
     [^4]: see activeft.acquisition_functions.bace.BaCE
     """

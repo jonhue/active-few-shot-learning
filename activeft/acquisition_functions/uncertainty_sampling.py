@@ -18,9 +18,9 @@ class UncertaintySampling(UndirectedITL):
 
         `UncertaintySampling` coincides with [Undirected ITL](undirected_itl) with `force_nonsequential=True`.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | ✅                | ❌          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | ❌          | embedding / kernel  |
 
     [^1]: Lewis, D. D. and Catlett, J. Heterogeneous uncertainty sampling for supervised learning. In Machine learning proceedings 1994. Elsevier, 1994.
 
