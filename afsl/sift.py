@@ -26,8 +26,8 @@ class Dataset(AbstractDataset):
 class RetrievalTime(NamedTuple):
     faiss: float
     """Time spent with Faiss retrieval."""
-    afsl: float
-    """Additional time spent with AFSL."""
+    sift: float
+    """Additional time spent with SIFT."""
 
 
 class Retriever:
@@ -153,7 +153,7 @@ class Retriever:
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
-            retrieval_time = RetrievalTime(faiss=t_faiss, afsl=0)
+            retrieval_time = RetrievalTime(faiss=t_faiss, sift=0)
             return D[:, :N], I[:, :N], V[:, :N], retrieval_time
 
         def engine(i: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -190,8 +190,8 @@ class Retriever:
                 resulting_values.append(values)
                 resulting_indices.append(indices)
                 resulting_embeddings.append(embeddings)
-        t_afsl = time.time() - t_start
-        retrieval_time = RetrievalTime(faiss=t_faiss, afsl=t_afsl)
+        t_sift = time.time() - t_start
+        retrieval_time = RetrievalTime(faiss=t_faiss, sift=t_sift)
         return (
             np.array(resulting_values),
             np.array(resulting_indices),
