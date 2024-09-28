@@ -103,14 +103,14 @@ class Retriever:
         self,
         query: np.ndarray,
         N: int,
-        k: int | None,
+        K: int | None,
         mean_pooling: bool = False,
         threads: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, RetrievalTime]:
         r"""
         :param query: Query embedding (of shape $m \times d$), comprised of $m$ individual embeddings.
         :param N: Number of results to return.
-        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
+        :param K: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -119,7 +119,7 @@ class Retriever:
         D, I, V, retrieval_time = self.batch_search(
             queries=np.array([query]),
             N=N,
-            k=k,
+            K=K,
             mean_pooling=mean_pooling,
             threads=threads,
         )
@@ -129,14 +129,14 @@ class Retriever:
         self,
         queries: np.ndarray,
         N: int,
-        k: int | None = None,
+        K: int | None = None,
         mean_pooling: bool = False,
         threads: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, RetrievalTime]:
         r"""
         :param queries: $n$ query embeddings (of combined shape $n \times m \times d$), each comprised of $m$ individual embeddings.
         :param N: Number of results to return.
-        :param k: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
+        :param K: Number of results to pre-sample with Faiss. Does not pre-sample if set to `None`.
         :param mean_pooling: Whether to use the mean of the query embeddings.
         :param threads: Number of threads to use.
 
@@ -149,7 +149,7 @@ class Retriever:
 
         t_start = time.time()
         sift.omp_set_num_threads(threads)  # type: ignore
-        D, I, V = self.index.search_and_reconstruct(mean_queries, k or self.index.ntotal)  # type: ignore
+        D, I, V = self.index.search_and_reconstruct(mean_queries, K or self.index.ntotal)  # type: ignore
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
