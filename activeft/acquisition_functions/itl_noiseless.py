@@ -13,6 +13,10 @@ ABS_TOL = 1e-5
 
 
 class ITLNoiseless(TargetedBaCE):
+    """
+    Noiseless version of [ITL](itl).
+    """
+
     def __init__(
         self,
         target: torch.Tensor,

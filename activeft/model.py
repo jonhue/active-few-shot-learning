@@ -19,6 +19,9 @@ class Model(Protocol):
     def eval(self) -> Model:
         ...
 
+    def train(self) -> Model:
+        ...
+
     def zero_grad(self) -> None:
         ...
 

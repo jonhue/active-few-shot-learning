@@ -27,9 +27,9 @@ class CosineSimilarity(
 
         `CosineSimilarity` coincides with [CTL](ctl) with `force_nonsequential=True`.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ✅          | ❌                | ❌          | embedding           |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | (✅)       | ❌          | embedding           |
 
     [^1]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
     """

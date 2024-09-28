@@ -15,9 +15,9 @@ class InformationDensity(BatchAcquisitionFunction):
     r"""
     `InformationDensity`[^1] is a heuristic combination of the [MaxEntropy](max_entropy) and [Cosine Similarity](cosine_similarity) acquisition functions: \\[\argmax_{\vx}\quad \H{p_\vx} \cdot \left(\frac{1}{|\spA|} \sum_{\vxp \in \spA} \angle(\vphi(\vx), \vphi(\vxp))\right)^\beta\\] where the parameter $\beta$ trades off informativeness and relevance.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | (✅)        | (✅)              | ❌          | embedding & softmax |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | (✅)       | (✅)          | embedding & softmax |
 
     [^1]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
     """

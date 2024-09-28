@@ -1,7 +1,6 @@
 import torch
 from activeft.acquisition_functions.bace import BaCEState, TargetedBaCE
 from activeft.acquisition_functions.vtl import VTL
-from activeft.gaussian import get_jitter
 from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
@@ -15,9 +14,9 @@ class UndirectedVTL(VTL):
     `UndirectedVTL` is the special case of [VTL](vtl) without specified prediction targets.[^1]
     In the literature, this acquisition function is also known as BAIT.[^4][^2]
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | ✅                | ✅          | embedding / kernel  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | ✅         | embedding / kernel  |
 
     [^1]: That is, the prediction targets $\spA$ are equal to the data set $\spS$.
 
