@@ -91,10 +91,8 @@ def train_loop(
     if faiss_index_path is not None:
         acquisition_function.subsample = False
 
-        res = faiss.StandardGpuResources()
         index = faiss.read_index(faiss_index_path)
-        index = faiss.index_cpu_to_gpu(res, 0, index)
-        retriever = Retriever(index, acquisition_function)  # type: ignore
+        retriever = Retriever(index, acquisition_function)
     else:
         data_loader = ActiveDataLoader(
             dataset=train_inputs,

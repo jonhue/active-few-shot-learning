@@ -1,4 +1,5 @@
 black~=24.8
+faiss-cpu~=1.8
 numpy~=2.1
 pandas~=2.2
 poetry~=1.8

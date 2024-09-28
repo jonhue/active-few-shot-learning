@@ -3,7 +3,7 @@ from warnings import warn
 from afsl.acquisition_functions import AcquisitionFunction, Targeted
 from afsl.acquisition_functions.lazy_vtl import LazyVTL
 from afsl.acquisition_functions.vtl import VTL
-import faiss  # type: ignore
+import faiss
 import torch
 import time
 import concurrent.futures
@@ -46,12 +46,12 @@ class Retriever:
     ```
     """
 
-    index: faiss.Index  # type: ignore
+    index: faiss.Index
     only_faiss: bool = False
 
     def __init__(
         self,
-        index: faiss.Index,  # type: ignore
+        index: faiss.Index,
         acquisition_function: AcquisitionFunction | None = None,
         llambda: float = 0.01,
         fast: bool = False,
@@ -148,7 +148,7 @@ class Retriever:
         mean_queries = np.mean(queries, axis=1)
 
         t_start = time.time()
-        faiss.omp_set_num_threads(threads)  # type: ignore
+        faiss.omp_set_num_threads(threads)
         D, I, V = self.index.search_and_reconstruct(mean_queries, K or self.index.ntotal)  # type: ignore
         t_faiss = time.time() - t_start
 
