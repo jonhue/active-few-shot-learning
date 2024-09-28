@@ -140,7 +140,7 @@ class TypiClust(
             calculate_typicality(rel_feats, min(K_NN, len(indices) // 2))
         )
         # remove already selected samples
-        typicality = typicality[state.num_selected:]
+        typicality = typicality[state.num_selected :]
         assert typicality.size(0) == state.n - state.num_selected
         return typicality
 

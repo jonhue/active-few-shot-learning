@@ -99,7 +99,7 @@ class ProbCover(
         # selecting the sample with the highest degree
         degrees = torch.tensor(np.bincount(state.cur_df.x, minlength=state.n))
         # remove already selected samples
-        degrees = degrees[state.num_selected:]
+        degrees = degrees[state.num_selected :]
         print(
             f"Iteration is {state.i}.\tGraph has {len(state.cur_df)} edges.\tMax degree is {degrees.max()}.\tCoverage is {coverage:.3f}"
         )

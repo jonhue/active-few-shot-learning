@@ -148,7 +148,7 @@ class MaxDist(
         min_sqd_distances = torch.clone(state.min_sqd_distances)
         if state.centroid_indices.size(0) > 0:
             min_sqd_distances[state.centroid_indices] = 0
-        return min_sqd_distances[:state.n]
+        return min_sqd_distances[: state.n]
 
     def step(self, state: DistanceState, i: int) -> DistanceState:
         centroid_indices = torch.cat(
