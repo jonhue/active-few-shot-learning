@@ -1,9 +1,9 @@
 import torch
-from afsl.acquisition_functions import BatchAcquisitionFunction
-from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
-from afsl.acquisition_functions.max_entropy import MaxEntropy
-from afsl.model import ModelWithEmbedding
-from afsl.utils import (
+from activeft.acquisition_functions import BatchAcquisitionFunction
+from activeft.acquisition_functions.cosine_similarity import CosineSimilarity
+from activeft.acquisition_functions.max_entropy import MaxEntropy
+from activeft.model import ModelWithEmbedding
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

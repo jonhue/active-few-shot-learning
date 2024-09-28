@@ -1,6 +1,6 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import BaCE, BaCEState
+from activeft.acquisition_functions.bace import BaCE, BaCEState
 
 
 class UndirectedITL(BaCE):
@@ -50,13 +50,13 @@ class UndirectedITL(BaCE):
     \end{align}\\]
     That is, `UndirectedITL` minimizes the determinant of the posterior covariance matrix of $\vf(\spS)$ whereas [Undirected VTL](undirected_vtl) minimizes the trace of the posterior covariance matrix of $\vf(\spS)$.
 
-    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See afsl.model.ModelWithKernel.
+    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See activeft.model.ModelWithKernel.
 
     [^2]: Holzmüller, D., Zaverkin, V., Kästner, J., and Steinwart, I. A framework and benchmark for deep batch active learning for regression. JMLR, 24(164), 2023.
 
     [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
 
-    [^4]: see afsl.acquisition_functions.bace.BaCE
+    [^4]: see activeft.acquisition_functions.bace.BaCE
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:

@@ -1,7 +1,7 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
-from afsl.gaussian import get_jitter
+from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
+from activeft.gaussian import get_jitter
 
 
 class VTL(TargetedBaCE):
@@ -31,13 +31,13 @@ class VTL(TargetedBaCE):
     In practice, this difference amounts to a different "weighting" of the prediction targets in $\spA$.
     While `VTL` attributes equal importance to all prediction targets, [ITL](itl) attributes more importance to the "most uncertain" prediction targets.
 
-    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See afsl.model.ModelWithKernel.
+    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See activeft.model.ModelWithKernel.
 
     [^2]: Seo, S., Wallat, M., Graepel, T., and Obermayer, K. Gaussian process regression: Active data selection and test point rejection. In Mustererkennung 2000. Springer, 2000.
 
     [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
 
-    [^4]: see afsl.acquisition_functions.bace.BaCE
+    [^4]: see activeft.acquisition_functions.bace.BaCE
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:

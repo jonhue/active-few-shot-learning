@@ -1,7 +1,7 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
-from afsl.utils import (
+from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

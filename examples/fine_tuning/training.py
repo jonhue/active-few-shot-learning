@@ -5,11 +5,11 @@ from tqdm import tqdm
 import faiss  # type: ignore
 import torch
 from torch.utils.data import DataLoader
-import afsl
-from afsl.acquisition_functions import AcquisitionFunction, EmbeddingBased, Targeted
-from afsl.active_data_loader import ActiveDataLoader
-from afsl.sift import Retriever
-from afsl.utils import get_device
+import activeft
+from activeft.acquisition_functions import AcquisitionFunction, EmbeddingBased, Targeted
+from activeft.active_data_loader import ActiveDataLoader
+from activeft.sift import Retriever
+from activeft.utils import get_device
 from examples.fine_tuning.data import CollectedData, Dataset
 from examples.utils import accuracy
 
@@ -68,7 +68,7 @@ def train(
 def train_loop(
     model: torch.nn.Module,
     labels: torch.Tensor,
-    train_inputs: afsl.data.Dataset,
+    train_inputs: activeft.data.Dataset,
     train_labels: torch.Tensor,
     valset: CollectedData,
     criterion: torch.nn.Module,
@@ -130,7 +130,7 @@ def train_loop(
             trainloader = DataLoader(data, batch_size=train_batch_size, shuffle=True)
 
             if update_target and isinstance(
-                acquisition_function, afsl.acquisition_functions.Targeted
+                acquisition_function, activeft.acquisition_functions.Targeted
             ):
                 acquisition_function.add_to_target(batch.inputs)
 

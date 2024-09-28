@@ -1,10 +1,10 @@
 import torch
-from afsl.embeddings.classification import (
+from activeft.embeddings.classification import (
     HallucinatedCrossEntropyEmbedding,
     # ExpectedCrossEntropyEmbedding,
     # OutputNormEmbedding,
 )
-from afsl.models.simple_convnet import SimpleCNN
+from activeft.models.simple_convnet import SimpleCNN
 
 data = torch.randn(100, 3, 28, 28)
 

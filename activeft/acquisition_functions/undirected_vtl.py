@@ -1,9 +1,9 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import BaCEState, TargetedBaCE
-from afsl.acquisition_functions.vtl import VTL
-from afsl.gaussian import get_jitter
-from afsl.utils import (
+from activeft.acquisition_functions.bace import BaCEState, TargetedBaCE
+from activeft.acquisition_functions.vtl import VTL
+from activeft.gaussian import get_jitter
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

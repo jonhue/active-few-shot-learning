@@ -1,6 +1,6 @@
 import torch
 import wandb
-from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
+from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
 class ITL(TargetedBaCE):
@@ -39,13 +39,13 @@ class ITL(TargetedBaCE):
     `ITL` is computed using $\I{\vf(\spA)}{y(\vx) \mid \spD_i} \approx \I{\vy(\spA)}{y(\vx) \mid \spD_i}$ with \\[\begin{align}
         \I{\vy(\spA)}{y(\vx) \mid \spD_i} &= \frac{1}{2} \log\left( \frac{k_i(\vx,\vx) + \sigma^2}{\tilde{k}_i(\vx,\vx) + \sigma^2} \right) \qquad\text{where} \\\\
         \tilde{k}_i(\vx,\vx) &= k_i(\vx,\vx) - \vk_i(\vx,\spA) (\mK_i(\spA,\spA) + \sigma^2 \mI)^{-1} \vk_i(\spA,\vx)
-    \end{align}\\] where $\sigma^2$ is the noise variance and $k_i$ denotes the conditional kernel (see afsl.acquisition_functions.bace.BaCE).
+    \end{align}\\] where $\sigma^2$ is the noise variance and $k_i$ denotes the conditional kernel (see activeft.acquisition_functions.bace.BaCE).
 
-    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See afsl.model.ModelWithKernel.
+    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See activeft.model.ModelWithKernel.
 
     [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
 
-    [^4]: see afsl.acquisition_functions.bace.BaCE
+    [^4]: see activeft.acquisition_functions.bace.BaCE
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:

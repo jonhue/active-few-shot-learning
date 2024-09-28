@@ -1,6 +1,6 @@
 import random
 import torch
-from afsl.acquisition_functions.max_dist import MaxDist
+from activeft.acquisition_functions.max_dist import MaxDist
 
 
 class KMeansPP(MaxDist):
@@ -19,7 +19,7 @@ class KMeansPP(MaxDist):
     |------------|------------------|------------|--------------------|
     | ❌          | (✅)                | ✅          | embedding / kernel  |
 
-    Using the afsl.embeddings.classification.HallucinatedCrossEntropyEmbedding embeddings, this acquisition function is known as BADGE (*Batch Active learning by Diverse Gradient Embeddings*).[^4]
+    Using the activeft.embeddings.classification.HallucinatedCrossEntropyEmbedding embeddings, this acquisition function is known as BADGE (*Batch Active learning by Diverse Gradient Embeddings*).[^4]
 
     [^1]: See [here](max_dist#where-does-the-distance-come-from) for a discussion of how a distance is induced by embeddings or a kernel.
 

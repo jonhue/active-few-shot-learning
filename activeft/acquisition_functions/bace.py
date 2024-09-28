@@ -1,17 +1,17 @@
 from typing import NamedTuple
 import torch
-from afsl.acquisition_functions import (
+from activeft.acquisition_functions import (
     EmbeddingBased,
     SequentialAcquisitionFunction,
     Targeted,
 )
-from afsl.gaussian import GaussianCovarianceMatrix
-from afsl.model import (
+from activeft.gaussian import GaussianCovarianceMatrix
+from activeft.model import (
     ModelWithEmbeddingOrKernel,
     ModelWithKernel,
     ModelWithLatentCovariance,
 )
-from afsl.utils import (
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
@@ -52,7 +52,7 @@ class BaCE(
 
     [^1]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
 
-    [^2]: A kernel is also induced by embeddings. See afsl.model.ModelWithEmbedding.
+    [^2]: A kernel is also induced by embeddings. See activeft.model.ModelWithEmbedding.
     """
 
     noise_std: float | None

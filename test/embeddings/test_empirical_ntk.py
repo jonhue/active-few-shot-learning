@@ -1,6 +1,6 @@
 import torch
-from afsl.embeddings.empirical_ntk import EmpiricalNTKEmbedding
-from afsl.models.simple_mlp import SimpleMLP
+from activeft.embeddings.empirical_ntk import EmpiricalNTKEmbedding
+from activeft.models.simple_mlp import SimpleMLP
 
 
 class SimpleMLPWithEmbedding(SimpleMLP, EmpiricalNTKEmbedding):

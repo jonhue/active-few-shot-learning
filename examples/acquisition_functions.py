@@ -1,20 +1,20 @@
 import torch
-from afsl.acquisition_functions import AcquisitionFunction
-from afsl.acquisition_functions.cosine_similarity import CosineSimilarity
-from afsl.acquisition_functions.ctl import CTL
-from afsl.acquisition_functions.information_density import InformationDensity
-from afsl.acquisition_functions.itl import ITL
-from afsl.acquisition_functions.itl_noiseless import ITLNoiseless
-from afsl.acquisition_functions.kmeans_pp import KMeansPP
-from afsl.acquisition_functions.least_confidence import LeastConfidence
-from afsl.acquisition_functions.max_dist import MaxDist
-from afsl.acquisition_functions.max_entropy import MaxEntropy
-from afsl.acquisition_functions.min_margin import MinMargin
-from afsl.acquisition_functions.random import Random
-from afsl.acquisition_functions.uncertainty_sampling import UncertaintySampling
-from afsl.acquisition_functions.undirected_itl import UndirectedITL
-from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
-from afsl.acquisition_functions.vtl import VTL
+from activeft.acquisition_functions import AcquisitionFunction
+from activeft.acquisition_functions.cosine_similarity import CosineSimilarity
+from activeft.acquisition_functions.ctl import CTL
+from activeft.acquisition_functions.information_density import InformationDensity
+from activeft.acquisition_functions.itl import ITL
+from activeft.acquisition_functions.itl_noiseless import ITLNoiseless
+from activeft.acquisition_functions.kmeans_pp import KMeansPP
+from activeft.acquisition_functions.least_confidence import LeastConfidence
+from activeft.acquisition_functions.max_dist import MaxDist
+from activeft.acquisition_functions.max_entropy import MaxEntropy
+from activeft.acquisition_functions.min_margin import MinMargin
+from activeft.acquisition_functions.random import Random
+from activeft.acquisition_functions.uncertainty_sampling import UncertaintySampling
+from activeft.acquisition_functions.undirected_itl import UndirectedITL
+from activeft.acquisition_functions.undirected_vtl import UndirectedVTL
+from activeft.acquisition_functions.vtl import VTL
 
 
 def get_acquisition_function(

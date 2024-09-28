@@ -1,14 +1,14 @@
 from typing import List, NamedTuple, Tuple
 import numpy as np
 import torch
-from afsl.acquisition_functions import (
+from activeft.acquisition_functions import (
     EmbeddingBased,
     SequentialAcquisitionFunction,
     Targeted,
 )
-from afsl.gaussian import GaussianCovarianceMatrix
-from afsl.model import ModelWithEmbeddingOrKernel
-from afsl.utils import (
+from activeft.gaussian import GaussianCovarianceMatrix
+from activeft.model import ModelWithEmbeddingOrKernel
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

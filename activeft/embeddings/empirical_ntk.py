@@ -1,5 +1,5 @@
 import torch
-from afsl.model import ModelWithEmbedding
+from activeft.model import ModelWithEmbedding
 
 
 class EmpiricalNTKEmbedding(ModelWithEmbedding):
@@ -7,7 +7,7 @@ class EmpiricalNTKEmbedding(ModelWithEmbedding):
     Implements the embedding corresponding to the empirical NTK kernel.
     Requires the model to be a multi-layer perceptron, i.e., a full-connected neural network with linear layers composed by nonlinearities.
 
-    For more details regarding the empirical NTK, see afsl.model.ModelWithEmbedding.
+    For more details regarding the empirical NTK, see activeft.model.ModelWithEmbedding.
     """
 
     def embed(self, data: torch.Tensor) -> torch.Tensor:

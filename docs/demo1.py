@@ -1,4 +1,4 @@
-from afsl import ActiveDataLoader
+from activeft import ActiveDataLoader
 
 train_loader = ActiveDataLoader.initialize(dataset, target, batch_size=32)
 

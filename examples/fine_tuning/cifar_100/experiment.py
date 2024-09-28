@@ -4,7 +4,7 @@ import wandb
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from afsl.data import InputDataset
+from activeft.data import InputDataset
 from examples.acquisition_functions import get_acquisition_function
 from examples.fine_tuning.cifar_100.data import collect_test_data, get_datasets
 

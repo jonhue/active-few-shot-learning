@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import Generic, Tuple
 import torch
-from afsl.acquisition_functions import M, AcquisitionFunction, Targeted
-from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
-from afsl.acquisition_functions.vtl import VTL
-from afsl.data import Dataset
-from afsl.utils import (
+from activeft.acquisition_functions import M, AcquisitionFunction, Targeted
+from activeft.acquisition_functions.undirected_vtl import UndirectedVTL
+from activeft.acquisition_functions.vtl import VTL
+from activeft.data import Dataset
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
@@ -64,7 +64,7 @@ class ActiveDataLoader(Generic[M]):
     ):
         """
         Explicitly constructs an active data loader with a custom acquisition function.
-        `afsl` supports a wide range of acquisition functions which are summarized in `afsl.acquisition_functions`.
+        `activeft` supports a wide range of acquisition functions which are summarized in `activeft.acquisition_functions`.
         """
 
         assert len(dataset) > 0, "Data must be non-empty"
