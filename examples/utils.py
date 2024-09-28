@@ -2,7 +2,7 @@ import argparse
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from afsl.utils import get_device
+from activeft.utils import get_device
 
 
 def accuracy(

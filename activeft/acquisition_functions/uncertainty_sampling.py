@@ -1,5 +1,9 @@
-from afsl.acquisition_functions.undirected_itl import UndirectedITL
-from afsl.utils import DEFAULT_MINI_BATCH_SIZE, DEFAULT_NUM_WORKERS, DEFAULT_SUBSAMPLE
+from activeft.acquisition_functions.undirected_itl import UndirectedITL
+from activeft.utils import (
+    DEFAULT_MINI_BATCH_SIZE,
+    DEFAULT_NUM_WORKERS,
+    DEFAULT_SUBSAMPLE,
+)
 
 
 class UncertaintySampling(UndirectedITL):
@@ -8,7 +12,7 @@ class UncertaintySampling(UndirectedITL):
 
     If the kernel $k(\vx,\vxp) = \vphi(\vx)^\top \vphi(\vxp)$ is induced by embeddings $\vphi$, then \\[\sigma^2(\vx) = \norm{\vphi(\vx)}_2^2.\\]
 
-    If coupled with gradient embeddings $\vphi(\vx) = \grad[\vtheta] \ell(\vx, \widehat{\vy}; \vtheta)$ (see afsl.embeddings), this is similar to *gradient length* acquisition functions.[^2]
+    If coupled with gradient embeddings $\vphi(\vx) = \grad[\vtheta] \ell(\vx, \widehat{\vy}; \vtheta)$ (see activeft.embeddings), this is similar to *gradient length* acquisition functions.[^2]
 
     .. note::
 
@@ -22,7 +26,7 @@ class UncertaintySampling(UndirectedITL):
 
     [^2]: Settles, B. and Craven, M. An analysis of active learning strategies for sequence labeling tasks. In EMNLP, 2008.
 
-    [^3]: see afsl.model.ModelWithKernel
+    [^3]: see activeft.model.ModelWithKernel
     """
 
     def __init__(

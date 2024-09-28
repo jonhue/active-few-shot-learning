@@ -1,12 +1,12 @@
 """
 Implementation of embeddings for classification models whose final layer is a linear layer. The `forward` function is expected to return a distribution over classes.
 
-For more details regarding embeddings, see afsl.model.ModelWithEmbedding.
+For more details regarding embeddings, see activeft.model.ModelWithEmbedding.
 """
 
 import torch
 from torch import nn
-from afsl.model import ClassificationModel, ModelWithEmbedding
+from activeft.model import ClassificationModel, ModelWithEmbedding
 
 
 class HallucinatedCrossEntropyEmbedding(ClassificationModel, ModelWithEmbedding):

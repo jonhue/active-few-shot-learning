@@ -1,7 +1,7 @@
 from typing import Any
 import torch
 import torch.nn as nn
-from afsl.embeddings.classification import HallucinatedCrossEntropyEmbedding
+from activeft.embeddings.classification import HallucinatedCrossEntropyEmbedding
 
 
 class EfficientNet(nn.Module):

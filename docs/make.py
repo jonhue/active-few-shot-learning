@@ -49,13 +49,13 @@ if __name__ == "__main__":
     # Render main docs
     pdoc.render.configure(
         edit_url_map={
-            "afsl": "https://github.com/jonhue/afsl/docs",
+            "activeft": "https://github.com/jonhue/activeft/docs",
         },
         template_directory=here / "templates",
         math=True,
     )
     pdoc.pdoc(
-        here / ".." / "afsl",
+        here / ".." / "activeft",
         output_directory=here / "docs",
     )
 
@@ -76,6 +76,6 @@ if __name__ == "__main__":
                 continue
             filename = str(file.relative_to(here).as_posix()).replace("index.html", "")
             f.write(
-                f"""\n<url><loc>https://jonhue.github.io/afsl/{filename}</loc></url>"""
+                f"""\n<url><loc>https://jonhue.github.io/activeft/{filename}</loc></url>"""
             )
         f.write("""\n</urlset>""")

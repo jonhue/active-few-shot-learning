@@ -1,6 +1,6 @@
 from pytest import approx
 import torch
-from afsl.gaussian import GaussianCovarianceMatrix
+from activeft.gaussian import GaussianCovarianceMatrix
 
 matrix = torch.tensor([[1, 0.5], [0.5, 3]])
 noise_std = 1

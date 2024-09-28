@@ -1,12 +1,12 @@
 import torch
 import torch.nn.functional as F
-from afsl.acquisition_functions import (
+from activeft.acquisition_functions import (
     BatchAcquisitionFunction,
     EmbeddingBased,
     Targeted,
 )
-from afsl.model import ModelWithEmbedding
-from afsl.utils import (
+from activeft.model import ModelWithEmbedding
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

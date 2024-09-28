@@ -1,7 +1,7 @@
 import torch
-from afsl.acquisition_functions import BatchAcquisitionFunction
-from afsl.model import Model
-from afsl.utils import get_device, mini_batch_wrapper
+from activeft.acquisition_functions import BatchAcquisitionFunction
+from activeft.model import Model
+from activeft.utils import get_device, mini_batch_wrapper
 
 
 class MaxEntropy(BatchAcquisitionFunction):

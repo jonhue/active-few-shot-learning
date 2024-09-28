@@ -1,15 +1,15 @@
 from typing import NamedTuple, Tuple
 from warnings import warn
-from afsl.acquisition_functions import AcquisitionFunction, Targeted
-from afsl.acquisition_functions.lazy_vtl import LazyVTL
-from afsl.acquisition_functions.vtl import VTL
+from activeft.acquisition_functions import AcquisitionFunction, Targeted
+from activeft.acquisition_functions.lazy_vtl import LazyVTL
+from activeft.acquisition_functions.vtl import VTL
 import faiss
 import torch
 import time
 import concurrent.futures
 import numpy as np
-from afsl import ActiveDataLoader
-from afsl.data import Dataset as AbstractDataset
+from activeft import ActiveDataLoader
+from activeft.data import Dataset as AbstractDataset
 
 
 class Dataset(AbstractDataset):
@@ -55,6 +55,7 @@ class Retriever:
         acquisition_function: AcquisitionFunction | None = None,
         llambda: float = 0.01,
         fast: bool = False,
+        also_query_opposite: bool = False,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
@@ -63,10 +64,12 @@ class Retriever:
         :param acquisition_function: Acquisition function object.
         :param llambda: Value of the lambda parameter of SIFT. Ignored if `acquisition_function` is set.
         :param fast: Whether to use the SIFT-Fast. Ignored if `acquisition_function` is set.
+        :param also_query_opposite: If using an inner product index, setting this to `True` will also query the opposite of the query embeddings, pre-selecting points with high *absolute* inner product.
         :param only_faiss: Whether to only use Faiss for search.
         :param device: Device to use for computation.
         """
         self.index = index
+        self.also_query_opposite = also_query_opposite
         self.only_faiss = only_faiss
         self.device = (
             device
@@ -147,9 +150,22 @@ class Retriever:
         assert d == self.index.d
         mean_queries = np.mean(queries, axis=1)
 
+        k = K or self.index.ntotal
         t_start = time.time()
         faiss.omp_set_num_threads(threads)
-        D, I, V = self.index.search_and_reconstruct(mean_queries, K or self.index.ntotal)  # type: ignore
+        D, I, V = self.index.search_and_reconstruct(mean_queries, k)  # type: ignore
+        if self.also_query_opposite:
+            assert (
+                self.index.metric_type == faiss.METRIC_INNER_PRODUCT
+            ), "`also_query_opposite` should only be used with inner product indexes."
+            D_, I_, V_ = self.index.search_and_reconstruct(-mean_queries, k)  # type: ignore
+            D__, I__, V__ = (
+                np.concatenate([D, D_]),
+                np.concatenate([I, I_]),
+                np.concatenate([V, V_]),
+            )
+            sorted_indices = np.argsort(-D__)[:k]
+            D, I, V = D__[sorted_indices], I__[sorted_indices], V__[sorted_indices]
         t_faiss = time.time() - t_start
 
         if self.only_faiss:

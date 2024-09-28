@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "afsl"
+name = "activeft"
 version = "0.1.0"
 description = "Active Few-Shot Learning for Neural Networks"
 authors = ["Jonas Hübotter <jonas.huebotter@inf.ethz.ch>"]
@@ -23,11 +23,11 @@ torch = "^2.2.0"
 logging = ["wandb"]
 
 [tool.poetry.urls]
-homepage = "https://github.com/jonhue/afsl"
+homepage = "https://github.com/jonhue/activeft"
 
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-exclude = "(venv|^/afsl/model.py)"
+exclude = "(venv|^/activeft/model.py)"

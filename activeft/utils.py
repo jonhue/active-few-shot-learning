@@ -1,7 +1,7 @@
 import torch
 import heapq
 from typing import List, Tuple
-from afsl.model import Model
+from activeft.model import Model
 
 Element = Tuple[int, float]
 """`(index, value)`"""

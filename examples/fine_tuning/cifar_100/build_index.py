@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from afsl.utils import DEFAULT_EMBEDDING_BATCH_SIZE, mini_batch_wrapper
+from activeft.utils import DEFAULT_EMBEDDING_BATCH_SIZE, mini_batch_wrapper
 from examples.acquisition_functions import get_acquisition_function
 from examples.fine_tuning.cifar_100.data import collect_test_data, get_datasets
 

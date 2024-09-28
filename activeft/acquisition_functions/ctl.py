@@ -1,5 +1,5 @@
 import torch
-from afsl.acquisition_functions.bace import TargetedBaCE, BaCEState
+from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
 
 
 class CTL(TargetedBaCE):
@@ -23,11 +23,11 @@ class CTL(TargetedBaCE):
     |------------|------------------|------------|--------------------|
     | ✅          | (✅)                | ✅          | embedding / kernel  |
 
-    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See afsl.model.ModelWithKernel.
+    [^1]: A kernel $k$ on domain $\spX$ induces a stochastic process $\\{f(\vx)\\}_{\vx \in \spX}$. See activeft.model.ModelWithKernel.
 
     [^3]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
 
-    [^4]: see afsl.acquisition_functions.bace.BaCE
+    [^4]: see activeft.acquisition_functions.bace.BaCE
     """
 
     def compute(self, state: BaCEState) -> torch.Tensor:

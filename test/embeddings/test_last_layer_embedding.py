@@ -1,6 +1,6 @@
 import torch
-from afsl.acquisition_functions import EmbeddingBased
-from afsl.models.simple_mlp import SimpleMLP
+from activeft.acquisition_functions import EmbeddingBased
+from activeft.models.simple_mlp import SimpleMLP
 
 
 class SimpleMLPWithEmbedding(SimpleMLP):

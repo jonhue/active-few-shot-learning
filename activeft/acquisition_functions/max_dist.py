@@ -1,8 +1,12 @@
 from typing import NamedTuple
 import torch
-from afsl.acquisition_functions import EmbeddingBased, SequentialAcquisitionFunction
-from afsl.model import ModelWithEmbedding, ModelWithEmbeddingOrKernel, ModelWithKernel
-from afsl.utils import (
+from activeft.acquisition_functions import EmbeddingBased, SequentialAcquisitionFunction
+from activeft.model import (
+    ModelWithEmbedding,
+    ModelWithEmbeddingOrKernel,
+    ModelWithKernel,
+)
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,

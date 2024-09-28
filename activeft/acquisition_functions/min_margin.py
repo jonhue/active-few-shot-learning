@@ -1,12 +1,13 @@
 import torch
-from afsl.acquisition_functions import BatchAcquisitionFunction
-from afsl.model import Model
-from afsl.utils import get_device, mini_batch_wrapper
+from activeft.acquisition_functions import BatchAcquisitionFunction
+from activeft.model import Model
+from activeft.utils import get_device, mini_batch_wrapper
 
 
-class LeastConfidence(BatchAcquisitionFunction):
+class MinMargin(BatchAcquisitionFunction):
     r"""
-    Given a model which for an input $\vx$ outputs a (softmax) distribution over classes $p_{\vx}$, `LeastConfidence`[^1] selects the inputs with the smallest confidence, i.e., minimizing $\max_i p_{\vx}(i)$.
+    Given a model which for an input $\vx$ outputs a (softmax) distribution over classes $p_{\vx}$, the margin of $\vx$ is the difference between the largest and second largest class probabilities: \\[\mathrm{margin}(\vx) \defeq \max_i p_\vx(i) - \max_{j, j \neq i} p_\vx(j).\\]
+    `MinMargin`[^1] selects the inputs with the smallest margin.
     Intuitively, this leads to the selection of inputs for which the model is uncertain about the correct class.
     This is a commonly used heuristic for determining informative data points.
 
@@ -30,7 +31,9 @@ class LeastConfidence(BatchAcquisitionFunction):
                 output = torch.softmax(
                     model(batch.to(get_device(model), non_blocking=True)), dim=1
                 ).to(device)
-                return -torch.max(output, dim=1).values
+                top_preds, _ = torch.topk(output, 2, dim=1)
+                margins = top_preds[:, 0] - top_preds[:, 1]
+                return -margins
 
             return mini_batch_wrapper(
                 fn=engine,

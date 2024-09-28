@@ -1,13 +1,13 @@
 """
-`afsl` supports a wide range of acquisition functions which are summarized here.
+`activeft` supports a wide range of acquisition functions which are summarized here.
 The default implementation uses [VTL](acquisition_functions/vtl).
 You can use a custom acquisition function as follows:
 
 ```python
-from afsl.acquisition_functions.undirected_vtl import UndirectedVTL
+from activeft.acquisition_functions.undirected_vtl import UndirectedVTL
 
 acquisition_function = UndirectedVTL()
-data_loader = afsl.ActiveDataLoader(data, batch_size=64, acquisition_function=acquisition_function)
+data_loader = activeft.ActiveDataLoader(data, batch_size=64, acquisition_function=acquisition_function)
 ```
 
 ## Overview of Acquisition Functions
@@ -32,9 +32,9 @@ The following table provides an overview of the acquisition functions and their 
 | [Random](acquisition_functions/random)                             | ❌          | ❌                | (✅)        | -                   |
 
 
-- **Relevance** and **Informativeness** capture whether obtained data is "useful" as outlined [here](/afsl/docs/afsl#why-active-data-selection).
+- **Relevance** and **Informativeness** capture whether obtained data is "useful" as outlined [here](/activeft/docs/activeft#why-active-data-selection).
 - **Diversity** captures whether the selected batches are diverse, i.e., whether they cover different "useful" parts of the data space. In a non-diverse batch, most data is not useful conditional on the rest of the batch, meaning that most of the batch is "wasted".
-- **Model Requirement** describes the type of model required for the acquisition function. For example, some acquisition functions require an *embedding* or a *kernel* (see afsl.model), while others require the model to output a *softmax* distribution (typically in a classification context).
+- **Model Requirement** describes the type of model required for the acquisition function. For example, some acquisition functions require an *embedding* or a *kernel* (see activeft.model), while others require the model to output a *softmax* distribution (typically in a classification context).
 
 ---
 """
@@ -45,9 +45,9 @@ from typing import Callable, Generic, Optional, Tuple, TypeVar
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset as TorchDataset, Subset
-from afsl.data import Dataset
-from afsl.model import Model, ModelWithEmbedding
-from afsl.utils import (
+from activeft.data import Dataset
+from activeft.model import Model, ModelWithEmbedding
+from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
