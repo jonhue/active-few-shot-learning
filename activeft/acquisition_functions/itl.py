@@ -1,6 +1,6 @@
 import torch
-import wandb
 from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
+from activeft.utils import wandb_log
 
 
 class ITL(TargetedBaCE):
@@ -59,7 +59,7 @@ class ITL(TargetedBaCE):
         conditional_variances = torch.diag(conditional_covariance_matrix)
 
         mi = 0.5 * torch.clamp(torch.log(variances / conditional_variances), min=0)
-        wandb.log(
+        wandb_log(
             {
                 "max_mi": torch.max(mi),
                 "min_mi": torch.min(mi),

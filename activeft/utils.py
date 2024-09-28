@@ -33,6 +33,17 @@ def mini_batch_wrapper(fn, data, batch_size):
     return torch.cat(results, dim=0)
 
 
+def wandb_log(data):
+    try:
+        import wandb
+
+        if wandb.run is not None:
+            wandb.log(data)
+    except ImportError:
+        # wandb is not installed; do nothing
+        pass
+
+
 class PriorityQueue(object):
     """Priority Queue (largest value first)"""
 

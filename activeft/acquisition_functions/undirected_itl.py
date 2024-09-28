@@ -1,6 +1,6 @@
 import torch
-import wandb
 from activeft.acquisition_functions.bace import BaCE, BaCEState
+from activeft.utils import wandb_log
 
 
 class UndirectedITL(BaCE):
@@ -61,7 +61,7 @@ class UndirectedITL(BaCE):
 
     def compute(self, state: BaCEState) -> torch.Tensor:
         variances = torch.diag(state.covariance_matrix[:, :])
-        wandb.log(
+        wandb_log(
             {
                 "max_var": torch.max(variances),
                 "min_var": torch.min(variances),

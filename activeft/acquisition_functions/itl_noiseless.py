@@ -1,11 +1,11 @@
 import torch
-import wandb
 from activeft.acquisition_functions.bace import TargetedBaCE, BaCEState
 from activeft.utils import (
     DEFAULT_EMBEDDING_BATCH_SIZE,
     DEFAULT_MINI_BATCH_SIZE,
     DEFAULT_NUM_WORKERS,
     DEFAULT_SUBSAMPLE,
+    wandb_log,
 )
 
 
@@ -75,7 +75,7 @@ class ITLNoiseless(TargetedBaCE):
         if state.observed_indices.size(0) > 0:
             mi.index_fill_(dim=0, index=state.observed_indices, value=-torch.inf)
 
-        wandb.log(
+        wandb_log(
             {
                 "max_mi": torch.max(mi),
                 "min_mi": torch.min(mi),

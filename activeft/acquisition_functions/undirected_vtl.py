@@ -1,5 +1,4 @@
 import torch
-import wandb
 from activeft.acquisition_functions.bace import BaCEState, TargetedBaCE
 from activeft.acquisition_functions.vtl import VTL
 from activeft.utils import (
