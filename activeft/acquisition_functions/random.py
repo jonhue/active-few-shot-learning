@@ -18,9 +18,9 @@ class Random(BatchAcquisitionFunction):
 
     Random data selection leads inherently to reasonably diverse batches, yet, it does not consider the "usefulness" of data.
 
-    | Relevance? | Informativeness? | Diversity? | Model Requirement  |
-    |------------|------------------|------------|--------------------|
-    | ❌          | ❌                | (✅)        | -                  |
+    | Relevance? | Diversity? | Model Requirement  |
+    |------------|------------|--------------------|
+    | ❌         | (✅)        | -                  |
     """
 
     def __init__(

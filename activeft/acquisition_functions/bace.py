@@ -50,7 +50,7 @@ class BaCE(
 
     Using the conditional kernel $k_i$ (or equivalently the "conditional embedding") rather than the initial kernel $k_0$ leads to *diverse* batch selection since $k_i$ reflects the information gained from the previously selected data points $\vx_{1:i}$.
 
-    [^1]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Information-based Transductive Active Learning. arXiv preprint, 2024.
+    [^1]: Hübotter, J., Sukhija, B., Treven, L., As, Y., and Krause, A. Transductive Active Learning: Theory and Applications. NeurIPS, 2024.
 
     [^2]: A kernel is also induced by embeddings. See activeft.model.ModelWithEmbedding.
     """
