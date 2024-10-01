@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "activeft"
 version = "0.1.0"
-description = "Active Few-Shot Learning for Neural Networks"
+description = "Efficiently fine-tune large neural networks by intelligent active data selection"
 authors = ["Jonas Hübotter <jonas.huebotter@inf.ethz.ch>"]
 license = "MIT"
 readme = "README.md"
@@ -17,7 +17,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10"
-torch = "^2.2.0"
+torch = "^2.4.0"
 
 [tool.poetry.extras]
 logging = ["wandb"]
