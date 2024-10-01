@@ -46,6 +46,8 @@ class LazyVTL(
     """
     Lazy Implementation of [VTL](vtl).[^1]
 
+    See Appendix F.2 of [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs](TODO).
+
     [^1]: Hübotter, J., Bongni, S., Hakimi, I., and Krause, A. Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs. Preprint, 2024.
     """
 

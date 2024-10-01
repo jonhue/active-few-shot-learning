@@ -16,6 +16,7 @@ here = Path(__file__).parent
 if __name__ == "__main__":
     demo1 = here / "demo1.py"
     demo2 = here / "demo2.py"
+    demo3 = here / "demo3.py"
     env = Environment(
         loader=FileSystemLoader([here]),
         autoescape=True,
@@ -25,12 +26,15 @@ if __name__ == "__main__":
     formatter = pygments.formatters.html.HtmlFormatter(style="dracula")
     pygments_css = formatter.get_style_defs()
     example_html1 = Markup(
-        pygments.highlight(demo1.read_text("utf8"), lexer, formatter).replace(
-            "converged", '<span class="highlighted">converged</span>'
-        )
+        pygments.highlight(demo1.read_text("utf8"), lexer, formatter)
     )
     example_html2 = Markup(
         pygments.highlight(demo2.read_text("utf8"), lexer, formatter)
+    )
+    example_html3 = Markup(
+        pygments.highlight(demo3.read_text("utf8"), lexer, formatter).replace(
+            "converged", '<span class="highlighted">converged</span>'
+        )
     )
 
     (here / "index.html").write_bytes(
@@ -38,6 +42,7 @@ if __name__ == "__main__":
         .render(
             example_html1=example_html1,
             example_html2=example_html2,
+            example_html3=example_html3,
             pygments_css=pygments_css,
         )
         .encode()

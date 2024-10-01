@@ -1,5 +1,5 @@
 r"""
-*Active Fine-Tuning* (`activeft`) is a Python package for informative data selection.
+*Active Fine-Tuning* (`activeft`) is a Python package for intelligent active data selection.
 
 ## Why Active Data Selection?
 
@@ -7,13 +7,14 @@ As opposed to random data selection, active data selection chooses data adaptive
 In other words, <p style="text-align: center;">active data selection pays *attention* to the most useful data</p> which allows for faster learning and adaptation.
 There are mainly two reasons for why some data may be particularly useful:
 
-1. **Informativeness**: The data contains information that the model had previously been uncertain about.
-2. **Relevance**: The data is closely related to a particular task, such as answering a specific prompt.
+1. **Relevance**: The data is closely related to a particular task, such as answering a specific prompt.
+2. **Diversity**: The data contains non-redundant information that is not yet captured by the model.
 
+A dataset that is both relevant and diverse is *informative* for the model.
 This is related to memory recall, where the brain recalls informative and relevant memories (think "data") to make sense of the current sensory input.
-Focusing recall on useful data enables efficient few-shot learning.
+Focusing recall on useful data enables efficient learning from few examples.
 
-`activeft` provides a simple interface for active data selection, which can be used as a drop-in replacement for random data selection.
+`activeft` provides a simple interface for active data selection, which can be used as a drop-in replacement for random data selection or nearest neighbor retrieval.
 
 ## Getting Started
 
@@ -23,7 +24,7 @@ You can install `activeft` from [PyPI](https://pypi.org/project/activeft/) via p
 pip install activeft
 ```
 
-We briefly discuss how to use `activeft` for [fine-tuning](#example-fine-tuning) and [in-context learning / retrieval-augmented generation](#example-in-context-learning).
+We briefly discuss how to use `activeft` for standard [fine-tuning](#example-fine-tuning) and [test-time fine-tuning](#example-test-time-fine-tuning).
 
 ### Example: Fine-tuning
 
@@ -81,7 +82,13 @@ To do this, simply initialize
 data_loader = ActiveDataLoader.initialize(dataset, target=None, batch_size=64)
 ```
 
-### Example: In-context Learning
+### Example: Test-Time Fine-Tuning
+
+The above example described active data selection in the context of training a model with multiple batches. This usually happens at "train-time" or during "post-training".
+
+The following example demonstrates how to use `activeft` at "test-time" to obtain a model that is as good as possible on a specific test instance.
+For example, with a language model, this would fine-tune the model for a few gradient steps on data selected specifically for a given prompt.
+We refer to the following paper for more details: [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs](TODO).
 
 We can also use the intelligent retrieval of informative and relevant data outside a training loop — for example, for in-context learning and retrieval-augmented generation.
 
@@ -91,36 +98,59 @@ We can use `activeft` to query the most useful data and then add it to the model
 ```python
 from activeft import ActiveDataLoader
 
-data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=5)
-context = dataset[data_loader.next(model)]
-model.add_to_context(context)
+data_loader = ActiveDataLoader.initialize(dataset, target, batch_size=10)
+data = dataset[data_loader.next(model)]
+model.step(data)
 ```
 
 Again: very simple!
+
+### Scaling to Large Datasets
+
+By default `activeft` maintains a matrix of size of the dataset in memory. This is not feasible for very large datasets.
+Some acquisition functions (such as `activeft.acquisition_functions.LazyVTL`) allow for efficient computation of the acquisition function without storing the entire dataset in memory.
+An alternative approach is to pre-select a subset of the data using nearest neighbor retrieval (using [Faiss](https://github.com/facebookresearch/faiss)), before initializing the `ActiveDataLoader`.
+The following is an example of this approach in the context of [test-time fine-tuning](#example-test-time-fine-tuning):
+
+```python
+import torch
+import faiss
+from activeft.sift import Retriever
+
+# Before Test-Time
+embeddings = torch.randn(1000, 768)
+index = faiss.IndexFlatIP(embeddings.size(1))
+index.add(embeddings)
+retriever = Retriever(index)
+
+# At Test-Time, given query
+query_embeddings = torch.randn(1, 768)
+indices = retriever.search(query_embeddings, N=10, K=1_000)
+data = embeddings[indices]
+model.step(data)  # Use data to fine-tune base model, then forward pass query
+```
+
+`activeft.sift.Retriever` first pre-selects `K` nearest neighbors and then uses `activeft` to select the `N` most informative data for the given query from this subset.
 
 ## Citation
 
 If you use the code in a publication, please cite our papers:
 
 ```bibtex
-# Active fine-tuning:
-@inproceedings{huebotter2024active,
-    title={Active Few-Show Fine-Tuning},
-    author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
-    booktitle={ICLR Workshop on Bridging the Gap Between Practice and Theory in Deep Learning},
-    year={2024},
-    pdf={https://arxiv.org/pdf/2402.15898.pdf},
-    url={https://github.com/jonhue/activeft}
+# Large-Scale Learning at Test-Time with SIFT
+@article{hubotter2024efficiently,
+	title        = {Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs},
+	author       = {H{\"u}botter, Jonas and Bongni, Sascha and Hakimi, Ido and Krause, Andreas},
+	year         = 2024,
+	journal      = {arXiv Preprint}
 }
 
-# Theoretical analysis of "directed" active learning:
-@inproceedings{huebotter2024information,
-    title={Information-based Transductive Active Learning},
-    author={Jonas Hübotter and Bhavya Sukhija and Lenart Treven and Yarden As and Andreas Krause},
-    booktitle={ICML},
-    year={2024},
-    pdf={https://arxiv.org/pdf/2402.15441.pdf},
-    url={https://github.com/jonhue/activeft}
+# Theory and Fundamental Algorithms for Transductive Active Learning
+@inproceedings{hubotter2024transductive,
+	title        = {Transductive Active Learning: Theory and Applications},
+	author       = {H{\"u}botter, Jonas and Sukhija, Bhavya and Treven, Lenart and As, Yarden and Krause, Andreas},
+	year         = 2024,
+	booktitle    = {Advances in Neural Information Processing Systems}
 }
 ```
 

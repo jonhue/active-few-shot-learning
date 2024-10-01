@@ -55,17 +55,19 @@
     {%- endmacro %}
     <body>
         <header>
-            <h1>Active Few-Shot Learning</h1>
+            <h1>Active Fine-Tuning</h1>
             <p>
-                Efficient fine-tuning & in-context learning by intelligent active data selection.
+                Efficiently fine-tune large neural networks by intelligent active data selection.
             </p>
         </header>
 
         <aside id="example">
             <input type="radio" class="btn-check" name="view-selector" id="view-1" autocomplete="off" checked>
-            <label class="btn btn-outline-dark" for="view-1">Fine-tuning</label>
-            <input type="radio" class="btn-check" name="view-selector" id="view-2" autocomplete="off">
-            <label class="btn btn-outline-dark" for="view-2">In-context learning</label>
+            <label class="btn btn-outline-dark" for="view-1">at Test-Time</label>
+            {# <input type="radio" class="btn-check" name="view-selector" id="view-2" autocomplete="off">
+            <label class="btn btn-outline-dark" for="view-2">during Post-Training</label> #}
+            <input type="radio" class="btn-check" name="view-selector" id="view-3" autocomplete="off">
+            <label class="btn btn-outline-dark" for="view-3">within an Outer Loop</label>
             <div class="example-code" id="example-1">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14">
                     <g>
@@ -77,7 +79,7 @@
                 <div class="title"></div>
                 {{ example_html1 }}
             </div>
-            <div class="example-code" id="example-2">
+            {# <div class="example-code" id="example-2">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14">
                     <g>
                         <circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle>
@@ -87,6 +89,17 @@
                 </svg>
                 <div class="title"></div>
                 {{ example_html2 }}
+            </div> #}
+            <div class="example-code" id="example-3">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="54" height="14" viewBox="0 0 54 14">
+                    <g>
+                        <circle cx="6" cy="6" r="6" fill="#FF5F56" stroke="#E0443E" stroke-width=".5"></circle>
+                        <circle cx="26" cy="6" r="6" fill="#FFBD2E" stroke="#DEA123" stroke-width=".5"></circle>
+                        <circle cx="46" cy="6" r="6" fill="#27C93F" stroke="#1AAB29" stroke-width=".5"></circle>
+                    </g>
+                </svg>
+                <div class="title"></div>
+                {{ example_html3 }}
             </div>
         </aside>
 
@@ -102,31 +115,27 @@
                     {{ icon("book-half") }}
                     &nbsp;Documentation
                 </a>
-                <a href="https://arxiv.org/pdf/2402.15898.pdf"
+                <a href="TODO"
                 class="btn btn-dark shadow">
                     {{ icon("newspaper") }}
                     &nbsp;Paper
                 </a>
             </div>
-            <p>
+            <p><center>
                 <code>activeft</code> retrieves data intelligently to maximize the information gain about specified prediction targets.
-                This can be used, for example, to select data for efficient few-shot <i>fine-tuning</i> or to populate a context for <i>in-context learning</i>.
-                The documentation details <a href="https://jonhue.github.io/activeft/docs/activeft.html#getting-started">how to get started</a>.
-                To learn how <code>activeft</code> works, check out our <a href="https://arxiv.org/pdf/2402.15898.pdf">paper</a> or our <a href="https://yas.pub">blog post</a>.
-            </p>
+                This can be used to select data for efficient <i>fine-tuning</i> or to efficiently <i>learn at test-time</i>.
+            </center></p>
             <div id="publications">
                 <h3>Publications</h3>
                 <div>
-                    <h5>Active Few-Shot Fine-Tuning <a href="https://arxiv.org/pdf/2402.15441.pdf">{{ icon("newspaper") }}</a></h5>
-                    {# <p>Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p> #}
-                    {# <p>ICLR 2024 Workshop on Bridging the Gap Between Practice and Theory in Deep Learning</p> #}
+                    <h5>Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs</h5>
+                    {# <p>Jonas Hübotter, Sascha Bongni, Ido Hakimi, Andreas Krause</p> #}
                     <p>Preprint</p>
                 </div>
                 <div>
-                    <h5>Information-based Transductive Active Learning <a href="https://arxiv.org/pdf/2402.15898.pdf">{{ icon("newspaper") }}</a></h5>
+                    <h5>Transductive Active Learning: Theory and Applications <a href="https://arxiv.org/abs/2402.15898">{{ icon("newspaper") }}</a></h5>
                     {# <p>Jonas Hübotter, Bhavya Sukhija, Lenart Treven, Yarden As, Andreas Krause</p> #}
-                    {# <p>ICML 2024</p> #}
-                    <p>Preprint</p>
+                    <p>NeurIPS 2024</p>
                 </div>
             </div>
         </main>
