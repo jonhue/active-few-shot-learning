@@ -44,7 +44,12 @@ header {
   border-bottom-left-radius: 0;
 }
 
-#example-1, #example-2 {
+#example > label[for=view-3] {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+#example-1, #example-2, #example-3 {
   display: none;
 }
 
@@ -53,6 +58,10 @@ header {
 }
 
 #view-2:checked ~ #example-2 {
+  display: block;
+}
+
+#view-3:checked ~ #example-3 {
   display: block;
 }
 
@@ -80,6 +89,7 @@ header {
 
 .example-code .highlight {
   margin: 1em 1em 1.5em;
+  min-width: 40em;
 }
 
 .example-code pre {

@@ -1,7 +1,12 @@
-from activeft import ActiveDataLoader
+import torch
+import faiss
+from activeft.sift import Retriever
 
-train_loader = ActiveDataLoader.initialize(dataset, target, batch_size=32)
+# Before Test-Time
+index = faiss.IndexFlatIP(embeddings.size(1))
+index.add(embeddings)
+retriever = Retriever(index)
 
-while not converged:
-    batch = dataset[train_loader.next(model)]
-    model.step(batch)
+# At Test-Time, given query
+indices = retriever.search(query_embeddings, N=10)
+model.step(dataset[indices])

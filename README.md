@@ -57,7 +57,7 @@ To start a local server hosting the documentation run ```pdoc ./activeft --math`
 	title        = {Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs},
 	author       = {H{\"u}botter, Jonas and Bongni, Sascha and Hakimi, Ido and Krause, Andreas},
 	year         = 2024,
-	journal      = {TODO}
+	journal      = {arXiv Preprint}
 }
 
 @inproceedings{hubotter2024transductive,
