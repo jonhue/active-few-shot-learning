@@ -160,12 +160,12 @@ class Retriever:
             ), "`also_query_opposite` should only be used with inner product indexes."
             D_, I_, V_ = self.index.search_and_reconstruct(-mean_queries, k)  # type: ignore
             D__, I__, V__ = (
-                np.concatenate([D, D_]),
-                np.concatenate([I, I_]),
-                np.concatenate([V, V_]),
+                np.concatenate([D, D_], axis=1),
+                np.concatenate([I, I_], axis=1),
+                np.concatenate([V, V_], axis=1),
             )
-            sorted_indices = np.argsort(-D__)[:k]
-            D, I, V = D__[sorted_indices], I__[sorted_indices], V__[sorted_indices]
+            sorted_indices = np.argsort(-D__)[:, :k]
+            D, I, V = np.take_along_axis(D__, sorted_indices, axis=1), np.take_along_axis(I__, sorted_indices, axis=1), np.take_along_axis(V__, sorted_indices[:, :, np.newaxis], axis=1)
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
