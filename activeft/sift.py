@@ -55,7 +55,7 @@ class Retriever:
         acquisition_function: AcquisitionFunction | None = None,
         llambda: float = 0.01,
         fast: bool = False,
-        also_query_opposite: bool = False,
+        also_query_opposite: bool = True,
         only_faiss: bool = False,
         device: torch.device | None = None,
     ):
