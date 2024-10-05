@@ -168,6 +168,6 @@ __all__ = [
     "model",
     "sift",
 ]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Jonas Hübotter"
 __credits__ = "ETH Zurich, Switzerland"
