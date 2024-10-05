@@ -165,7 +165,11 @@ class Retriever:
                 np.concatenate([V, V_], axis=1),
             )
             sorted_indices = np.argsort(-D__)[:, :k]
-            D, I, V = np.take_along_axis(D__, sorted_indices, axis=1), np.take_along_axis(I__, sorted_indices, axis=1), np.take_along_axis(V__, sorted_indices[:, :, np.newaxis], axis=1)
+            D, I, V = (
+                np.take_along_axis(D__, sorted_indices, axis=1),
+                np.take_along_axis(I__, sorted_indices, axis=1),
+                np.take_along_axis(V__, sorted_indices[:, :, np.newaxis], axis=1),
+            )
         t_faiss = time.time() - t_start
 
         if self.only_faiss:
