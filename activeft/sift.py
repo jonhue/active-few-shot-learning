@@ -53,7 +53,7 @@ class Retriever:
         self,
         index: faiss.Index,
         acquisition_function: AcquisitionFunction | None = None,
-        llambda: float = 0.01,
+        lambda_: float = 0.01,
         fast: bool = False,
         also_query_opposite: bool = True,
         only_faiss: bool = False,
@@ -62,7 +62,7 @@ class Retriever:
         """
         :param index: Faiss index object.
         :param acquisition_function: Acquisition function object.
-        :param llambda: Value of the lambda parameter of SIFT. Ignored if `acquisition_function` is set.
+        :param lambda_: Value of the lambda parameter of SIFT. Ignored if `acquisition_function` is set.
         :param fast: Whether to use the SIFT-Fast. Ignored if `acquisition_function` is set.
         :param also_query_opposite: If using an inner product index, setting this to `True` will also query the opposite of the query embeddings, pre-selecting points with high *absolute* inner product.
         :param only_faiss: Whether to only use Faiss for search.
@@ -85,21 +85,19 @@ class Retriever:
                     UserWarning,
                 )
         elif fast:
-            assert llambda is not None
             self.acquisition_function = LazyVTL(
                 target=torch.Tensor(),
                 num_workers=1,
                 subsample=False,
-                noise_std=np.sqrt(llambda),
+                noise_std=np.sqrt(lambda_),
             )
         else:
-            assert llambda is not None
             self.acquisition_function = VTL(
                 target=torch.Tensor(),
                 num_workers=1,
                 subsample=False,
                 force_nonsequential=False,
-                noise_std=np.sqrt(llambda),
+                noise_std=np.sqrt(lambda_),
             )
 
     def search(
