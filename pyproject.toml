@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "activeft"
-version = "0.1.0"
+version = "0.1.1"
 description = "Efficiently fine-tune large neural networks by intelligent active data selection"
 authors = ["Jonas Hübotter <jonas.huebotter@inf.ethz.ch>"]
 license = "MIT"
