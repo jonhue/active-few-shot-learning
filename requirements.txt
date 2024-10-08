@@ -1,4 +1,4 @@
-black~=24.8
+black~=24.10
 faiss-cpu~=1.8
 numpy~=1.26
 pandas~=2.2
