@@ -6,7 +6,7 @@ A library for automatic data selection in active fine-tuning of large neural net
 
 Please cite our work if you use this library in your research ([bibtex below](#citation)):
 
-- [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs]()
+- [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs](https://arxiv.org/abs/2410.08020)
 - [Transductive Active Learning: Theory and Applications](https://arxiv.org/abs/2402.15898) (Section 4)
 
 ## Installation
@@ -57,7 +57,7 @@ To start a local server hosting the documentation run ```pdoc ./activeft --math`
 	title        = {Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs},
 	author       = {H{\"u}botter, Jonas and Bongni, Sascha and Hakimi, Ido and Krause, Andreas},
 	year         = 2024,
-	journal      = {arXiv Preprint}
+	journal      = {arXiv preprint arXiv:2410.08020}
 }
 
 @inproceedings{hubotter2024transductive,
