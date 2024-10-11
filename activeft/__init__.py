@@ -88,7 +88,7 @@ The above example described active data selection in the context of training a m
 
 The following example demonstrates how to use `activeft` at "test-time" to obtain a model that is as good as possible on a specific test instance.
 For example, with a language model, this would fine-tune the model for a few gradient steps on data selected specifically for a given prompt.
-We refer to the following paper for more details: [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs](TODO).
+We refer to the following paper for more details: [Efficiently Learning at Test-Time: Active Fine-Tuning of LLMs](https://arxiv.org/abs/2410.08020).
 
 We can also use the intelligent retrieval of informative and relevant data outside a training loop — for example, for in-context learning and retrieval-augmented generation.
 
