@@ -230,7 +230,7 @@ class Retriever:
         t_sift = time.time() - t_start
         retrieval_time = RetrievalTime(faiss=t_faiss, sift=t_sift)
         dtype = (
-            float if self.alpha is None else object
+            None if self.alpha is None else object
         )  # Array of adaptive SIFT might have inconsistent lengths
         return (
             np.array(resulting_values, dtype=dtype),
