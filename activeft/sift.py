@@ -1,4 +1,4 @@
-from typing import NamedTuple, Tuple
+from typing import NamedTuple, Optional, Tuple
 from warnings import warn
 from activeft.acquisition_functions import AcquisitionFunction, Targeted
 from activeft.acquisition_functions.lazy_vtl import LazyVTL
@@ -182,6 +182,28 @@ class Retriever:
             retrieval_time = RetrievalTime(faiss=t_faiss, sift=0)
             return D[:, :N], I[:, :N], V[:, :N], retrieval_time
 
+        t_start = time.time()
+
+        values, indices, distances = self.refine_selection_with_sift(
+            queries, n, N, I, V, mean_queries, mean_pooling, threads
+        )
+
+        t_sift = time.time() - t_start
+
+        return values, indices, distances, RetrievalTime(faiss=t_faiss, sift=t_sift)
+
+    def refine_selection_with_sift(
+        self,
+        queries: np.ndarray,
+        n: int,
+        N: int,
+        I,
+        V,
+        mean_queries: np.ndarray,
+        mean_pooling: bool = False,
+        threads: int = 1,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+
         def engine(i: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
             dataset = Dataset(torch.tensor(V[i]))
             target = torch.tensor(
@@ -214,7 +236,6 @@ class Retriever:
 
             return values, indices, embeddings
 
-        t_start = time.time()
         resulting_values = []
         resulting_indices = []
         resulting_embeddings = []
@@ -227,8 +248,6 @@ class Retriever:
                 resulting_values.append(values)
                 resulting_indices.append(indices)
                 resulting_embeddings.append(embeddings)
-        t_sift = time.time() - t_start
-        retrieval_time = RetrievalTime(faiss=t_faiss, sift=t_sift)
         dtype = (
             None if self.alpha is None else object
         )  # Array of adaptive SIFT might have inconsistent lengths
@@ -236,5 +255,4 @@ class Retriever:
             np.array(resulting_values, dtype=dtype),
             np.array(resulting_indices, dtype=dtype),
             np.array(resulting_embeddings, dtype=dtype),
-            retrieval_time,
         )
